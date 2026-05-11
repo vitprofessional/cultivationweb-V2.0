@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link rel="stylesheet" href="{{ asset('public/educavo/assets/css/font-awesome.min.css') }}">
     <link rel="stylesheet" href="{{ asset('public/educavo/assets/fonts/flaticon.css') }}">
+    <link rel="stylesheet" href="{{ asset('public/educavo/assets/fonts/linea-fonts.css') }}">
     <link rel="stylesheet" href="{{ asset('public/educavo/assets/css/animate.css') }}">
     <link rel="stylesheet" href="{{ asset('public/educavo/assets/css/owl.carousel.css') }}">
     <link rel="stylesheet" href="{{ asset('public/educavo/assets/css/slick.css') }}">
@@ -637,129 +638,7 @@
     @stack('styles')
 </head>
 <body class="home-style2">
-    <div id="loader" class="loader">
-        <div class="loader-container">
-            <div class="loader-icon">
-                <img src="{{ asset('public/educavo/assets/images/pre-logo.png') }}" alt="loader">
-            </div>
-        </div>
-    </div>
-
-    <div class="full-width-header header-style2">
-        <header id="rs-header" class="rs-header">
-            <div class="topbar-area">
-                <div class="container">
-                    <div class="row y-middle">
-                        <div class="col-md-7">
-                            <ul class="topbar-contact">
-                                <li>
-                                    <i class="flaticon-email"></i>
-                                    <a href="mailto:{{ !empty($config->officeEmail) ? $config->officeEmail : 'support@rstheme.com' }}">
-                                        {{ !empty($config->officeEmail) ? $config->officeEmail : 'support@rstheme.com' }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <i class="flaticon-call"></i>
-                                    <a href="tel:{{ !empty($config->officeMobile) ? preg_replace('/\s+/', '', $config->officeMobile) : '+0885898745' }}">
-                                        {{ !empty($config->officeMobile) ? $config->officeMobile : '(+088) 589-8745' }}
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-5 text-right">
-                            <ul class="topbar-right">
-                                <li class="login-register">
-                                    <i class="fa fa-map-marker"></i>
-                                    <span>{{ !empty($config->address) ? $config->address : 'North Shampur, Burichong, Cumilla' }}</span>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="menu-area menu-sticky edu-menu" style="background:var(--edu-secondary);">
-                <div class="container">
-                    <div class="row y-middle">
-                        <div class="col-lg-3">
-                            <div class="logo-part py-2">
-                                <a class="edu-brand" href="{{ route('homePage') }}">
-                                    @if(!empty($config->logo))
-                                        <img src="{{ config('app.url') }}/public/upload/image/cultivation/{{ $config->logo }}" alt="logo">
-                                    @else
-                                        <img src="{{ asset('public/logo.png') }}" alt="logo">
-                                    @endif
-                                    <span class="text-white fw-bold d-none d-md-inline">
-                                        {{ !empty($config->instituteName) ? $config->instituteName : 'Jahanara Ayub Academy' }}
-                                    </span>
-                                </a>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-9">
-                            <nav class="navbar navbar-expand-lg py-0">
-                                <button class="navbar-toggler text-white border-0 ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainEduMenu" aria-controls="mainEduMenu" aria-expanded="false" aria-label="Toggle navigation">
-                                    <i class="fa fa-bars"></i>
-                                </button>
-                                <div class="collapse navbar-collapse" id="mainEduMenu">
-                                    <ul class="navbar-nav ms-auto align-items-lg-center">
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="{{ route('homePage') }}">Home</a>
-                                        </li>
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Institute</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{{ route('institutePage') }}">About Us</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('principalSpeechPage') }}">{{ $frontendSpeechNavLabel ?? "Principal's Message" }}</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('student') }}">Student List</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('exprincipalPage') }}">EX-Principals</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('teacherPage') }}">Lecturer Corner</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('staffPage') }}">Staff Panel</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('comitteePage') }}">Governing Body</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Academic</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{{ route('newSyllabus') }}">Syllabus</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('newClassSchedule') }}">Class Routine</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('newExamSchedule') }}">Exam Routine</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('newSemister') }}">Semister Plans</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Result Archive</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{{ route('internalResult') }}">Internal Result</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Job Placement</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{{ route('placementCellView') }}">Placement Cell</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('jobNeedyStudentView') }}">Job Needy Student</a></li>
-                                                <li><a class="dropdown-item" target="_blank" href="https://bdjobs.com/">Job Circular</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item dropdown">
-                                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Gallery</a>
-                                            <ul class="dropdown-menu">
-                                                <li><a class="dropdown-item" href="{{ route('imagePage') }}">Photo Gallery</a></li>
-                                                <li><a class="dropdown-item" href="{{ route('videoPage') }}">Video Gallery</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="{{ route('supportPage') }}">Support</a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
-    </div>
+    @include('frontend.educavo-v2.partials._header')
 
     <div class="homepage-slider-wrap">
         @yield('sliderninfo')
@@ -780,52 +659,7 @@
         </div>
     </section>
 
-    <footer id="rs-footer" class="rs-footer home9-style main-home" style="background:var(--edu-secondary);">
-        <div class="footer-top py-4">
-            <div class="container">
-                <div class="row">
-                    <div class="col-lg-4 col-md-6 mb-3 mb-lg-0">
-                        <h4 class="text-white mb-3">Contact Details</h4>
-                        <p class="text-light mb-2"><i class="fa fa-link"></i> {{ url('/') }}</p>
-                        <p class="text-light mb-2"><i class="fa fa-phone"></i> {{ !empty($config->officeMobile) ? $config->officeMobile : '01836994770' }}</p>
-                        <p class="text-light mb-2"><i class="fa fa-map-marker"></i> {{ !empty($config->address) ? $config->address : 'North Shampur, Burichong, Cumilla.' }}</p>
-                        <p class="text-light mb-2"><i class="fa fa-envelope"></i>
-                            <a class="text-light" href="mailto:{{ !empty($config->officeEmail) ? $config->officeEmail : 'cultivation@virtualitprofessional.com' }}">
-                                {{ !empty($config->officeEmail) ? $config->officeEmail : 'cultivation@virtualitprofessional.com' }}
-                            </a>
-                        </p>
-                    </div>
-                    <div class="col-lg-4 col-md-6 mb-3 mb-lg-0">
-                        <h4 class="text-white mb-3">Visitor Counter</h4>
-                        @include('visitorCounter')
-                    </div>
-                    <div class="col-lg-4 col-md-12">
-                        <h4 class="text-white mb-3">Google Map</h4>
-                        @php
-                            $defaultMapEmbed = '!1m18!1m12!1m3!1d3658.720943010397!2d91.14681007428437!3d23.50655879809593!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3754796e7c90d6e3%3A0x210c98d19ee0bc9c!2z4Ka44KeH4Ka-4Kao4Ka-4KawIOCmrOCmvuCmguCmsuCmviDgppXgprLgp4fgppw!5e0!3m2!1sen!2suk!4v1695524774546!5m2!1sen!2suk';
-                            $mapEmbedValue = !empty($config->mapEmbed) ? $config->mapEmbed : $defaultMapEmbed;
-                        @endphp
-                        <iframe
-                            src="https://www.google.com/maps/embed?pb={{ $mapEmbedValue }}"
-                            width="100%"
-                            height="220"
-                            style="border:0;"
-                            allowfullscreen=""
-                            loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="footer-bottom py-3" style="background:var(--edu-heading);">
-            <div class="container text-center text-light">
-                <small>
-                    Copyright &copy; @php echo date('Y'); @endphp {{ !empty($config->instituteName) ? $config->instituteName : 'Jahanara Ayub Academy' }} | Powered By Cultivation
-                </small>
-            </div>
-        </div>
-    </footer>
+    @include('frontend.educavo-v2.partials._footer')
 
     <script src="{{ asset('public/assets/js/jquery-1.9.1.min.js') }}"></script>
     <script src="{{ asset('public/educavo/assets/js/modernizr-2.8.3.min.js') }}"></script>

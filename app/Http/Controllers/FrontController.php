@@ -91,11 +91,12 @@ class FrontController extends Controller
          $insData  =   InstituteDetails::first();
          $notice  =   Notice::orderBy('id','desc')->limit(5)->get();
          $slider = HomeSlider::orderBy('ID','DESC')->limit(5)->get();
-        return view('frontend.index',[
-            'insData'=>$insData,
-            'noticeBoard'=>$notice,
-            'sliderData'=>$slider,
-            'gallery'=>$photo,
+
+        return view('frontend.educavo-v2.homepage', [
+            'insData' => $insData,
+            'noticeBoard' => $notice,
+            'sliderData' => $slider,
+            'gallery' => $photo,
         ]);
     }
 

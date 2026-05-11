@@ -32,7 +32,9 @@ class AppServiceProvider extends ServiceProvider
         View::composer('frontend.*', function ($view): void {
             static $speechLabels = null;
 
-            $layout = session('frontend_layout', config('frontend.layout', 'frontend.educavo-v2.page'));
+            $viewData = $view->getData();
+            $layout = $viewData['frontendLayout']
+                ?? session('frontend_layout', config('frontend.layout', 'frontend.educavo-v2.page'));
 
             if ($speechLabels === null) {
                 $speechDesignation = trim((string) optional(ServerConfig::first())->principalDesignation);

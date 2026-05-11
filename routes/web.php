@@ -19,13 +19,13 @@ Route::get('/',[
     'homePage'
 ])->name('homePage');
 
-Route::get('/frontend/version/{version}', function (string $version) {
+Route::get('/version/{version}', function (string $version) {
     $layouts = config('frontend.layouts', []);
     if (isset($layouts[$version])) {
         session(['frontend_layout' => $layouts[$version]]);
     }
 
-    return redirect()->back();
+    return redirect()->route('homePage');
 })->whereIn('version', ['v1', 'v2'])->name('frontend.version');
 
 Route::get('/syllabus',[
