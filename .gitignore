@@ -1,0 +1,37 @@
+# Laravel
+/vendor/
+/node_modules/
+/.env
+/.env.*
+/.phpunit.result.cache
+composer.lock
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+
+# Laravel caches and compiled files
+/bootstrap/cache/*.php
+!bootstrap/cache/.gitignore
+/storage/*.key
+/storage/app/public/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!storage/**/.gitignore
+
+# Public build artifacts
+/public/build/
+/public/hot
+/public/storage
+
+# IDE/editor cruft
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Misc
+/.fleet/
