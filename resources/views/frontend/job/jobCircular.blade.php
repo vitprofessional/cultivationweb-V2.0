@@ -20,6 +20,8 @@ $config =App\Models\ServerConfig::first()
     .lect-name{font-size:clamp(.98rem,1.6vw,1.12rem);font-weight:800;margin:0;display:flex;align-items:center;gap:.4rem;color:#15392a}
     .lect-id{font-size:.64rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#198754;background:#e8f7f1;padding:3px 7px;border-radius:6px}
     .lect-designation{font-size:clamp(.78rem,1.2vw,.9rem);font-weight:600;color:#4b5563;margin-top:.35rem}
+    .lect-meta{margin-top:.55rem;display:flex;flex-wrap:wrap;gap:5px}
+    .lect-meta span{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;background:#eef8f4;border:1px solid #ccecdf;color:#1f6f49;font-size:.62rem;font-weight:700;line-height:1.2}
     .lect-contact{margin-top:.55rem;display:grid;grid-template-columns:1fr;row-gap:4px;font-size:clamp(.68rem,1vw,.8rem)}
     .lect-contact span{display:flex;align-items:center;gap:6px;color:#38424d}
     .lect-contact i{color:#198754;font-size:.85rem}
@@ -48,9 +50,87 @@ $config =App\Models\ServerConfig::first()
                 <div class="lecturer-grid">
                     @foreach($Datakey as $data)
                         @php
+                            $pickValue = function ($item, array $keys) {
+                                foreach ($keys as $key) {
+                                    $value = $item->{$key} ?? null;
+                                    if (is_string($value) && trim($value) === '') {
+                                        continue;
+                                    }
+                                    if (!empty($value) || $value === '0' || $value === 0) {
+                                        return $value;
+                                    }
+                                }
+                                return null;
+                            };
+
+                            $resolveOption = function ($value, array $map) {
+                                if ($value === null) {
+                                    return null;
+                                }
+
+                                $raw = is_string($value) ? trim($value) : (string) $value;
+                                if ($raw === '') {
+                                    return null;
+                                }
+
+                                if (array_key_exists($raw, $map)) {
+                                    return $map[$raw];
+                                }
+
+                                $normalized = strtolower($raw);
+                                foreach ($map as $key => $label) {
+                                    if (strtolower((string) $key) === $normalized) {
+                                        return $label;
+                                    }
+                                }
+
+                                return $raw;
+                            };
+
                             $name = trim(($data->firstName ?? '').' '.($data->lastName ?? ''));
                             $name = $name !== '' ? $name : 'Unknown';
                             $designation = \App\Models\TeacherManagement::getDesignationName($data->designation ?? null);
+                            $genderText = $resolveOption($pickValue($data, ['gender']), [
+                                '1' => 'Male',
+                                '2' => 'Female',
+                                '3' => 'Other',
+                                'male' => 'Male',
+                                'female' => 'Female',
+                                'other' => 'Other',
+                                'others' => 'Other',
+                            ]);
+                            $religionText = $resolveOption($pickValue($data, ['religion', 'relegion']), [
+                                '1' => 'Islam',
+                                '2' => 'Hindu',
+                                '3' => 'Christian',
+                                '4' => 'Buddhist',
+                                '5' => 'Other',
+                                'islam' => 'Islam',
+                                'hindu' => 'Hindu',
+                                'christian' => 'Christian',
+                                'buddish' => 'Buddhist',
+                                'buddhist' => 'Buddhist',
+                                'other' => 'Other',
+                                'others' => 'Other',
+                            ]);
+                            $bloodGroupText = $resolveOption($pickValue($data, ['bloodGroup', 'blood_group', 'blGroup', 'blgroup']), [
+                                '1' => 'A+',
+                                '2' => 'A-',
+                                '3' => 'B+',
+                                '4' => 'B-',
+                                '5' => 'O+',
+                                '6' => 'O-',
+                                '7' => 'AB+',
+                                '8' => 'AB-',
+                                'a+' => 'A+',
+                                'a-' => 'A-',
+                                'b+' => 'B+',
+                                'b-' => 'B-',
+                                'o+' => 'O+',
+                                'o-' => 'O-',
+                                'ab+' => 'AB+',
+                                'ab-' => 'AB-',
+                            ]);
                             $photo = !empty($data->avatar)
                                 ? config('app.url').'/public/upload/image/teacher/'.rawurlencode(basename($data->avatar))
                                 : config('app.url').'/public/avatar.png';
@@ -62,6 +142,13 @@ $config =App\Models\ServerConfig::first()
                             <h3 class="lect-name">{{ e($name) }}</h3>
                             @if(!empty($designation))
                                 <div class="lect-designation">{{ e($designation) }}</div>
+                            @endif
+                            @if(!empty($genderText) || !empty($religionText) || !empty($bloodGroupText))
+                                <div class="lect-meta">
+                                    @if(!empty($genderText))<span>{{ e($genderText) }}</span>@endif
+                                    @if(!empty($religionText))<span>{{ e($religionText) }}</span>@endif
+                                    @if(!empty($bloodGroupText))<span>{{ e($bloodGroupText) }}</span>@endif
+                                </div>
                             @endif
                             <div class="lect-contact">
                                 @if(!empty($data->email))<span><i class="fa-solid fa-envelope"></i> {{ e($data->email) }}</span>@endif

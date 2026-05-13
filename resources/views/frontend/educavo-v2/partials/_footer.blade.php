@@ -15,6 +15,22 @@
         margin-top: 0;
     }
 
+    #rs-footer,
+    #rs-footer p,
+    #rs-footer li,
+    #rs-footer a {
+        color: #90b4d8;
+    }
+
+    #rs-footer a {
+        text-decoration: none;
+    }
+
+    #rs-footer img {
+        max-width: 80%;
+        height: auto;
+    }
+
     /* ---- info strip (Contact / Visitor / Map) ---- */
     .footer-info-strip {
         background: linear-gradient(90deg, #112958 0%, #0e2248 50%, #112958 100%);
@@ -106,32 +122,75 @@
     }
 
     /* col 1 — about */
+    .footer-about {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 4px 0 0;
+    }
+
+    .footer-about-shell {
+        padding: 18px 18px 16px;
+        border: 1px solid rgba(33, 167, 208, 0.14);
+        border-radius: 16px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+        box-shadow: 0 16px 32px rgba(7, 18, 42, 0.18);
+    }
+
+    .footer-about-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        margin-bottom: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(33, 167, 208, 0.14);
+        border: 1px solid rgba(33, 167, 208, 0.25);
+        color: #a8dff2;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.9px;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+
     .footer-brand-logo img {
-        max-height: 56px;
+        max-height: 52px;
         width: auto;
-        margin-bottom: 14px;
+        margin-bottom: 10px;
+        object-fit: contain;
+        filter: none !important;
     }
 
     .footer-about-desc {
-        color: #90b4d8;
-        font-size: 13.5px;
-        line-height: 1.65;
-        margin-bottom: 16px;
+        color: #a9c8e8;
+        font-size: 13.8px;
+        line-height: 1.8;
+        margin-bottom: 0;
+    }
+
+    .footer-about-note {
+        margin: 0;
+        color: #6e94bf;
+        font-size: 12px;
+        line-height: 1.5;
     }
 
     /* footer sub-section inside col 1 */
     .footer-sub-section {
-        margin-top: 20px;
+        margin-top: 16px;
         padding-top: 18px;
         border-top: 1px solid rgba(255,255,255,0.1);
     }
 
     .footer-sub-title {
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 800;
-        letter-spacing: 0.8px;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        color: #21a7d0;
+        color: #7ed9f4 !important;
         margin: 0 0 10px;
     }
 
@@ -139,22 +198,22 @@
     .footer-social-inline {
         display: flex !important;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 10px;
         list-style: none;
         padding: 0;
-        margin: 0;
+        margin: 14px 0 0;
     }
 
     .footer-social-inline li a {
-        width: 34px;
-        height: 34px;
+        width: 38px;
+        height: 38px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
-        background: rgba(255,255,255,0.07);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.06);
         border: 1px solid rgba(255,255,255,0.12);
-        color: #90b4d8;
+        color: #a9c8e8;
         font-size: 14px;
         transition: all 0.22s ease;
     }
@@ -163,6 +222,11 @@
         background: #21a7d0;
         border-color: #21a7d0;
         color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .footer-contact-list {
+        margin-top: 10px !important;
     }
 
     /* address widget (inside sub-section) */
@@ -175,24 +239,29 @@
     .footer-sub-section .address-widget li {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 10px;
-        color: #90b4d8;
+        gap: 12px;
+        margin-bottom: 12px;
+        color: #a9c8e8;
         font-size: 13px;
-        line-height: 1.5;
+        line-height: 1.55;
+        padding: 10px 12px;
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.03);
     }
 
     .footer-sub-section .address-widget li i {
         color: #21a7d0;
         font-size: 14px;
-        margin-top: 2px;
+        margin-top: 3px;
         flex-shrink: 0;
-        width: 16px;
+        width: 20px;
+        height: 20px;
         text-align: center;
     }
 
     .footer-sub-section .address-widget li a {
-        color: #90b4d8;
+        color: #c1dcf6;
         word-break: break-all;
     }
 
@@ -297,33 +366,26 @@
         color: rgba(255,255,255,0.12);
     }
 
-    .footer-bottom .footer-social {
+    .footer-bottom .footer-bottom-legal {
         display: flex;
-        gap: 6px;
-        justify-content: flex-end;
-        list-style: none;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .footer-bottom .footer-bottom-legal .eyebrow {
+        color: #7ed9f4;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         margin: 0;
-        padding: 0;
     }
 
-    .footer-bottom .footer-social li a {
-        width: 30px;
-        height: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 6px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.1);
+    .footer-bottom .footer-bottom-legal .subcopy {
         color: #6b90b8;
-        font-size: 13px;
-        transition: all 0.2s ease;
-    }
-
-    .footer-bottom .footer-social li a:hover {
-        background: #21a7d0;
-        color: #ffffff;
-        border-color: #21a7d0;
+        font-size: 12px;
+        margin: 0;
+        line-height: 1.5;
     }
 
     /* sidebar-strip (kept for compat — hidden on footer redesign) */
@@ -338,11 +400,6 @@
     }
 
     @media (max-width: 767px) {
-        .footer-bottom .footer-social {
-            justify-content: center;
-            margin-top: 10px;
-        }
-
         .footer-bottom-links {
             justify-content: center;
             margin-bottom: 8px;
@@ -405,24 +462,28 @@
                 {{-- Col 1: About + Contact --}}
                 <div class="col-lg-3 col-md-6 col-sm-12 footer-widget md-mb-50">
                     <div class="footer-about">
-                        <a href="{{ route('homePage') }}" class="footer-brand-logo">
-                            <img src="{{ asset('public/educavo/assets/images/logo.png') }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}">
-                        </a>
-                        <p class="footer-about-desc">
-                            {{ !empty($config?->instituteName) ? $config->instituteName : 'Our Institute' }} is committed to quality education, character building and academic excellence.
-                        </p>
-                        <ul class="footer-social footer-social-inline">
-                            <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
-                            <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
-                            <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
-                            <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a></li>
-                        </ul>
+                        <div class="footer-about-shell">
+                            <div class="footer-about-badge">Official School Portal</div>
+                            <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="Home">
+                                <img src="{{ asset('public/educavo/assets/images/logo.png') }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}">
+                            </a>
+                            <p class="footer-about-desc">
+                                {{ !empty($config?->instituteName) ? $config->instituteName : 'Our Institute' }} is committed to quality education, character building and academic excellence.
+                            </p>
+                            <p class="footer-about-note">Stay connected for notices, updates, and official announcements.</p>
+                            <ul class="footer-social footer-social-inline">
+                                <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
+                                <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
+                                <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+                                <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a></li>
+                            </ul>
+                        </div>
                     </div>
 
                     {{-- Contact Us below About --}}
                     <div class="footer-sub-section">
                         <h5 class="footer-sub-title">Contact Us</h5>
-                        <ul class="address-widget" style="margin-top:0">
+                        <ul class="address-widget footer-contact-list" style="margin-top:0">
                             <li>
                                 <i class="flaticon-location"></i>
                                 <div class="desc">{{ !empty($config?->address) ? $config->address : 'Dhaka, Bangladesh' }}</div>
@@ -503,26 +564,20 @@
     <div class="footer-bottom">
         <div class="container">
             <div class="row y-middle">
-                <div class="col-lg-4 col-md-12 md-mb-10 text-md-center">
-                    <div class="copyright">
-                        <p>&copy; <span>{{ date('Y') }}</span> {{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}. All Rights Reserved.<br>Developed &amp; Powered By <span>Cultivation</span></p>
+                <div class="col-lg-7 col-md-12 md-mb-10 text-lg-start">
+                    <div class="footer-bottom-legal">
+                        <div class="copyright">
+                            <p>&copy; <span>{{ date('Y') }}</span> {{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}. All Rights Reserved.</p>
+                        </div>
+                        <p class="subcopy">Developed &amp; Powered By <strong>Cultivation</strong></p>
                     </div>
                 </div>
-                <div class="col-lg-4 col-md-12 md-mb-10">
+                <div class="col-lg-5 col-md-12">
                     <ul class="footer-bottom-links">
                         <li><a href="{{ route('homePage') }}">Home</a></li>
                         <li><a href="{{ route('institutePage') }}">About</a></li>
                         <li><a href="{{ route('allNotices') }}">Notice</a></li>
                         <li><a href="{{ route('supportPage') }}">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-4 col-md-12">
-                    <ul class="footer-social" style="display:flex;gap:6px;justify-content:flex-end;list-style:none;margin:0;padding:0">
-                        <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
-                        <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
-                        <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
-                        <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a></li>
-                        <li><a href="#" aria-label="LinkedIn"><i class="fa fa-linkedin"></i></a></li>
                     </ul>
                 </div>
             </div>

@@ -52,30 +52,30 @@
         @page { size: A4 landscape; margin: 6mm; }
         .routine-view-wrap { max-width: 1200px; margin: 0 auto; }
 
-        .schedule-shell { background: #e6e6e8; border-radius: 10px; border: 1px solid #cfd4d8; padding: 18px; }
+        .schedule-shell { background: #fff; border-radius: 10px; border: 1px solid #dce9f4; padding: 18px; }
 
-        .schedule-title { margin: 0; font-size: 30px; line-height: 1; font-weight: 900; letter-spacing: 1px; color: #575f68; text-transform: uppercase; }
+        .schedule-title { margin: 0; font-size: 30px; line-height: 1; font-weight: 900; letter-spacing: 1px; color: #2f4e75; text-transform: uppercase; }
 
-        .schedule-meta { margin-top: 8px; margin-bottom: 14px; color: #4d5258; font-size: 13px; font-weight: 600; }
+        .schedule-meta { margin-top: 8px; margin-bottom: 14px; color: #4f6783; font-size: 13px; font-weight: 600; }
 
         .schedule-meta span { margin-right: 16px; }
 
-        .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #f4f4f5; }
+        .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #f7fbff; }
 
-        .schedule-table th, .schedule-table td { border: 2px solid #666b72; text-align: center; vertical-align: middle; padding: 10px 8px; color: #525861; }
+        .schedule-table th, .schedule-table td { border: 1px solid #cfe0ef; text-align: center; vertical-align: middle; padding: 10px 8px; color: #425b76; }
 
         .schedule-table thead th { font-size: 20px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
 
-        .slot-head { background: #eadc9f; width: 18%; }
-        .day-sunday { background: #efc9a0; }
-        .day-monday { background: #eea3a8; }
-        .day-tuesday { background: #ef89d5; }
-        .day-wednesday { background: #cda8d8; }
-        .day-thursday { background: #beb1e6; }
+        .slot-head { background: #dff4fb; color: #08688e; width: 18%; }
+        .day-sunday { background: #e8f6ff; }
+        .day-monday { background: #edf8ff; }
+        .day-tuesday { background: #f2f9ff; }
+        .day-wednesday { background: #f5fbff; }
+        .day-thursday { background: #f8fcff; }
 
-        .slot-cell { font-size: 18px; font-weight: 500; width: 18%; background: #ececef; }
+        .slot-cell { font-size: 18px; font-weight: 700; width: 18%; background: #eef5fb; }
 
-        .subject-cell { background: #f2f2f3; height: auto; font-size: 12px; font-weight: 700; color: #4f5560; }
+        .subject-cell { background: #fff; height: auto; font-size: 12px; font-weight: 700; color: #425b76; }
 
         .subject-empty { color: #a3a8ae; font-weight: 400; }
 

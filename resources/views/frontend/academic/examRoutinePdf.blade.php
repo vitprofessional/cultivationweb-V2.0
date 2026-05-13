@@ -14,9 +14,10 @@
     <title>Exam Routine</title>
     <style>
         @page { size: A4 portrait; margin: 10mm; }
-        body{font-family:Arial,Helvetica,sans-serif;color:#212529}
+        body{font-family:Arial,Helvetica,sans-serif;color:#23364f}
         .header{text-align:center;margin-bottom:10px}
-        .meta{font-size:13px;color:#555;margin-bottom:8px}
+        .header h2{margin:0 0 6px 0;color:#13446f;letter-spacing:.02em}
+        .meta{font-size:13px;color:#4f6783;margin-bottom:8px}
         .attachment{width:100%;}
     </style>
 </head>
@@ -41,9 +42,13 @@
             </thead>
             <tbody>
                 @foreach($entries as $row)
+                    @php
+                        $hasDate = !empty($row->exam_date);
+                        $examDate = $hasDate ? \Carbon\Carbon::parse($row->exam_date) : null;
+                    @endphp
                     <tr>
-                        <td style="padding:6px;border:1px solid #444">{{ optional($row->exam_date) ? date('d-m-Y', strtotime($row->exam_date)) : '-' }}</td>
-                        <td style="padding:6px;border:1px solid #444">{{ \Illuminate\Support\Str::title(\Carbon\Carbon::parse($row->exam_date ?? now())->format('l')) ?? '-' }}</td>
+                        <td style="padding:6px;border:1px solid #444">{{ $examDate ? $examDate->format('d-m-Y') : '-' }}</td>
+                        <td style="padding:6px;border:1px solid #444">{{ $examDate ? $examDate->format('l') : '-' }}</td>
                         <td style="padding:6px;border:1px solid #444">{{ ($row->start_time && $row->end_time) ? date('h:i A', strtotime($row->start_time)).' - '.date('h:i A', strtotime($row->end_time)) : ($row->start_time ?? '-') }}</td>
                         <td style="padding:6px;border:1px solid #444">{{ $row->subject_name ?? ($row->subject_id ?? '-') }}</td>
                     </tr>

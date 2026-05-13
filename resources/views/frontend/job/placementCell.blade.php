@@ -40,30 +40,72 @@
                         <div class="card rounded-0 border-top-0">
                             <div class="card-body table-responsive">
                                 <!-- On tables -->
-                                <table id="myTable" data-order='[[ 0, "desc" ]]' class="table table-border">
+                                <style>
+                                    .placement-table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 12px; table-layout: fixed; }
+                                    .placement-table thead th { border-bottom: 1px solid #d7e6f3; color: #1f3f66; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; background: linear-gradient(180deg, #f8fcff 0%, #eef5fb 100%); padding: 14px 16px; }
+                                    .placement-table tbody td { vertical-align: middle; color: #3f5772; font-size: 14px; padding: 16px; line-height: 1.6; border-color: #e0ebf4; }
+                                    .placement-table tbody tr:nth-child(even) td { background: #fafcff; }
+                                    .placement-table tbody tr:hover td { background: #f4faff; }
+                                    .placement-table th:first-child, .placement-table td:first-child { width: 32%; }
+                                    .placement-table th:nth-child(2), .placement-table td:nth-child(2) { width: auto; }
+                                    .placement-table th:last-child, .placement-table td:last-child { width: 90px; text-align: center; white-space: nowrap; }
+                                    .placement-info { display: flex; align-items: center; gap: 12px; }
+                                    .placement-photo { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1.5px solid #dce9f4; flex-shrink: 0; }
+                                    .placement-name { font-weight: 700; color: #1f3f66; font-size: 13px; display: block; }
+                                    .placement-id { font-size: 12px; color: #6d7d8b; margin-top: 2px; }
+                                    .placement-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 12px; width: 100%; }
+                                    .placement-meta-item { background: #fff; border: 1px solid #e8f0f7; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; box-shadow: inset 0 1px 3px rgba(27, 112, 150, 0.04); }
+                                    .placement-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #0c7da7; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+                                    .placement-meta-label i { font-size: 12px; display: inline-block; min-width: 12px; }
+                                    .placement-meta-value { font-size: 13px; font-weight: 600; color: #1f3f66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                                    .placement-view-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(27, 112, 150, 0.2); background: rgba(27, 112, 150, 0.08); color: #1b7096; transition: all .2s ease; text-decoration: none; }
+                                    .placement-view-btn:hover { background: rgba(27, 112, 150, 0.15); border-color: rgba(27, 112, 150, 0.3); color: #0f4968; cursor: pointer; }
+                                </style>
+                                <table id="myTable" data-order='[[ 0, "desc" ]]' class="placement-table table table-border table-hover align-middle">
                                     <thead>
                                         <tr>
                                             <th class="d-none">Id</th>
-                                            <th>Name</th>
-                                            <th>Session</th>
-                                            <th>Roll Number</th>
-                                            <th>Company</th>
-                                            <th>Photo</th>
-                                            <th>Action</th>
+                                            <th>Placement Info</th>
+                                            <th>Placement Details</th>
+                                            <th>View</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @if(!empty($Datakey)) @foreach($Datakey as $data)
                                         <tr>
                                             <td class="d-none">{!!$data->id!!}</td>
-                                            <td>{!!$data->fullName!!}</td>
-                                            <td>{!!$data->sessionYear!!}</td>
-                                            <td>{!!$data->rollNumber!!}</td>
-                                            <td>{!!$data->companyName!!}</td>
-                                            <td style="width:10%"><img class="w-100" src="{{ config('app.url') }}/public/upload/image/placementCell/{{ $data->attachment }}" alt="{!! $data->fullName !!}" style="max-height: 120px !important;" /></td>
                                             <td>
-                                                <a href="#" class="text-success my-2" data-bs-toggle="modal" data-bs-target="#getData{{ $data->id }}">
-                                                    <i class="fa fa-eye" style="color: green;"></i>
+                                                <div class="placement-info">
+                                                    <img class="placement-photo" src="{{ config('app.url') }}/public/upload/image/placementCell/{{ $data->attachment }}" alt="{!! $data->fullName !!}" />
+                                                    <div>
+                                                        <span class="placement-name">{!!$data->fullName!!}</span>
+                                                        <span class="placement-id">Roll: {!!$data->rollNumber!!}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="placement-meta-grid">
+                                                    <div class="placement-meta-item placement-meta-session">
+                                                        <span class="placement-meta-label"><i class="fa fa-calendar"></i> Session</span>
+                                                        <span class="placement-meta-value">{!!$data->sessionYear!!}</span>
+                                                    </div>
+                                                    <div class="placement-meta-item placement-meta-company">
+                                                        <span class="placement-meta-label"><i class="fa fa-building"></i> Company</span>
+                                                        <span class="placement-meta-value">{!!$data->companyName!!}</span>
+                                                    </div>
+                                                    <div class="placement-meta-item placement-meta-position">
+                                                        <span class="placement-meta-label"><i class="fa fa-user"></i> Position</span>
+                                                        <span class="placement-meta-value">{!!$data->designation!!}</span>
+                                                    </div>
+                                                    <div class="placement-meta-item placement-meta-roll">
+                                                        <span class="placement-meta-label"><i class="fa fa-envelope"></i> Email</span>
+                                                        <span class="placement-meta-value">{!!$data->email!!}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="#" class="placement-view-btn" data-bs-toggle="modal" data-bs-target="#getData{{ $data->id }}" title="View Details">
+                                                    <i class="fa fa-eye"></i>
                                                 </a>
                                                 <!-- Modal -->
                                                 <div class="modal fade" id="getData{{ $data->id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">

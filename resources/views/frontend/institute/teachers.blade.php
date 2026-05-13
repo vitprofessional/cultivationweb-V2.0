@@ -1,115 +1,412 @@
 @extends($frontendLayout ?? config('frontend.layout'))
 @section('fronttitle')
-Lecturer
+Teacher List
 @endsection
 @php
-$config =App\Models\ServerConfig::first()
+$config = App\Models\ServerConfig::first();
+$teachers = $Datakey ?? collect();
 @endphp
 @section('frontcontent')
 <style>
-    /* Scoped styles for the lecturer cards */
-    .lecturer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.15rem;margin-top:1.25rem}
-    .lect-card{position:relative;background:#ffffff;border:1px solid #e8eef5;border-radius:16px;padding:1rem;display:flex;flex-direction:column;box-shadow:0 6px 18px rgba(0,0,0,.06);transition:.28s ease;overflow:hidden}
-    .lect-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#198754 0%,#106842 100%);opacity:0;transition:.35s;pointer-events:none;z-index:0}
-    .lect-card > *{position:relative;z-index:1}
-    .lect-card:hover::before{opacity:.07}
-    .lect-card:hover{transform:translateY(-4px);box-shadow:0 14px 30px -6px rgba(0,0,0,.18)}
-    .lect-photo-wrap{width:100%;display:flex;justify-content:center;margin-bottom:.6rem}
-    .lect-photo{width:clamp(78px,10vw,112px);height:clamp(78px,10vw,112px);aspect-ratio:1/1;border-radius:50%;object-fit:cover;border:4px solid #f3f6f9;box-shadow:0 0 0 2px #198754;transition:.35s}
-    .lect-card:hover .lect-photo{box-shadow:0 0 0 4px #0d5e39}
-    .lect-name{font-size:clamp(.98rem,1.6vw,1.12rem);font-weight:800;margin:0;display:flex;align-items:center;gap:.4rem;color:#15392a}
-    .lect-id{font-size:.64rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#198754;background:#e8f7f1;padding:3px 7px;border-radius:6px}
-    .lect-designation{font-size:clamp(.78rem,1.2vw,.9rem);font-weight:600;color:#4b5563;margin-top:.35rem}
-    .lect-contact{margin-top:.55rem;display:grid;grid-template-columns:1fr;row-gap:4px;font-size:clamp(.68rem,1vw,.8rem)}
-    .lect-contact span{display:flex;align-items:center;gap:6px;color:#38424d}
-    .lect-contact i{color:#198754;font-size:.85rem}
-    .lect-address{margin-top:.5rem;font-size:clamp(.62rem,.9vw,.74rem);line-height:1.25;color:#5b646d;display:flex;align-items:flex-start;gap:6px}
-    .lect-actions{margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap}
-    .lect-actions a{flex:1;text-align:center;font-size:.64rem;font-weight:700;text-decoration:none;padding:.52rem .6rem;border-radius:8px;border:1px solid #198754;color:#198754;background:#fff;transition:.23s}
-    .lect-actions a:hover{background:#198754;color:#fff}
-    @media(max-width:575.98px){
-        .lecturer-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.85rem}
-        .lect-card{padding:.85rem;border-radius:14px}
-        .lect-photo{width:88px;height:88px}
-        .lect-name{font-size:.96rem}
-        .lect-designation{font-size:.72rem}
-        .lect-contact{font-size:.66rem}
-        .lect-address{font-size:.6rem}
-        .lect-actions a{font-size:.58rem}
+    .teacher-directory-shell {
+        background: linear-gradient(180deg, #f8fbff 0%, #f2f8fd 100%);
+        border: 1px solid #dce9f4;
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 12px 28px rgba(19, 54, 102, 0.08);
+    }
+
+    .teacher-directory-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 14px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #dce9f4;
+    }
+
+    .teacher-directory-head .title-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .teacher-directory-head .kicker {
+        display: inline-flex;
+        width: fit-content;
+        color: #0c7da7;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #dff4fb;
+        border: 1px solid #bce7f4;
+    }
+
+    .teacher-directory-head h2 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.2;
+        color: #112958;
+        font-weight: 800;
+    }
+
+    .teacher-directory-head p {
+        margin: 0;
+        color: #5a708a;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .teacher-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #e7f9fb;
+        color: #1285af;
+        border: 1px solid #b8e8f5;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .teacher-card {
+        height: 100%;
+        background: #fff;
+        border: 1px solid #dce9f4;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(19, 54, 102, 0.08);
+        transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+
+    .teacher-card:hover {
+        transform: translateY(-3px);
+        border-color: #bdd9ed;
+        box-shadow: 0 16px 30px rgba(19, 54, 102, 0.14);
+    }
+
+    .teacher-photo-wrap {
+        display: block;
+        position: relative;
+        background: #eef5fb;
+    }
+
+    .teacher-photo {
+        width: 100%;
+        height: 252px;
+        object-fit: cover;
+        object-position: center top;
+        display: block;
+        transition: transform .35s ease;
+    }
+
+    .teacher-card:hover .teacher-photo {
+        transform: scale(1.04);
+    }
+
+    .teacher-body {
+        padding: 14px;
+    }
+
+    .teacher-name {
+        margin: 0 0 5px;
+        font-size: 17px;
+        line-height: 1.25;
+        font-weight: 800;
+    }
+
+    .teacher-name a {
+        color: #112958;
+    }
+
+    .teacher-name a:hover {
+        color: #21a7d0;
+    }
+
+    .teacher-designation {
+        margin: 0 0 10px;
+        color: #4f6783;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .teacher-meta-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 0 0 10px;
+    }
+
+    .teacher-meta-chips span {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid #d9e8f5;
+        background: #f4f9ff;
+        color: #355474;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+
+    .teacher-contact-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 7px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: #5d748e;
+        min-height: 20px;
+    }
+
+    .teacher-contact-line i {
+        color: #21a7d0;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .teacher-contact-line a {
+        color: #4f6783;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .teacher-contact-line a:hover {
+        color: #21a7d0;
+    }
+
+    .teacher-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .teacher-action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        min-height: 34px;
+        padding: 7px 10px;
+        border-radius: 8px;
+        border: 1px solid #cde3f1;
+        background: #fff;
+        color: #1f5078;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .teacher-action-btn:hover {
+        border-color: #21a7d0;
+        color: #fff;
+        background: #21a7d0;
+    }
+
+    .teacher-empty {
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px dashed #cfe3ec;
+        background: #f8fbfc;
+        text-align: center;
+        color: #6d7d8b;
+    }
+
+    @media (max-width: 991.98px) {
+        .teacher-photo {
+            height: 230px;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .teacher-directory-shell {
+            padding: 12px;
+        }
+
+        .teacher-directory-head {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .teacher-directory-head h2 {
+            font-size: 18px;
+        }
+
+        .teacher-photo {
+            height: 210px;
+        }
     }
 </style>
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-11 mx-auto">
-            <div class="text-center con-title mt-4">
-                <h2 class="wow fadeInLeft animated my-4" data-wow-delay=".60s"> Let's have a look of <span>@if(!empty($config->instituteName)){{ $config->instituteName }}@else Jahanara Ayub Academy @endif</span> Teachers</h2>
+<div class="col-12">
+    <div class="teacher-directory-shell">
+        <div class="teacher-directory-head">
+            <div class="title-wrap">
+                <span class="kicker">Academic Directory</span>
+                <h2>{{ !empty($config->instituteName) ? $config->instituteName : 'Jahanara Ayub Academy' }} Teacher Directory</h2>
+                <p>Meet our faculty members and view their academic profiles and official contact information.</p>
             </div>
-            @if($Datakey->count()>0)
-                <div class="lecturer-grid">
-                    @foreach($Datakey as $data)
-                        @php
-                            $name = trim(($data->firstName ?? '').' '.($data->lastName ?? ''));
-                            $name = $name !== '' ? $name : 'Unknown';
-                            $designation = \App\Models\TeacherManagement::getDesignationName($data->designation ?? null);
-                            $photo = !empty($data->avatar)
-                                ? config('app.url').'/public/upload/image/teacher/'.rawurlencode(basename($data->avatar))
-                                : config('app.url').'/public/avatar.png';
-                        @endphp
-                        <div class="lect-card">
-                            <div class="lect-photo-wrap">
-                                <img class="lect-photo" src="{{ $photo }}" alt="{{ e($name) }}" loading="lazy">
-                            </div>
-                            <h3 class="lect-name">{{ e($name) }}</h3>
-                            @if(!empty($designation))
-                                <div class="lect-designation">{{ e($designation) }}</div>
-                            @endif
-                            <div class="lect-contact">
-                                @if(!empty($data->email))<span><i class="fa-solid fa-envelope"></i> {{ e($data->email) }}</span>@endif
-                                @if(!empty($data->mobile))<span><i class="fa-solid fa-phone"></i> {{ e($data->mobile) }}</span>@endif
-                            </div>
-                            @if(!empty($data->address))
-                                <div class="lect-address"><i class="fa-solid fa-location-dot"></i>{{ e($data->address) }}</div>
-                            @endif
-                            <div class="lect-actions">
-                                <a href="{{ route('teacher.show', ['id' => $data->id]) }}" aria-label="View profile"><i class="fa-regular fa-eye"></i> Profile</a>
-                                @if(!empty($data->email))<a href="mailto:{{ e($data->email) }}" aria-label="Send email"><i class="fa-solid fa-paper-plane"></i> Email</a>@endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="alert alert-info my-4">Sorry! No data found</div>
-            @endif
+            <span class="teacher-count"><i class="fa fa-users"></i> {{ $teachers->count() }} {{ $teachers->count() === 1 ? 'Teacher' : 'Teachers' }}</span>
         </div>
+
+        @if($teachers->count() > 0)
+            <div class="row">
+                @foreach($teachers as $data)
+                    @php
+                        $pickValue = function ($item, array $keys) {
+                            foreach ($keys as $key) {
+                                $value = $item->{$key} ?? null;
+                                if (is_string($value) && trim($value) === '') {
+                                    continue;
+                                }
+                                if (!empty($value) || $value === '0' || $value === 0) {
+                                    return $value;
+                                }
+                            }
+                            return null;
+                        };
+
+                        $resolveOption = function ($value, array $map) {
+                            if ($value === null) {
+                                return null;
+                            }
+
+                            $raw = is_string($value) ? trim($value) : (string) $value;
+                            if ($raw === '') {
+                                return null;
+                            }
+
+                            if (array_key_exists($raw, $map)) {
+                                return $map[$raw];
+                            }
+
+                            $normalized = strtolower($raw);
+                            foreach ($map as $key => $label) {
+                                if (strtolower((string) $key) === $normalized) {
+                                    return $label;
+                                }
+                            }
+
+                            return $raw;
+                        };
+
+                        $name = trim(($data->firstName ?? '') . ' ' . ($data->lastName ?? ''));
+                        $name = $name !== '' ? $name : 'Unknown';
+                        $designation = \App\Models\TeacherManagement::getDesignationName($data->designation ?? null);
+                        $designation = !empty($designation) ? $designation : 'Faculty Member';
+                        $genderText = $resolveOption($pickValue($data, ['gender']), [
+                            '1' => 'Male',
+                            '2' => 'Female',
+                            '3' => 'Other',
+                            'male' => 'Male',
+                            'female' => 'Female',
+                            'other' => 'Other',
+                            'others' => 'Other',
+                        ]);
+                        $religionText = $resolveOption($pickValue($data, ['religion', 'relegion']), [
+                            '1' => 'Islam',
+                            '2' => 'Hindu',
+                            '3' => 'Christian',
+                            '4' => 'Buddhist',
+                            '5' => 'Other',
+                            'islam' => 'Islam',
+                            'hindu' => 'Hindu',
+                            'christian' => 'Christian',
+                            'buddish' => 'Buddhist',
+                            'buddhist' => 'Buddhist',
+                            'other' => 'Other',
+                            'others' => 'Other',
+                        ]);
+                        $bloodGroupText = $resolveOption($pickValue($data, ['bloodGroup', 'blood_group', 'blGroup', 'blgroup']), [
+                            '1' => 'A+',
+                            '2' => 'A-',
+                            '3' => 'B+',
+                            '4' => 'B-',
+                            '5' => 'O+',
+                            '6' => 'O-',
+                            '7' => 'AB+',
+                            '8' => 'AB-',
+                            'a+' => 'A+',
+                            'a-' => 'A-',
+                            'b+' => 'B+',
+                            'b-' => 'B-',
+                            'o+' => 'O+',
+                            'o-' => 'O-',
+                            'ab+' => 'AB+',
+                            'ab-' => 'AB-',
+                        ]);
+                        $photo = !empty($data->avatar)
+                            ? config('app.url') . '/public/upload/image/teacher/' . rawurlencode(basename($data->avatar))
+                            : config('app.url') . '/public/avatar.png';
+                    @endphp
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <article class="teacher-card">
+                            <a class="teacher-photo-wrap" href="{{ route('teacher.show', ['id' => $data->id]) }}" aria-label="View {{ e($name) }} profile">
+                                <img class="teacher-photo" src="{{ $photo }}" alt="{{ e($name) }}" loading="lazy"
+                                     onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';this.style.objectFit='contain';this.style.padding='20px';this.style.background='#eef5fb';">
+                            </a>
+                            <div class="teacher-body">
+                                <h3 class="teacher-name">
+                                    <a href="{{ route('teacher.show', ['id' => $data->id]) }}">{{ e($name) }}</a>
+                                </h3>
+                                <p class="teacher-designation">{{ e($designation) }}</p>
+
+                                @if(!empty($genderText) || !empty($religionText) || !empty($bloodGroupText))
+                                    <div class="teacher-meta-chips">
+                                        @if(!empty($genderText))
+                                            <span>{{ e($genderText) }}</span>
+                                        @endif
+                                        @if(!empty($religionText))
+                                            <span>{{ e($religionText) }}</span>
+                                        @endif
+                                        @if(!empty($bloodGroupText))
+                                            <span>{{ e($bloodGroupText) }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                <div class="teacher-contact-line">
+                                    <i class="fa fa-phone"></i>
+                                    @if(!empty($data->mobile))
+                                        <a href="tel:{{ preg_replace('/\s+/', '', $data->mobile) }}" title="Call {{ e($name) }}">{{ e($data->mobile) }}</a>
+                                    @else
+                                        <span>Phone not available</span>
+                                    @endif
+                                </div>
+                                <div class="teacher-contact-line">
+                                    <i class="fa fa-envelope"></i>
+                                    @if(!empty($data->email))
+                                        <a href="mailto:{{ e($data->email) }}" title="Email {{ e($name) }}">{{ e($data->email) }}</a>
+                                    @else
+                                        <span>Email not available</span>
+                                    @endif
+                                </div>
+
+                                <div class="teacher-actions">
+                                    <a class="teacher-action-btn" href="{{ route('teacher.show', ['id' => $data->id]) }}"><i class="fa fa-eye"></i> Profile</a>
+                                    @if(!empty($data->mobile))
+                                        <a class="teacher-action-btn" href="tel:{{ preg_replace('/\s+/', '', $data->mobile) }}"><i class="fa fa-phone"></i> Call</a>
+                                    @endif
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="teacher-empty">No teacher records found.</div>
+        @endif
     </div>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 @endsection

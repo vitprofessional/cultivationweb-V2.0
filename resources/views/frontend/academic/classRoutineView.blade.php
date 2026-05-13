@@ -4,6 +4,8 @@ Class Routine View
 @endsection
 
 @section('frontcontent')
+@include('frontend.academic.partials._theme')
+@include('frontend.academic.partials._table_theme')
 @php
     $itemClass = \App\Models\classManage::find($routine->assignClass);
     $itemSection = \App\Models\sectionManage::find($routine->assignSection);
@@ -53,30 +55,93 @@ Class Routine View
     @page { size: A4 landscape; margin: 6mm; }
     .routine-view-wrap { max-width: 1200px; margin: 0 auto; }
 
-    .schedule-shell { background: #e6e6e8; border-radius: 10px; border: 1px solid #cfd4d8; padding: 18px; }
+    .routine-page-shell {
+        background: linear-gradient(180deg, #f8fbff 0%, #f2f8fd 100%);
+        border: 1px solid #dce9f4;
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: 0 12px 28px rgba(19, 54, 102, 0.08);
+    }
 
-    .schedule-title { margin: 0; font-size: 30px; line-height: 1; font-weight: 900; letter-spacing: 1px; color: #575f68; text-transform: uppercase; }
+    .routine-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dce9f4;
+    }
 
-    .schedule-meta { margin-top: 8px; margin-bottom: 14px; color: #4d5258; font-size: 13px; font-weight: 600; }
+    .routine-toolbar h4 {
+        margin: 0;
+        color: #112958;
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .routine-toolbar .btn {
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .schedule-shell {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #dce9f4;
+        padding: 16px;
+    }
+
+    .schedule-title {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1;
+        font-weight: 900;
+        letter-spacing: 1px;
+        color: #2f4e75;
+        text-transform: uppercase;
+    }
+
+    .schedule-meta {
+        margin-top: 8px;
+        margin-bottom: 14px;
+        color: #4f6783;
+        font-size: 13px;
+        font-weight: 600;
+    }
 
     .schedule-meta span { margin-right: 16px; }
 
-    .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #f4f4f5; }
+    .schedule-table { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; background: #f7fbff; overflow: hidden; border-radius: 12px; }
 
-    .schedule-table th, .schedule-table td { border: 2px solid #666b72; text-align: center; vertical-align: middle; padding: 10px 8px; color: #525861; }
+    .schedule-table th, .schedule-table td {
+        border: 1px solid #cfe0ef;
+        text-align: center;
+        vertical-align: middle;
+        padding: 10px 8px;
+        color: #425b76;
+    }
 
-    .schedule-table thead th { font-size: 20px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; }
+    .schedule-table tbody tr:hover td {
+        background: #f5faff;
+    }
 
-    .slot-head { background: #eadc9f; width: 18%; }
-    .day-sunday { background: #efc9a0; }
-    .day-monday { background: #eea3a8; }
-    .day-tuesday { background: #ef89d5; }
-    .day-wednesday { background: #cda8d8; }
-    .day-thursday { background: #beb1e6; }
+    .schedule-table thead th { font-size: 20px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; background: linear-gradient(180deg, #f8fcff 0%, #eef5fb 100%); }
 
-    .slot-cell { font-size: 18px; font-weight: 500; width: 18%; background: #ececef; }
+    .schedule-table tbody tr:nth-child(even) td {
+        background: #fafcff;
+    }
 
-    .subject-cell { background: #f2f2f3; height: auto; font-size: 12px; font-weight: 700; color: #4f5560; }
+    .slot-head { background: #dff4fb; color: #08688e; width: 18%; }
+    .day-sunday { background: #e8f6ff; }
+    .day-monday { background: #edf8ff; }
+    .day-tuesday { background: #f2f9ff; }
+    .day-wednesday { background: #f5fbff; }
+    .day-thursday { background: #f8fcff; }
+
+    .slot-cell { font-size: 16px; font-weight: 700; width: 18%; background: #eef5fb; }
+
+    .subject-cell { background: #fff; height: auto; font-size: 12px; font-weight: 700; color: #425b76; }
 
     .subject-empty { color: #a3a8ae; font-weight: 400; }
 
@@ -98,22 +163,30 @@ Class Routine View
         .schedule-meta { margin: 2px 0 6px 0 !important; font-size: 10px !important; }
         .slot-cell { font-size: 11px !important; }
         .subject-cell { font-size: 10px; line-height: 1.2; padding: 4px 3px !important; }
-        .schedule-table th, .schedule-table td { border-color: #666b72 !important; padding: 5px 4px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .schedule-table th, .schedule-table td { border-color: #6f7f92 !important; padding: 5px 4px !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media (max-width: 767.98px) {
+        .routine-toolbar {
+            flex-direction: column;
+            align-items: flex-start;
+        }
     }
 </style>
 
 <div class="row gutters-10 mb-4 routine-view-wrap">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center no-print">
-                <span>Class Routine Details</span>
-                <div>
-                    <a href="{{ route('newClassSchedule') }}" class="btn btn-secondary btn-sm">Back</a>
-                    <a href="{{ route('classRoutine.download', ['id' => $routine->id]) }}" class="btn btn-danger btn-sm">Download PDF</a>
-                    <a href="{{ route('classRoutine.print', ['id' => $routine->id]) }}" target="_blank" class="btn btn-primary btn-sm">Print</a>
+        <div class="routine-page-shell">
+            <div class="routine-toolbar no-print">
+                <h4>Class Routine Details</h4>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ route('newClassSchedule') }}" class="btn btn-academic btn-academic-secondary btn-sm">Back</a>
+                    <a href="{{ route('classRoutine.download', ['id' => $routine->id]) }}" class="btn btn-academic btn-academic-danger btn-sm">Download PDF</a>
+                    <a href="{{ route('classRoutine.print', ['id' => $routine->id]) }}" target="_blank" class="btn btn-academic btn-academic-primary btn-sm">Print</a>
                 </div>
             </div>
-            <div class="card-body cultivation">
+
+            <div class="cultivation">
                 @if(session()->has('error'))
                     <div class="alert alert-danger no-print">{{ session()->get('error') }}</div>
                 @endif

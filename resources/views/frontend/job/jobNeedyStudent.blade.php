@@ -61,50 +61,92 @@ Needy Students
                         <div class="card rounded-0 border-top-0">
                             <div class="card-body table-responsive">
                                 <!-- On tables -->
-                                <table id="myTable" data-order='[[ 0, "desc" ]]' class="table table-border" >
+                                <style>
+                                    .needy-table { margin-bottom: 0; border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 12px; table-layout: fixed; }
+                                    .needy-table thead th { border-bottom: 1px solid #d7e6f3; color: #1f3f66; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800; background: linear-gradient(180deg, #f8fcff 0%, #eef5fb 100%); padding: 14px 16px; }
+                                    .needy-table tbody td { vertical-align: middle; color: #3f5772; font-size: 14px; padding: 16px; line-height: 1.6; border-color: #e0ebf4; }
+                                    .needy-table tbody tr:nth-child(even) td { background: #fafcff; }
+                                    .needy-table tbody tr:hover td { background: #f4faff; }
+                                    .needy-table th:first-child, .needy-table td:first-child { width: 32%; }
+                                    .needy-table th:nth-child(2), .needy-table td:nth-child(2) { width: auto; }
+                                    .needy-table th:last-child, .needy-table td:last-child { width: 90px; text-align: center; white-space: nowrap; }
+                                    .needy-info { display: flex; align-items: center; gap: 12px; }
+                                    .needy-photo { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1.5px solid #dce9f4; flex-shrink: 0; }
+                                    .needy-name { font-weight: 700; color: #1f3f66; font-size: 13px; display: block; }
+                                    .needy-id { font-size: 12px; color: #6d7d8b; margin-top: 2px; }
+                                    .needy-meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 12px; width: 100%; }
+                                    .needy-meta-item { background: #fff; border: 1px solid #e8f0f7; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; box-shadow: inset 0 1px 3px rgba(27, 112, 150, 0.04); }
+                                    .needy-meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #0c7da7; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+                                    .needy-meta-label i { font-size: 12px; display: inline-block; min-width: 12px; }
+                                    .needy-meta-value { font-size: 13px; font-weight: 600; color: #1f3f66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                                    .needy-view-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid rgba(27, 112, 150, 0.2); background: rgba(27, 112, 150, 0.08); color: #1b7096; transition: all .2s ease; text-decoration: none; }
+                                    .needy-view-btn:hover { background: rgba(27, 112, 150, 0.15); border-color: rgba(27, 112, 150, 0.3); color: #0f4968; cursor: pointer; }
+                                </style>
+                                <table id="myTable" data-order='[[ 0, "desc" ]]' class="needy-table table table-border table-hover align-middle" >
                                     <thead>
                                         <tr>
                                             <th class="d-none">Id</th>
-                                            <th>Name</th>
-                                            <th>Session</th>
-                                            <th>Roll Number</th>
-                                            <th>Photo</th>
+                                            <th>Seeker Info</th>
+                                            <th>Seeker Details</th>
                                             <th>View CV</th>
-                                            
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @if(!empty($Datakey))
-                                                                                @foreach($Datakey as $data)
+                                        @foreach($Datakey as $data)
                                         <tr>
-                                                                                        <td class="d-none">{{ $data->id }}</td>
-                                                                                        <td>{{ $data->fullName }}</td>
-                                                                                        <td>{{ $data->sessionYear }}</td>
-                                                                                        <td>{{ $data->rollNumber }}</td>
-                                                                                        <td><img class="w-50" src="{{ asset('upload/image/neddyStudent/' . rawurlencode(basename($data->attachment))) }}" alt="{{ $data->fullName }}" style="max-height:120px !important"></td>
+                                            <td class="d-none">{{ $data->id }}</td>
                                             <td>
-                                                <a href="#" class="text-success my-2" data-bs-toggle="modal" data-bs-target="#getData{{ $data->id }}" >
-                                                    <i class="fa fa-eye" style="color: green;"></i>
+                                                <div class="needy-info">
+                                                    <img class="needy-photo" src="{{ asset('upload/image/neddyStudent/' . rawurlencode(basename($data->attachment))) }}" alt="{{ $data->fullName }}" />
+                                                    <div>
+                                                        <span class="needy-name">{{ $data->fullName }}</span>
+                                                        <span class="needy-id">Roll: {{ $data->rollNumber }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="needy-meta-grid">
+                                                    <div class="needy-meta-item needy-meta-session">
+                                                        <span class="needy-meta-label"><i class="fa fa-calendar"></i> Session</span>
+                                                        <span class="needy-meta-value">{{ $data->sessionYear }}</span>
+                                                    </div>
+                                                    <div class="needy-meta-item needy-meta-email">
+                                                        <span class="needy-meta-label"><i class="fa fa-envelope"></i> Email</span>
+                                                        <span class="needy-meta-value">{{ $data->email }}</span>
+                                                    </div>
+                                                    <div class="needy-meta-item needy-meta-roll">
+                                                        <span class="needy-meta-label"><i class="fa fa-id-card"></i> Roll</span>
+                                                        <span class="needy-meta-value">{{ $data->rollNumber }}</span>
+                                                    </div>
+                                                    <div class="needy-meta-item needy-meta-mobile">
+                                                        <span class="needy-meta-label"><i class="fa fa-mobile"></i> Mobile</span>
+                                                        <span class="needy-meta-value">{{ $data->mobile }}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a href="#" class="needy-view-btn" data-bs-toggle="modal" data-bs-target="#getData{{ $data->id }}" title="View CV">
+                                                    <i class="fa fa-eye"></i>
                                                 </a>
-<!-- Modal -->
-<div class="modal fade" id="getData{{ $data->id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-                <p class="modal-title fs-5" id="staticBackdropLabel">CV of {{ $data->fullName }}</p>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-            <div class="text-center">
-                                <embed class="w-100" height="550px" src="{{ asset('upload/image/neddyStudent/' . rawurlencode(basename($data->attachment))) }}" title="CV of {{ $data->fullName }}"></embed>
-            </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-      </div>
-    </div>
-  </div>
-</div>
+                                                <div class="modal fade" id="getData{{ $data->id }}" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <p class="modal-title fs-5" id="staticBackdropLabel">CV of {{ $data->fullName }}</p>
+                                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="text-center">
+                                                                    <embed class="w-100" height="550px" src="{{ asset('upload/image/neddyStudent/' . rawurlencode(basename($data->attachment))) }}" title="CV of {{ $data->fullName }}"></embed>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                         @endforeach         

@@ -4,6 +4,158 @@
     }
 @endphp
 
+<style>
+    /* Global header styles shared by homepage and all inner pages */
+    body.home-style2 .topbar-area {
+        background: #1f3b6f;
+        border-bottom: 0;
+    }
+
+    body.home-style2 .topbar-area .topbar-contact li a,
+    body.home-style2 .topbar-area .topbar-right li,
+    body.home-style2 .topbar-area .topbar-right li a,
+    body.home-style2 .topbar-area .topbar-right li span {
+        color: #ffffff;
+    }
+
+    body.home-style2 .topbar-area .topbar-contact li i,
+    body.home-style2 .topbar-area .topbar-right li i {
+        color: #7ed9f4;
+    }
+
+    body.home-style2 .topbar-area .topbar-right .apply-btn {
+        background: #21a7d0;
+        color: #ffffff;
+        border-radius: 0;
+        font-weight: 700;
+        min-width: 104px;
+        text-align: center;
+    }
+
+    body.home-style2 .topbar-area .topbar-right .apply-btn:hover {
+        background: #1692ba;
+        color: #ffffff;
+    }
+
+    body.home-style2 .menu-area.menu-sticky {
+        background: #ffffff;
+        border-bottom: 1px solid #e7edf5;
+    }
+
+    body.home-style2 .menu-area.menu-sticky .row.y-middle {
+        min-height: 90px;
+    }
+
+    body.home-style2 .menu-area .logo-cat-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        flex-wrap: nowrap;
+    }
+
+    body.home-style2 .menu-area .logo-part.pr-90,
+    body.home-style2 .menu-area .main-menu.pr-90 {
+        padding-right: 0 !important;
+    }
+
+    body.home-style2 .menu-area .logo-part .light-logo {
+        display: none !important;
+    }
+
+    body.home-style2 .menu-area .logo-part .dark-logo {
+        display: inline-flex !important;
+        vertical-align: middle;
+    }
+
+    body.home-style2 .menu-area .logo-part img {
+        height: 52px;
+        width: auto;
+        max-width: 240px;
+        object-fit: contain;
+    }
+
+    body.home-style2 .menu-area .rs-menu-area {
+        display: flex;
+        justify-content: flex-end;
+        width: 100%;
+    }
+
+    body.home-style2 .menu-area .main-menu {
+        width: 100%;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: nowrap;
+        gap: 0;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
+        color: #273c66;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 0 12px;
+        line-height: 90px;
+        letter-spacing: 0.2px;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu {
+        text-align: left;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu > li > a {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li.current-menu-item > a,
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a:hover {
+        color: #21a7d0;
+    }
+
+    body.home-style2 .menu-area .mobile-menu {
+        top: 50%;
+        transform: translateY(-50%);
+        right: 0;
+    }
+
+    @media (max-width: 1199px) {
+        body.home-style2 .menu-area .logo-part img {
+            max-width: 200px;
+            height: 46px;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
+            padding: 0 9px;
+            line-height: 86px;
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 991px) {
+        body.home-style2 .menu-area.menu-sticky .row.y-middle {
+            min-height: 76px;
+        }
+
+        body.home-style2 .menu-area .logo-part img {
+            height: 42px;
+            max-width: 150px;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu {
+            display: block;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
+            padding: 10px 0;
+            line-height: 1.5;
+            color: #ffffff;
+        }
+    }
+</style>
+
 <div id="loader" class="loader">
     <div class="loader-container">
         <div class='loader-icon'>
@@ -75,12 +227,12 @@
                                             <a href="#">Institute</a>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('institutePage') }}">About Us</a></li>
-                                                <li><a href="{{ route('principalSpeechPage') }}">Principal Message</a></li>
+                                                <li><a href="{{ route('headOfInstituteMessagePage') }}">Head of Institute Message</a></li>
                                                 <li><a href="{{ route('student') }}">Student</a></li>
-                                                <li><a href="{{ route('teacherPage') }}">Teacher</a></li>
-                                                <li><a href="{{ route('staffPage') }}">Staff</a></li>
-                                                <li><a href="{{ route('comitteePage') }}">Managing Committee</a></li>
-                                                <li><a href="{{ route('exprincipalPage') }}">Ex-Principal</a></li>
+                                                <li><a href="{{ route('teacherPage') }}">Teacher Directory</a></li>
+                                                <li><a href="{{ route('staffPage') }}">Staff Directory</a></li>
+                                                <li><a href="{{ route('comitteePage') }}">Governing Body</a></li>
+                                                <li><a href="{{ route('exprincipalPage') }}">Former Heads of Institution</a></li>
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">

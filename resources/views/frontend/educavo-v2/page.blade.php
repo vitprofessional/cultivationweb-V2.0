@@ -231,22 +231,7 @@
             letter-spacing: 0.2px;
         }
 
-        .rs-footer {
-            margin-top: 26px;
-        }
-
-        .rs-footer h4 {
-            color: #ffffff;
-        }
-
-        .rs-footer .text-light,
-        .rs-footer .text-light a {
-            color: #d7e7ef !important;
-        }
-
-        .rs-footer .text-light a:hover {
-            color: var(--edu-primary) !important;
-        }
+        /* Footer styles are centralized in frontend/educavo-v2/partials/_footer.blade.php */
 
         .home-style2 .btn-success,
         .home-style2 .bg-success {
@@ -688,6 +673,7 @@
             if ($('#myTable').length) {
                 $('#myTable').DataTable({
                     order: [[0, 'asc']],
+                    autoWidth: false,
                 });
             }
         });

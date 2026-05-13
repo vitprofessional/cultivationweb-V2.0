@@ -650,11 +650,11 @@
                                 <div class="collapse" id="mobileInstituteMenu">
                                     <ul class="list-unstyled ps-4">
                                         <li><a class="nav-link py-2" href="{{route('institutePage')}}">About Us</a></li>
-                                        <li><a class="nav-link py-2" href="{{route('principalSpeechPage')}}">{{ $frontendSpeechNavLabel ?? "Principal's Message" }}</a></li>
+                                        <li><a class="nav-link py-2" href="{{route('headOfInstituteMessagePage')}}">{{ $frontendSpeechNavLabel ?? "Head of Institute Message" }}</a></li>
                                         <li><a class="nav-link py-2" href="{{route('student')}}">Student List</a></li>
-                                        <li><a class="nav-link py-2" href="{{route('exprincipalPage')}}">EX-Principals</a></li>
-                                        <li><a class="nav-link py-2" href="{{route('teacherPage')}}">Lecturer Corner</a></li>
-                                        <li><a class="nav-link py-2" href="{{route('staffPage')}}">Staff Panel</a></li>
+                                        <li><a class="nav-link py-2" href="{{route('exprincipalPage')}}">Former Heads of Institution</a></li>
+                                        <li><a class="nav-link py-2" href="{{route('teacherPage')}}">Teacher Directory</a></li>
+                                        <li><a class="nav-link py-2" href="{{route('staffPage')}}">Staff Directory</a></li>
                                         <li><a class="nav-link py-2" href="{{route('comitteePage')}}">Governing Body</a></li>
                                     </ul>
                                 </div>
@@ -737,11 +737,11 @@
                                         </a>
                                         <ul class="dropdown-menu">
                                             <li><a class="dropdown-item" href="{{route('institutePage')}}">About Us</a></li>
-                                            <li><a class="dropdown-item" href="{{route('principalSpeechPage')}}">{{ $frontendSpeechNavLabel ?? "Principal's Message" }}</a></li>
+                                            <li><a class="dropdown-item" href="{{route('headOfInstituteMessagePage')}}">{{ $frontendSpeechNavLabel ?? "Head of Institute Message" }}</a></li>
                                             <li><a class="dropdown-item" href="{{route('student')}}">Student List</a></li>
-                                            <li><a class="dropdown-item" href="{{route('exprincipalPage')}}">EX-Principals</a></li>
-                                            <li><a class="dropdown-item" href="{{route('teacherPage')}}">Lecturer Corner</a></li>
-                                            <li><a class="dropdown-item" href="{{route('staffPage')}}">Staff Panel</a></li>
+                                            <li><a class="dropdown-item" href="{{route('exprincipalPage')}}">Former Heads of Institution</a></li>
+                                            <li><a class="dropdown-item" href="{{route('teacherPage')}}">Teacher Directory</a></li>
+                                            <li><a class="dropdown-item" href="{{route('staffPage')}}">Staff Directory</a></li>
                                             <li><a class="dropdown-item" href="{{route('comitteePage')}}">Governing Body</a></li>
                                         </ul>
                                     </li>
@@ -1022,6 +1022,7 @@
                 $(document).ready(function () {
                 $("#myTable").DataTable({
                     order: [[0, "asc"]],
+                    autoWidth: false,
                 });
                     // Default Owl init (skips if page marks it customized)
                     if($("#owl-demo").length && !$("#owl-demo").data('owlCustomized')){

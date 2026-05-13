@@ -124,10 +124,15 @@ Route::get('/about-us',[
     'institutePage'
 ])->name('institutePage');
 
-Route::get('/principal-speech',[
+Route::get('/head-of-institute-message', [
     FrontController::class,
-    'principalSpeechPage'
-    ])->name('principalSpeechPage');
+    'headOfInstituteMessagePage'
+])->name('headOfInstituteMessagePage');
+
+// Legacy URL/name kept for backward compatibility.
+Route::get('/principal-speech', function () {
+    return redirect()->route('headOfInstituteMessagePage');
+})->name('principalSpeechPage');
 
      Route::get('/student',[
     FrontController::class,

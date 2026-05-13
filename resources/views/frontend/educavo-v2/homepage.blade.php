@@ -78,10 +78,11 @@
 
     <style>
         .rs-slider.style1 .slider-content {
-            min-height: 560px;
+            min-height: 460px;
             background-position: center center;
             background-size: cover;
             background-repeat: no-repeat;
+            padding: 25px !important;
         }
 
         .rs-slider.style1 .slider-content::before {
@@ -94,7 +95,7 @@
         .rs-slider.style1 .slider-content .container {
             position: relative;
             z-index: 2;
-            padding-top: 170px;
+            padding-top: 150px;
         }
 
         .rs-about.style2 .about-intro {
@@ -149,6 +150,7 @@
 
         .menu-area .logo-part .dark-logo {
             display: inline-flex !important;
+            vertical-align: middle;
         }
 
         .menu-area .logo-part img {
@@ -445,74 +447,92 @@
         }
 
         .home-info-grid {
-            background: #f7fbfe;
-            border: 1px solid #dce9f4;
-            border-radius: 14px;
-            padding: 16px;
+            background: linear-gradient(180deg, #f8fcff 0%, #f2f8fe 100%);
+            border: 1px solid #d7e6f4;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
         .home-info-grid .info-card {
             background: #ffffff;
-            border: 1px solid #dce9f4;
-            border-radius: 10px;
+            border: 1px solid #d7e6f4;
+            border-radius: 14px;
             height: 100%;
             overflow: hidden;
+            box-shadow: 0 10px 24px rgba(16, 44, 99, 0.08);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+        }
+
+        .home-info-grid .info-card:hover {
+            transform: translateY(-2px);
+            border-color: #bdd8ec;
+            box-shadow: 0 16px 30px rgba(16, 44, 99, 0.12);
         }
 
         .home-info-grid .info-card-head {
-            background: #21a7d0;
+            background: linear-gradient(90deg, #1b9cc5, #2377b8);
             color: #ffffff;
-            padding: 10px 12px;
-            font-size: 18px;
-            font-weight: 700;
+            padding: 12px 16px;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
             line-height: 1.2;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .home-info-grid .info-card-body {
-            padding: 12px;
+            padding: 16px;
         }
 
         .home-info-grid .info-card-row {
             display: grid;
-            grid-template-columns: 64px 1fr;
-            gap: 12px;
+            grid-template-columns: 72px minmax(0, 1fr);
+            gap: 14px;
             align-items: start;
         }
 
         .home-info-grid .info-card-row img {
-            width: 64px;
-            height: 64px;
+            width: 72px;
+            height: 72px;
             object-fit: contain;
-            border-radius: 6px;
-            background: #f3f8fb;
-            padding: 4px;
+            border-radius: 10px;
+            background: linear-gradient(160deg, #f3f8fd, #ebf4fb);
+            padding: 6px;
+            border: 1px solid #deebf6;
+            box-shadow: 0 6px 14px rgba(16, 44, 99, 0.08);
         }
 
         .home-info-grid ul {
             list-style: none;
             margin: 0;
             padding: 0;
+            display: grid;
+            gap: 4px;
         }
 
         .home-info-grid li {
-            margin-bottom: 6px;
-            font-size: 15px;
+            margin: 0;
+            font-size: 17px;
             line-height: 1.4;
-            color: #173c73;
-            font-weight: 600;
-        }
-
-        .home-info-grid li:last-child {
-            margin-bottom: 0;
+            color: #163d75;
+            font-weight: 700;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         }
 
         .home-info-grid li i {
-            color: #21a7d0;
-            margin-right: 6px;
+            color: #1c95c7;
+            margin-top: 4px;
+            min-width: 12px;
+            font-size: 15px;
         }
 
-        .home-info-grid li a {
-            color: #173c73;
+        .home-info-grid li a,
+        .home-info-grid li .info-item-text {
+            color: #163d75;
+            transition: color .2s ease;
         }
 
         .home-info-grid li a:hover {
@@ -520,57 +540,104 @@
         }
 
         .ref-photo-gallery {
-            background: linear-gradient(180deg, #f7fbfe 0%, #f2f8fd 100%);
-            border: 1px solid #d6e6f3;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 12px 30px rgba(19, 54, 102, 0.08);
+            background: linear-gradient(165deg, #f8fbff 0%, #ecf6ff 100%);
+            border: 1px solid #d2e4f3;
+            border-radius: 18px;
+            padding: 22px;
+            box-shadow: 0 14px 34px rgba(17, 53, 105, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ref-photo-gallery::before {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -80px;
+            top: -100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(33, 167, 208, 0.2), rgba(33, 167, 208, 0));
+            pointer-events: none;
         }
 
         .ref-photo-gallery .gallery-head {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #dce9f4;
+            align-items: flex-end;
+            gap: 14px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #d9e8f5;
+            position: relative;
+            z-index: 1;
         }
 
         .ref-photo-gallery .gallery-head .head-copy {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 7px;
         }
 
         .ref-photo-gallery .gallery-head .head-copy span {
-            font-size: 13px;
+            display: inline-flex;
+            width: fit-content;
+            font-size: 11px;
             line-height: 1;
-            letter-spacing: 0.7px;
+            letter-spacing: 0.8px;
             text-transform: uppercase;
-            color: #21a7d0;
-            font-weight: 700;
+            color: #0d7c9f;
+            font-weight: 800;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #dff4fb;
+            border: 1px solid #bee8f5;
         }
 
         .ref-photo-gallery .gallery-head h2 {
             margin: 0;
             color: #102c63;
-            font-size: 30px;
-            line-height: 1.15;
+            font-size: 34px;
+            line-height: 1.08;
             font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        .ref-photo-gallery .gallery-head .head-note {
+            margin: 0;
+            color: #4a6484;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: 650px;
+        }
+
+        .ref-photo-gallery .gallery-head .gallery-meta {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #1f567f;
+            font-weight: 700;
+            margin-top: 2px;
         }
 
         .ref-photo-gallery .view-all-btn {
             border: 1px solid #21a7d0;
             color: #ffffff;
-            background: #21a7d0;
-            border-radius: 10px;
-            padding: 8px 14px;
-            font-size: 14px;
-            font-weight: 700;
+            background: linear-gradient(120deg, #21a7d0, #178fb5);
+            border-radius: 11px;
+            padding: 10px 15px;
+            font-size: 13px;
+            font-weight: 800;
             line-height: 1;
-            box-shadow: 0 8px 18px rgba(33, 167, 208, 0.28);
+            box-shadow: 0 9px 20px rgba(33, 167, 208, 0.25);
             transition: all .25s ease;
+            white-space: nowrap;
+        }
+
+        .ref-photo-gallery .view-all-btn i {
+            margin-left: 6px;
+            font-size: 11px;
         }
 
         .ref-photo-gallery .view-all-btn:hover {
@@ -578,35 +645,46 @@
             border-color: #112958;
             color: #ffffff;
             transform: translateY(-1px);
+            box-shadow: 0 11px 24px rgba(17, 41, 88, 0.25);
         }
 
         .ref-photo-gallery .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            grid-auto-rows: 84px;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile {
+            grid-column: span 3;
+            grid-row: span 2;
             display: block;
-            border-radius: 12px;
+            border-radius: 14px;
             overflow: hidden;
-            border: 1px solid #dce9f4;
+            border: 1px solid #d6e7f5;
             background: #fff;
             cursor: pointer;
             padding: 0;
             width: 100%;
             text-align: left;
             position: relative;
-            box-shadow: 0 6px 16px rgba(19, 54, 102, 0.08);
-            transition: transform .25s ease, box-shadow .25s ease;
+            box-shadow: 0 8px 18px rgba(19, 54, 102, 0.08);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+        }
+
+        .ref-photo-gallery .gallery-grid .gallery-tile:first-child {
+            grid-column: span 6;
+            grid-row: span 4;
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile img {
             width: 100%;
-            height: 132px;
+            height: 100%;
             object-fit: cover;
             display: block;
-            transition: transform .35s ease;
+            transition: transform .4s ease;
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile .gallery-shade {
@@ -615,8 +693,8 @@
             right: 0;
             bottom: 0;
             top: 0;
-            background: linear-gradient(180deg, rgba(7, 24, 52, 0) 30%, rgba(9, 31, 68, 0.62) 100%);
-            opacity: .85;
+            background: linear-gradient(180deg, rgba(8, 29, 59, 0.12) 20%, rgba(10, 35, 74, 0.82) 100%);
+            opacity: .86;
             transition: opacity .25s ease;
         }
 
@@ -624,11 +702,11 @@
             position: absolute;
             left: 50%;
             top: 50%;
-            width: 42px;
-            height: 42px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            transform: translate(-50%, -50%) scale(.92);
-            background: rgba(255, 255, 255, 0.94);
+            transform: translate(-50%, -50%) scale(.9);
+            background: rgba(255, 255, 255, 0.95);
             color: #112958;
             display: flex;
             align-items: center;
@@ -640,34 +718,56 @@
 
         .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-date {
             position: absolute;
-            left: 10px;
-            bottom: 10px;
-            font-size: 11px;
-            font-weight: 700;
+            left: 12px;
+            top: 12px;
+            font-size: 10px;
+            font-weight: 800;
             line-height: 1;
-            letter-spacing: .35px;
+            letter-spacing: .45px;
             text-transform: uppercase;
             color: #ffffff;
-            padding: 5px 8px;
+            padding: 6px 9px;
             border-radius: 999px;
-            background: rgba(17, 41, 88, 0.8);
+            background: rgba(17, 41, 88, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-date:empty {
             display: none;
         }
 
+        .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-title {
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 12px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.3;
+            text-shadow: 0 2px 8px rgba(7, 20, 39, 0.45);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ref-photo-gallery .gallery-grid .gallery-tile:first-child .gallery-mini-title {
+            font-size: 18px;
+            max-width: 88%;
+        }
+
         .ref-photo-gallery .gallery-grid .gallery-tile:hover img {
-            transform: scale(1.08);
+            transform: scale(1.07);
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 24px rgba(19, 54, 102, 0.18);
+            border-color: #bdd9ed;
+            box-shadow: 0 14px 30px rgba(19, 54, 102, 0.2);
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile:hover .gallery-shade {
-            opacity: .45;
+            opacity: .58;
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile:hover .gallery-plus {
@@ -758,323 +858,7 @@
             margin: 0;
         }
 
-        /* Footer styles are in partials/_footer.blade.php */
-
-        /* ---- info strip (Contact / Visitor / Map) ---- */
-        .footer-info-strip {
-            background: linear-gradient(90deg, #112958 0%, #0e2248 50%, #112958 100%);
-            border-bottom: 1px solid rgba(33,167,208,0.25);
-            padding: 20px 0;
-            margin-bottom: 0;
-        }
-
-        .footer-info-strip .fi-card {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .footer-info-strip .fi-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 10px;
-            background: rgba(33,167,208,0.18);
-            border: 1px solid rgba(33,167,208,0.35);
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #21a7d0;
-            font-size: 16px;
-        }
-
-        .footer-info-strip .fi-body h6 {
-            margin: 0 0 4px;
-            color: #ffffff;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-
-        .footer-info-strip .fi-body p,
-        .footer-info-strip .fi-body a {
-            margin: 0;
-            color: #90b4d8;
-            font-size: 13px;
-            line-height: 1.5;
-            word-break: break-all;
-        }
-
-        .footer-info-strip .fi-body a:hover {
-            color: #21a7d0;
-        }
-
-        .footer-info-strip .fi-divider {
-            width: 1px;
-            background: rgba(255,255,255,0.1);
-            align-self: stretch;
-            margin: 0 8px;
-        }
-
-        /* ---- footer-top main columns ---- */
-        .footer-top,
-        #rs-footer .footer-top,
-        .rs-footer .footer-top {
-            padding: 48px 0 32px !important;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .footer-main-row .footer-widget {
-            padding-right: 16px;
-        }
-
-        /* widget title with accent underline */
-        .footer-main-row .widget-title {
-            color: #ffffff;
-            font-size: 17px;
-            font-weight: 800;
-            letter-spacing: 0.3px;
-            margin: 0 0 20px;
-            padding-bottom: 12px;
-            position: relative;
-        }
-
-        .footer-main-row .widget-title::after {
-            content: '';
-            position: absolute;
-            left: 0;
-            bottom: 0;
-            width: 36px;
-            height: 3px;
-            border-radius: 99px;
-            background: linear-gradient(90deg, #21a7d0, #4dc8e8);
-        }
-
-        /* site-map links */
-        .footer-main-row .site-map {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .footer-main-row .site-map li {
-            margin-bottom: 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .footer-main-row .site-map li:last-child {
-            border-bottom: 0;
-        }
-
-        .footer-main-row .site-map li a {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 7px 0;
-            color: #8faecf;
-            font-size: 14px;
-            line-height: 1.4;
-            transition: color .2s, padding-left .2s;
-        }
-
-        .footer-main-row .site-map li a:hover {
-            color: #21a7d0;
-            padding-left: 4px;
-        }
-
-        .footer-main-row .site-map li a i.fa-angle-right {
-            font-size: 12px;
-            color: #21a7d0;
-            flex-shrink: 0;
-        }
-
-        /* group label inside site-map */
-        .footer-link-group-label {
-            font-size: 10px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: #21a7d0 !important;
-            padding: 12px 0 4px !important;
-            border-bottom: 1px solid rgba(33,167,208,0.25) !important;
-            margin-bottom: 2px;
-            pointer-events: none;
-            list-style: none;
-        }
-
-        .footer-link-group-label:first-child {
-            padding-top: 0 !important;
-        }
-
-        /* col 1 — about */
-        .footer-about {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .footer-brand-logo img {
-            height: 46px;
-            max-width: 180px;
-            object-fit: contain;
-            filter: brightness(0) invert(1);
-        }
-
-        .footer-about-desc {
-            color: #8faecf;
-            font-size: 14px;
-            line-height: 1.8;
-            margin: 0;
-            border-left: 3px solid rgba(33,167,208,0.4);
-            padding-left: 12px;
-        }
-
-        .footer-social-inline {
-            display: flex !important;
-            flex-direction: row !important;
-            gap: 8px;
-            padding: 0;
-            margin: 0;
-            list-style: none;
-        }
-
-        .footer-social-inline li a {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.07);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: #90b4d8;
-            font-size: 14px;
-            transition: background .2s, color .2s, border-color .2s;
-        }
-
-        .footer-social-inline li a:hover {
-            background: #21a7d0;
-            border-color: #21a7d0;
-            color: #ffffff;
-        }
-
-        /* col 4 — address widget */
-        .address-widget.mt-20 {
-            margin-top: 16px;
-        }
-
-        /* footer sub-section inside col 1 */
-        .footer-sub-section {
-            margin-top: 20px;
-            padding-top: 18px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .footer-sub-title {
-            font-size: 13px;
-            font-weight: 800;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-            color: #21a7d0;
-            margin: 0 0 10px;
-        }
-
-        .footer-main-row .address-widget {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .footer-main-row .address-widget li {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            color: #8faecf;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .footer-main-row .address-widget li:last-child {
-            border-bottom: 0;
-        }
-
-        .footer-main-row .address-widget li i {
-            color: #21a7d0;
-            font-size: 16px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .footer-main-row .address-widget li a {
-            color: #8faecf;
-        }
-
-        .footer-main-row .address-widget li a:hover {
-            color: #21a7d0;
-        }
-
-        /* ---- footer bottom bar ---- */
-        .footer-bottom {
-            background: #060f1f;
-            border-top: 1px solid rgba(33,167,208,0.2);
-            padding: 16px 0;
-        }
-
-        .footer-bottom .copyright p {
-            color: #6a86a8;
-            font-size: 13px;
-            margin: 0;
-        }
-
-        .footer-bottom .copyright p span {
-            color: #21a7d0;
-            font-weight: 700;
-        }
-
-        .footer-bottom-links {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 16px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .footer-bottom-links li a {
-            color: #6a86a8;
-            font-size: 13px;
-        }
-
-        .footer-bottom-links li a:hover {
-            color: #21a7d0;
-        }
-
-        .footer-bottom-links li + li::before {
-            content: '|';
-            margin-right: 16px;
-            color: rgba(255,255,255,0.15);
-        }
-
-        .footer-bottom .footer-social {
-            justify-content: flex-end;
-        }
-
-        .footer-bottom .footer-social li a {
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.12);
-            color: #8faecf;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            transition: background .2s, color .2s;
-        }
+        /* Footer styles are centralized in frontend/educavo-v2/partials/_footer.blade.php */
 
         @media (max-width: 767px) {
             .topbar-area .topbar-right {
@@ -1164,11 +948,12 @@
 
             .home-info-grid {
                 padding: 12px;
+                border-radius: 14px;
             }
 
             .home-info-grid .info-card-head {
-                font-size: 16px;
-                padding: 9px 10px;
+                font-size: 18px;
+                padding: 10px 12px;
             }
 
             .home-info-grid .info-card-row {
@@ -1179,6 +964,10 @@
             .home-info-grid .info-card-row img {
                 width: 52px;
                 height: 52px;
+            }
+
+            .home-info-grid li {
+                font-size: 15px;
             }
 
             .ref-photo-gallery {
@@ -1192,16 +981,31 @@
             }
 
             .ref-photo-gallery .gallery-head h2 {
-                font-size: 24px;
+                font-size: 26px;
+            }
+
+            .ref-photo-gallery .gallery-head .head-note {
+                font-size: 14px;
             }
 
             .ref-photo-gallery .gallery-grid {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(8, minmax(0, 1fr));
+                grid-auto-rows: 82px;
                 gap: 8px;
             }
 
-            .ref-photo-gallery .gallery-grid .gallery-tile img {
-                height: 116px;
+            .ref-photo-gallery .gallery-grid .gallery-tile {
+                grid-column: span 4;
+                grid-row: span 2;
+            }
+
+            .ref-photo-gallery .gallery-grid .gallery-tile:first-child {
+                grid-column: span 8;
+                grid-row: span 4;
+            }
+
+            .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-title {
+                font-size: 13px;
             }
 
             .gallery-preview-modal .modal-header,
@@ -1211,10 +1015,6 @@
 
             .gallery-preview-modal .preview-info h4 {
                 font-size: 18px;
-            }
-
-            .footer-sidebar-strip {
-                grid-template-columns: 1fr;
             }
 
             .home-info-grid li {
@@ -1229,13 +1029,38 @@
                 font-size: 22px;
             }
 
+            .ref-photo-gallery .gallery-head .head-note {
+                font-size: 13px;
+            }
+
             .ref-photo-gallery .gallery-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-auto-rows: 78px;
                 gap: 8px;
             }
 
-            .ref-photo-gallery .gallery-grid img {
-                height: 78px;
+            .ref-photo-gallery .gallery-grid .gallery-tile {
+                grid-column: span 1;
+                grid-row: span 2;
+            }
+
+            .ref-photo-gallery .gallery-grid .gallery-tile:first-child {
+                grid-column: span 2;
+                grid-row: span 4;
+            }
+
+            .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-date {
+                top: 8px;
+                left: 8px;
+                padding: 5px 7px;
+            }
+
+            .ref-photo-gallery .gallery-grid .gallery-tile .gallery-mini-title,
+            .ref-photo-gallery .gallery-grid .gallery-tile:first-child .gallery-mini-title {
+                font-size: 12px;
+                left: 10px;
+                right: 10px;
+                bottom: 9px;
             }
 
             .ref-photo-gallery .view-all-btn {
@@ -1370,8 +1195,8 @@
             <div class="container">
                 <div class="principal-feature-card">
                     <div class="principal-feature-head">
-                        <h3>Principal Speech</h3>
-                        <a class="readon2" href="{{ route('principalSpeechPage') }}">Read Full Message</a>
+                        <h3>Head of Institute Message</h3>
+                        <a class="readon2" href="{{ route('headOfInstituteMessagePage') }}">Read Full Message</a>
                     </div>
                     <div class="principal-feature-body">
                         <div class="principal-meta">
@@ -1443,8 +1268,8 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/forms.jpg') }}" alt="Admission" onerror="this.onerror=null;this.src='{{ asset('public/educavo/assets/images/services/icons/2.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-level-down"></i> Honors Admission</li>
-                                            <li><i class="fa fa-level-down"></i> XI Class Admission</li>
+                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">Honors Admission</span></li>
+                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">XI Class Admission</span></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1457,11 +1282,12 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/institute.jpg') }}" alt="Institute" onerror="this.onerror=null;this.src='{{ asset('public/educavo/assets/images/services/icons/1.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('institutePage') }}"> About Us</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('teacherPage') }}"> Teacher Database</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('staffPage') }}"> Staff Database</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('principalSpeechPage') }}"> Head of Institute Message</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('comitteePage') }}"> Managing Committee</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('institutePage') }}">About Us</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('teacherPage') }}">Teacher Directory</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('staffPage') }}">Staff Directory</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('headOfInstituteMessagePage') }}">Head of Institute Message</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('comitteePage') }}">Governing Body</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('exprincipalPage') }}">Former Heads of Institution</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1474,10 +1300,10 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/academic.png') }}" alt="Academic" onerror="this.onerror=null;this.src='{{ asset('public/educavo/assets/images/services/icons/3.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('newSemister') }}"> Semister Plan</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('newSyllabus') }}"> Syllabus</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('newClassSchedule') }}"> Class Routine</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('newExamSchedule') }}"> Exam Routine</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newSemister') }}">Semister Plan</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newSyllabus') }}">Syllabus</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newClassSchedule') }}">Class Routine</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newExamSchedule') }}">Exam Routine</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1490,10 +1316,10 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/studentCorner.png') }}" alt="Student corner" onerror="this.onerror=null;this.src='{{ asset('public/educavo/assets/images/services/icons/1.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('student') }}"> Student Database</a></li>
-                                            <li><i class="fa fa-level-down"></i> X-Student Archive</li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('placementCellView') }}"> Placement Cell</a></li>
-                                            <li><i class="fa fa-level-down"></i><a href="{{ route('jobNeedyStudentView') }}"> Job Seekers</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('student') }}">Student Database</a></li>
+                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">X-Student Archive</span></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('placementCellView') }}">Placement Cell</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('jobNeedyStudentView') }}">Job Seekers</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1572,6 +1398,9 @@
             </div>
         </div>
 
+        @php
+            $galleryPreviewItems = ($gallery ?? collect())->take(6);
+        @endphp
         <div class="pt-64 pb-64 md-pt-42 md-pb-42">
             <div class="container">
                 <div class="ref-photo-gallery">
@@ -1579,11 +1408,13 @@
                         <div class="head-copy">
                             <span>Campus Memories</span>
                             <h2>Photo Gallery</h2>
+                            <p class="head-note">A curated look at student achievements, events, and everyday campus moments.</p>
+                            <div class="gallery-meta"><i class="fa fa-camera"></i> {{ $galleryPreviewItems->count() > 0 ? $galleryPreviewItems->count() : 6 }} highlighted photos</div>
                         </div>
-                        <a class="view-all-btn" href="{{ route('imagePage') }}">View All</a>
+                        <a class="view-all-btn" href="{{ route('imagePage') }}">View All <i class="fa fa-arrow-right"></i></a>
                     </div>
                     <div class="gallery-grid">
-                        @forelse(($gallery ?? collect())->take(6) as $img)
+                        @forelse($galleryPreviewItems as $img)
                             @php
                                 $galleryImageSrc = $resolveGalleryImage($img, 'public/educavo/assets/images/blog/style2/1.jpg');
                                 $galleryTitle = trim((string) ($img->title ?? 'Gallery Image'));
@@ -1601,6 +1432,7 @@
                                 <span class="gallery-shade"></span>
                                 <span class="gallery-plus"><i class="fa fa-search-plus" aria-hidden="true"></i></span>
                                 <span class="gallery-mini-date">{{ $galleryDate }}</span>
+                                <span class="gallery-mini-title">{{ $galleryTitle }}</span>
                             </button>
                         @empty
                             @for($i = 0; $i < 6; $i++)
@@ -1615,6 +1447,7 @@
                                     <span class="gallery-shade"></span>
                                     <span class="gallery-plus"><i class="fa fa-search-plus" aria-hidden="true"></i></span>
                                     <span class="gallery-mini-date"></span>
+                                    <span class="gallery-mini-title">Gallery Image</span>
                                 </button>
                             @endfor
                         @endforelse

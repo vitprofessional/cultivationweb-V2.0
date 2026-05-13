@@ -69,12 +69,21 @@ Enter to learn & Leave to serve
 .home-gallery .card-header{padding:1rem 1.15rem;background:#fff;border-bottom:1px solid #ecf2f5!important}
 .home-gallery .card-body{padding:1rem 1.1rem 1.15rem}
 .home-gallery .card-header .btn-outline-success{font-weight:700}
-.gallery-card{position:relative;overflow:hidden;border-radius:.65rem;cursor:pointer;background:#f3f8f9}
-.gallery-card .g-img{width:100%;height:210px;object-fit:cover;display:block;transition:transform .35s ease}
-.gallery-card .g-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(39,60,102,.45),rgba(33,167,208,.12));display:flex;align-items:flex-end;justify-content:flex-end;padding:.65rem;opacity:0;transition:opacity .3s ease}
-.gallery-card .g-overlay i{color:#fff;font-size:1.1rem;background:rgba(17,41,88,.55);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
-.gallery-card:hover .g-img{transform:scale(1.05)}
-.gallery-card:hover .g-overlay{opacity:1}
+.home-gallery .gallery-card-shell{background:linear-gradient(165deg,#f8fbff 0%,#eef6fd 100%);border:1px solid #d8e7f3;border-radius:1rem;overflow:hidden}
+.home-gallery .gallery-section-kicker{display:inline-flex;width:fit-content;margin-bottom:.35rem;padding:.3rem .65rem;border-radius:999px;background:#dff4fb;border:1px solid #bee8f5;color:#0d7c9f;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.home-gallery .gallery-section-note{margin:0 0 1rem;color:#4a6484;font-size:.96rem;line-height:1.7}
+.home-gallery .gallery-carousel{position:relative}
+.gallery-card{position:relative;overflow:hidden;border-radius:.8rem;cursor:pointer;background:#f3f8f9;border:1px solid #d6e7f5;display:block;width:100%;padding:0;text-align:left;box-shadow:0 8px 18px rgba(19,54,102,.08);transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease}
+.gallery-card .g-img{width:100%;height:230px;object-fit:cover;display:block;transition:transform .4s ease}
+.gallery-card .g-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,29,59,.08) 20%,rgba(10,35,74,.82) 100%);display:flex;align-items:flex-end;justify-content:flex-end;padding:.7rem;opacity:.82;transition:opacity .25s ease}
+.gallery-card .g-overlay i{color:#fff;font-size:1.05rem;background:rgba(17,41,88,.58);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(0,0,0,.18)}
+.gallery-card .g-caption{position:absolute;left:0;right:0;bottom:0;padding:0.8rem 0.85rem 0.85rem;color:#fff;z-index:2;text-shadow:0 2px 8px rgba(7,20,39,.45)}
+.gallery-card .g-kicker{display:inline-flex;margin-bottom:.3rem;padding:.28rem .55rem;border-radius:999px;background:rgba(17,41,88,.88);border:1px solid rgba(255,255,255,.18);font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.gallery-card .g-caption strong{display:block;font-size:1rem;line-height:1.3;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gallery-card:hover{transform:translateY(-3px);border-color:#bdd9ed;box-shadow:0 14px 30px rgba(19,54,102,.2)}
+.gallery-card:hover .g-img{transform:scale(1.07)}
+.gallery-card:hover .g-overlay{opacity:.62}
+.gallery-card:hover .g-overlay i{background:rgba(255,255,255,.94);color:#112958}
 
 /* Owl nav placement refinement */
 #owl-demo .owl-controls{margin-top:12px}
@@ -222,7 +231,7 @@ Enter to learn & Leave to serve
     </div>
     @php
         $principalSpeech = \App\Models\PrincipalSpeech::first();
-        $speechTitle = $frontendSpeechTitle ?? "Principal's Message";
+        $speechTitle = $frontendSpeechTitle ?? "Head of Institute Message";
         $principalSpeechLead = !empty($config->principalImportantSpeech)
             ? $config->principalImportantSpeech
             : (!empty($principalSpeech?->importantSpeech) ? $principalSpeech->importantSpeech : 'We want to make good students as well as good people.');
@@ -237,14 +246,14 @@ Enter to learn & Leave to serve
     <div class="col-12 mx-auto mb-4 scale-on-scroll speech-feature p-0">
         <div class="feature-header">
             <h2 class="home-section-title mb-0 text-white">{{ $speechTitle }}</h2>
-            <a href="{{ route('principalSpeechPage') }}" class="btn btn-outline-light btn-sm">Read More</a>
+            <a href="{{ route('headOfInstituteMessagePage') }}" class="btn btn-outline-light btn-sm">Read More</a>
         </div>
         <div class="feature-body">
             <div class="speech-meta">
-                <img class="speech-avatar" src="{{ $principalSpeechAvatar }}" alt="Principal portrait">
+                <img class="speech-avatar" src="{{ $principalSpeechAvatar }}" alt="Head of Institute portrait">
                 <div>
                     <p class="speech-name">{{ $config->principalName ?? 'Engr. Abu Yousuf' }}</p>
-                    <p class="speech-role">{{ $config->principalDesignation ?? 'Principal' }}</p>
+                    <p class="speech-role">{{ $config->principalDesignation ?? 'Head of Institute' }}</p>
                 </div>
             </div>
             <div class="speech-quote">“{{ $principalSpeechLead }}”</div>
@@ -301,7 +310,7 @@ Enter to learn & Leave to serve
                                         <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('institutePage')}}"> About Us</a></li>
                                         <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('teacherPage')}}"> Teacher Database</a></li>
                                         <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('staffPage')}}"> Staff Database</a> </li>
-                                        <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('principalSpeechPage')}}"> {{ $frontendSpeechNavLabel ?? "Principal's Message" }}</a></li>
+                                        <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('headOfInstituteMessagePage')}}"> {{ $frontendSpeechNavLabel ?? "Head of Institute Message" }}</a></li>
                                         <li class="list-group-item"><i class="fa-regular fa-arrow-turn-down-right"></i><a href="{{route('comitteePage')}}"> Managing Comittee</a></li>
                                     </ul>
                                 </div>
@@ -373,60 +382,74 @@ Enter to learn & Leave to serve
         <hr class="my-4">
         <!-- Photo Gallery -->
         <div id="demo" class="col-12 mx-auto mt-2 home-gallery">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between">
-                    <h2 class="home-section-title mb-0">Photo Gallery</h2>
+            <div class="card border-0 shadow-sm gallery-card-shell">
+                <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <div class="gallery-section-kicker">Campus Memories</div>
+                        <h2 class="home-section-title mb-0">Photo Gallery</h2>
+                    </div>
                     <a href="{{ route('imagePage') }}" class="btn btn-outline-success btn-sm">View All</a>
                 </div>
                 <div class="card-body pt-3">
-                    <div id="owl-demo" class="owl-carousel owl-theme" aria-label="Campus photo highlights" data-owl-customized="1">
+                    <p class="gallery-section-note">A visual glimpse into student life, campus events, and the everyday moments that shape the institution.</p>
+                    <div id="owl-demo" class="owl-carousel owl-theme gallery-carousel" aria-label="Campus photo highlights" data-owl-customized="1">
             @if($gallery->count()>0) 
                 @foreach($gallery as $data)
                         <div class="item">
-                            <div class="gallery-card" role="button" tabindex="0"
+                            <button type="button" class="gallery-card" role="button" tabindex="0"
                                      onclick="showImageModal('{{ config('app.url') }}/public/upload/image/PhotoGallery/{{ $data->avatar }}', '{{ $data->title ?? 'Gallery Image' }}', '{{ $data->description ?? 'Beautiful moment captured' }}')"
                                  onkeypress="if(event.key==='Enter'){showImageModal('{{ config('app.url') }}/public/upload/image/PhotoGallery/{{ $data->avatar }}', '{{ $data->title ?? 'Gallery Image' }}', '{{ $data->description ?? 'Beautiful moment captured' }}')}">
                                 <img loading="lazy" decoding="async" src="{{ config('app.url') }}/public/upload/image/PhotoGallery/{{$data->avatar}}" alt="{{ $data->title ?? 'Gallery image' }}" class="g-img">
                                 <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                            </div>
+                                <div class="g-caption">
+                                    <span class="g-kicker">Photo</span>
+                                    <strong>{{ $data->title ?? 'Gallery Image' }}</strong>
+                                </div>
+                            </button>
                         </div>
                 @endforeach
             @else
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/campus.jpeg','Campus ground','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/campus.jpeg','Campus ground','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/campus.jpeg','Campus ground','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/campus.jpeg','Campus ground','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/campus.jpeg" alt="Campus ground" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Campus ground</strong></div>
+                    </button>
                 </div>
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/mainbuilding.jpg','Main building','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/mainbuilding.jpg','Main building','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/mainbuilding.jpg','Main building','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/mainbuilding.jpg','Main building','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/mainbuilding.jpg" alt="Main building" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Main building</strong></div>
+                    </button>
                 </div>
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/office.jpg','Office room','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/office.jpg','Office room','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/office.jpg','Office room','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/office.jpg','Office room','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/office.jpg" alt="Office room" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Office room</strong></div>
+                    </button>
                 </div>
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/principalroom.jpg','Principal room','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/principalroom.jpg','Principal room','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/principalroom.jpg','Principal room','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/principalroom.jpg','Principal room','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/principalroom.jpg" alt="Principal room" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Principal room</strong></div>
+                    </button>
                 </div>
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/hostel.jpg','Student hostel','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/hostel.jpg','Student hostel','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/hostel.jpg','Student hostel','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/hostel.jpg','Student hostel','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/hostel.jpg" alt="Student hostel" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Student hostel</strong></div>
+                    </button>
                 </div>
                 <div class="item">
-                    <div class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/auditoriam.jpg','Auditorium','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/auditoriam.jpg','Auditorium','Default gallery image')}">
+                    <button type="button" class="gallery-card" role="button" tabindex="0" onclick="showImageModal('{{ asset('/public/') }}/img/auditoriam.jpg','Auditorium','Default gallery image')" onkeypress="if(event.key==='Enter'){showImageModal('{{ asset('/public/') }}/img/auditoriam.jpg','Auditorium','Default gallery image')}">
                         <img loading="lazy" src="{{ asset('/public/') }}/img/auditoriam.jpg" alt="Auditorium" class="g-img">
                         <div class="g-overlay"><i class="fa-solid fa-magnifying-glass-plus"></i></div>
-                    </div>
+                        <div class="g-caption"><span class="g-kicker">Featured</span><strong>Auditorium</strong></div>
+                    </button>
                 </div>
             @endif
                     </div>
@@ -435,7 +458,7 @@ Enter to learn & Leave to serve
         </div>
         
         <!-- Bootstrap Modal for Image Viewer (mirrors gallery page) -->
-        <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+        <div class="modal fade gallery-modal" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header" style="background: linear-gradient(135deg, #273c66, #21a7d0); color: #fff; border-bottom: none;">

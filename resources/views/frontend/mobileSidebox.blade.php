@@ -9,18 +9,18 @@
             <div class="principal-standalone mb-3">
                 <div class="plain-heading"><i class="fa-solid fa-user-graduate me-1"></i> <span>Head of Institute</span></div>
                 <div class="text-center">
-                    <img class="principal-photo" src="{{ $principalAvatar }}" alt="Principal portrait" loading="lazy">
+                    <img class="principal-photo" src="{{ $principalAvatar }}" alt="Head of Institute portrait" loading="lazy">
                     <div class="principal-caption">
                         <div class="fw-semibold" style="font-size:12px">{{ $config->principalName ?? 'Engr. Abu Yousuf' }}</div>
-                        <div class="text-muted small" style="font-size:11px">{{ $config->principalDesignation ?? 'Principal' }}</div>
-                        <a class="btn btn-success btn-sm px-3" href="{{ route('principalSpeechPage') }}">Details</a>
+                        <div class="text-muted small" style="font-size:11px">{{ $config->principalDesignation ?? 'Head of Institute' }}</div>
+                        <a class="btn btn-success btn-sm px-3" href="{{ route('headOfInstituteMessagePage') }}">Details</a>
                     </div>
                 </div>
             </div>
         </div>
         @php
             $principalSpeech = \App\Models\PrincipalSpeech::first();
-            $speechTitle = $frontendSpeechTitle ?? "Principal's Message";
+            $speechTitle = $frontendSpeechTitle ?? "Head of Institute Message";
             $principalSpeechLead = !empty($config->principalImportantSpeech)
                 ? $config->principalImportantSpeech
                 : (!empty($principalSpeech?->importantSpeech) ? $principalSpeech->importantSpeech : 'We want to make good students as well as good people.');
@@ -35,7 +35,7 @@
                 <div class="p-3 bg-white">
                     <p class="small fw-semibold text-secondary mb-2">“{{ $principalSpeechLead }}”</p>
                     <p class="small text-muted mb-3">{{ $principalSpeechExcerpt ?: 'A brief note from the head of institute.' }}</p>
-                    <a class="btn btn-outline-success btn-sm w-100" href="{{ route('principalSpeechPage') }}">Read More</a>
+                    <a class="btn btn-outline-success btn-sm w-100" href="{{ route('headOfInstituteMessagePage') }}">Read More</a>
                 </div>
             </div>
         </div>
