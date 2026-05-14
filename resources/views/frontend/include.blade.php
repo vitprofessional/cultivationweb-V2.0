@@ -154,6 +154,41 @@
                 gap: 40px;
                 max-width: 1200px;
                 margin: 0 auto;
+                position: relative;
+            }
+
+            .site-lang-switcher-inline {
+                display: inline-flex;
+                align-items: center;
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 999px;
+                overflow: hidden;
+                background: rgba(11, 44, 18, 0.35);
+            }
+
+            .site-lang-switcher-inline .lang-btn {
+                border: 0;
+                background: transparent;
+                color: #e9ffe9;
+                padding: 7px 12px;
+                font-size: 11px;
+                font-weight: 800;
+                letter-spacing: 0.4px;
+                line-height: 1;
+                cursor: pointer;
+            }
+
+            .site-lang-switcher-inline .lang-btn.active {
+                background: #ffc107;
+                color: #164417;
+            }
+
+            .header-lang-switcher {
+                position: absolute;
+                right: 0;
+                top: 10px;
+                z-index: 3;
+                display: none !important;
             }
 
             /* Professional Navbar Styles */
@@ -292,6 +327,10 @@
                     gap: 25px;
                 }
                 
+
+                .header-lang-switcher {
+                    position: static;
+                }
                 .header-logo {
                     padding-right: 0;
                 }
@@ -528,15 +567,50 @@
                 border-color: rgba(255,255,255,0.5) !important;
                 color: #fff !important;
             }
+
+            body.translated-ltr,
+            body.translated-rtl {
+                top: 0 !important;
+            }
+
+            .goog-te-banner-frame.skiptranslate,
+            .goog-te-balloon-frame,
+            .goog-te-gadget,
+            .goog-logo-link,
+            .goog-te-gadget > span,
+            .goog-te-combo,
+            #goog-gt-tt,
+            .goog-tooltip,
+            .goog-tooltip:hover {
+                display: none !important;
+                visibility: hidden !important;
+            }
+
+            #google_translate_element {
+                position: fixed;
+                left: -9999px;
+                bottom: -9999px;
+                opacity: 0;
+                pointer-events: none;
+            }
         </style>
     </head>
     <body>
+        <div id="google_translate_element" aria-hidden="true"></div>
+
         <!-- Header Top Section -->
         <div class="header-top">
             <div class="container">
                 <div class="row">
                     <div class="col-12">
                         <div class="header-content text-center">
+                            <div class="header-lang-switcher">
+                                <div class="site-lang-switcher-inline js-site-lang-switcher" role="group" aria-label="Language switcher">
+                                    <button type="button" class="lang-btn" data-lang="en">EN</button>
+                                    <button type="button" class="lang-btn" data-lang="bn">বাংলা</button>
+                                </div>
+                            </div>
+
                             <!-- Logo on the left -->
                             <div class="header-logo">
                                 @if(!empty($config->logo))
@@ -1530,6 +1604,75 @@
                 });
             });
         </script>
+        <script>
+            (function () {
+                const STORAGE_KEY = 'site_language_pref';
+
+                function setTranslateCookie(value) {
+                    document.cookie = 'googtrans=' + value + ';path=/';
+                    document.cookie = 'googtrans=' + value + ';path=/;domain=' + window.location.hostname;
+                }
+
+                function getSavedLanguage() {
+                    const lang = localStorage.getItem(STORAGE_KEY);
+                    return lang === 'bn' ? 'bn' : 'en';
+                }
+
+                function syncSavedLanguageCookie() {
+                    const savedLang = getSavedLanguage();
+                    const desired = savedLang === 'bn' ? '/auto/bn' : '/auto/en';
+                    if (!document.cookie.includes('googtrans=' + desired)) {
+                        setTranslateCookie(desired);
+                        window.location.reload();
+                        return true;
+                    }
+                    return false;
+                }
+
+                function markActiveButton(lang) {
+                    document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
+                        button.classList.toggle('active', button.getAttribute('data-lang') === lang);
+                    });
+                }
+
+                function applyLanguage(lang) {
+                    localStorage.setItem(STORAGE_KEY, lang);
+                    markActiveButton(lang);
+                    document.documentElement.setAttribute('lang', lang === 'bn' ? 'bn' : 'en');
+                    setTranslateCookie(lang === 'bn' ? '/auto/bn' : '/auto/en');
+                    window.location.reload();
+                }
+
+                document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const lang = button.getAttribute('data-lang') === 'bn' ? 'bn' : 'en';
+                        applyLanguage(lang);
+                    });
+                });
+
+                markActiveButton(getSavedLanguage());
+                if (syncSavedLanguageCookie()) {
+                    return;
+                }
+
+                window.googleTranslateElementInit = function () {
+                    try {
+                        new google.translate.TranslateElement(
+                            {
+                                pageLanguage: 'en',
+                                includedLanguages: 'en,bn',
+                                autoDisplay: false,
+                            },
+                            'google_translate_element'
+                        );
+                    } catch (error) {
+                        // Keep UI functional even if translate script fails.
+                    }
+                };
+            })();
+        </script>
+        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
         @stack('scripts')
     </body>
 </html>
