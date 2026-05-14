@@ -410,7 +410,7 @@ $config = App\Models\ServerConfig::first();
     $instituteName = !empty($config?->instituteName) ? $config->instituteName : 'Jahanara Ayub Academy';
     $heroImage = !empty($data?->heroImg)
         ? config('app.url') . '/public/upload/image/cultivation/' . $data->heroImg
-        : asset('public/educavo/assets/images/breadcrumbs/2.jpg');
+        : asset('public/cultivation/assets/images/breadcrumbs/2.jpg');
 
     $aboutEstYear = '';
     if (!empty($data?->establishDate)) {
@@ -431,7 +431,7 @@ $config = App\Models\ServerConfig::first();
 @endphp
 
 <div class="col-12">
-    <section class="about-pro-breadcrumb" style="background-image: url('{{ asset('public/educavo/assets/images/breadcrumbs/2.jpg') }}');">
+    <section class="about-pro-breadcrumb" style="background-image: url('{{ asset('public/cultivation/assets/images/breadcrumbs/2.jpg') }}');">
         <div class="about-pro-kicker">Institute Profile</div>
         <h1>{{ $instituteName }}</h1>
         <p>{{ $headline }}</p>

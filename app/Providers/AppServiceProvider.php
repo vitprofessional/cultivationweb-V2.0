@@ -33,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
 
             $viewData = $view->getData();
             $layout = $viewData['frontendLayout']
-                ?? session('frontend_layout', config('frontend.layout', 'frontend.educavo-v2.page'));
+                ?? session('frontend_layout', config('frontend.layout', 'frontend.cultivation-v2.page'));
 
             if ($speechLabels === null) {
                 $speechLabels = [
@@ -50,3 +50,5 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 }
+
+

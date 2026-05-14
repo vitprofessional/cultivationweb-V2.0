@@ -92,7 +92,7 @@ class FrontController extends Controller
          $notice  =   Notice::orderBy('id','desc')->limit(5)->get();
          $slider = HomeSlider::orderBy('ID','DESC')->limit(5)->get();
 
-        return view('frontend.educavo-v2.homepage', [
+        return view('frontend.cultivation-v2.homepage', [
             'insData' => $insData,
             'noticeBoard' => $notice,
             'sliderData' => $slider,
@@ -650,3 +650,5 @@ class FrontController extends Controller
     }
     
 }
+
+
