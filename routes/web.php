@@ -183,6 +183,11 @@ Route::get('/notices', [
     'allNotices'
 ])->name('allNotices');
 
+Route::get('/notices/{notice}', [
+    FrontController::class,
+    'showNotice'
+])->name('notice.show');
+
 Route::post('placementCell/save',[
     FrontController::class ,
     'savePlacementCell'

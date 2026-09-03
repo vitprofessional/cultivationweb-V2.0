@@ -1,6 +1,8 @@
 @php
     if (!isset($config)) {
-        $config = App\Models\ServerConfig::first();
+        $config = \Illuminate\Support\Facades\Schema::hasTable((new App\Models\ServerConfig())->getTable())
+            ? App\Models\ServerConfig::first()
+            : null;
     }
 @endphp
 
@@ -429,35 +431,36 @@
     <div class="footer-info-strip">
         <div class="container">
             <div class="row y-middle">
-                <div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
+                @if(!empty($config?->address))<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
                     <div class="fi-card">
                         <div class="fi-icon"><i class="fa fa-map-marker"></i></div>
                         <div class="fi-body">
                             <h6>Address</h6>
-                            <p>{{ !empty($config?->address) ? $config->address : 'Dhaka, Bangladesh' }}</p>
+                            <p>{{ $config->address }}</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
+                </div>@endif
+                @if(!empty($config?->officeMobile) || !empty($config?->officeEmail))<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
                     <div class="fi-card">
                         <div class="fi-icon"><i class="fa fa-phone"></i></div>
                         <div class="fi-body">
                             <h6>Phone &amp; Email</h6>
-                            <a href="tel:{{ !empty($config?->officeMobile) ? preg_replace('/\s+/', '', $config->officeMobile) : '+8801700000000' }}">{{ !empty($config?->officeMobile) ? $config->officeMobile : '+8801700000000' }}</a><br>
-                            <a href="mailto:{{ !empty($config?->officeEmail) ? $config->officeEmail : 'info@cultivation.local' }}">{{ !empty($config?->officeEmail) ? $config->officeEmail : 'info@cultivation.local' }}</a>
+                            @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
+                            @if(!empty($config?->officeMobile) && !empty($config?->officeEmail))<br>@endif
+                            @if(!empty($config?->officeEmail))<a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>@endif
                         </div>
                     </div>
-                </div>
-                <div class="col-lg-4 col-md-6">
+                </div>@endif
+                @if(!empty($config?->address))<div class="col-lg-4 col-md-6">
                     <div class="fi-card">
                         <div class="fi-icon"><i class="fa fa-globe"></i></div>
                         <div class="fi-body">
                             <h6>Find Us Online</h6>
                             <a href="{{ url('/') }}">{{ url('/') }}</a><br>
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode(!empty($config?->address) ? $config->address : 'Dhaka, Bangladesh') }}" target="_blank" rel="noopener">Open in Google Maps &rarr;</a>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($config->address) }}" target="_blank" rel="noopener noreferrer">Open in Google Maps &rarr;</a>
                         </div>
                     </div>
-                </div>
+                </div>@endif
             </div>
         </div>
     </div>
@@ -479,12 +482,6 @@
                                 {{ !empty($config?->instituteName) ? $config->instituteName : 'Our Institute' }} is committed to quality education, character building and academic excellence.
                             </p>
                             <p class="footer-about-note">Stay connected for notices, updates, and official announcements.</p>
-                            <ul class="footer-social footer-social-inline">
-                                <li><a href="#" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
-                                <li><a href="#" aria-label="Twitter"><i class="fa fa-twitter"></i></a></li>
-                                <li><a href="#" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
-                                <li><a href="#" aria-label="YouTube"><i class="fa fa-youtube-play"></i></a></li>
-                            </ul>
                         </div>
                     </div>
 
@@ -494,18 +491,18 @@
                         <ul class="address-widget footer-contact-list" style="margin-top:0">
                             <li>
                                 <i class="flaticon-location"></i>
-                                <div class="desc">{{ !empty($config?->address) ? $config->address : 'Dhaka, Bangladesh' }}</div>
+                                <div class="desc">{{ $config?->address }}</div>
                             </li>
                             <li>
                                 <i class="flaticon-call"></i>
                                 <div class="desc">
-                                    <a href="tel:{{ !empty($config?->officeMobile) ? preg_replace('/\s+/', '', $config->officeMobile) : '+8801700000000' }}">{{ !empty($config?->officeMobile) ? $config->officeMobile : '+8801700000000' }}</a>
+                                    @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
                                 </div>
                             </li>
                             <li>
                                 <i class="flaticon-email"></i>
                                 <div class="desc">
-                                    <a href="mailto:{{ !empty($config?->officeEmail) ? $config->officeEmail : 'info@cultivation.local' }}">{{ !empty($config?->officeEmail) ? $config->officeEmail : 'info@cultivation.local' }}</a>
+                                    @if(!empty($config?->officeEmail))<a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>@endif
                                 </div>
                             </li>
                             <li>
@@ -538,8 +535,7 @@
                     <h4 class="widget-title">Admission &amp; Student</h4>
                     <ul class="site-map">
                         <li class="footer-link-group-label">Admission</li>
-                        <li><a href="{{ route('supportPage') }}"><i class="fa fa-angle-right"></i> Honors Admission</a></li>
-                        <li><a href="{{ route('supportPage') }}"><i class="fa fa-angle-right"></i> XI Class Admission</a></li>
+                        <li><a href="{{ route('supportPage') }}"><i class="fa fa-angle-right"></i> Admission Information</a></li>
                         <li class="footer-link-group-label">Student Corner</li>
                         <li><a href="{{ route('student') }}"><i class="fa fa-angle-right"></i> Student Database</a></li>
                         <li><a href="{{ route('placementCellView') }}"><i class="fa fa-angle-right"></i> Placement Cell</a></li>
@@ -560,7 +556,7 @@
                         <li><a href="{{ route('newSyllabus') }}"><i class="fa fa-angle-right"></i> Syllabus</a></li>
                         <li><a href="{{ route('newClassSchedule') }}"><i class="fa fa-angle-right"></i> Class Routine</a></li>
                         <li><a href="{{ route('newExamSchedule') }}"><i class="fa fa-angle-right"></i> Exam Routine</a></li>
-                        <li><a href="{{ route('newSemister') }}"><i class="fa fa-angle-right"></i> Semister Plan</a></li>
+                        <li><a href="{{ route('newSemister') }}"><i class="fa fa-angle-right"></i> Semester Plan</a></li>
                         <li><a href="{{ route('internalResult') }}"><i class="fa fa-angle-right"></i> Internal Result</a></li>
                     </ul>
                 </div>

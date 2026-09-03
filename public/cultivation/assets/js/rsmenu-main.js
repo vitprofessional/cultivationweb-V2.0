@@ -5,7 +5,7 @@ $(document).ready(function () {
 	//Defines variables	
 	var arrow_up = '<i class="fa fa-angle-up" aria-hidden="true"></i>';
 	var arrow_down = '<i class="fa fa-angle-down" aria-hidden="true"></i>';
-	var arrow_span = '<span class="rs-menu-parent">' + arrow_down + '</span>';
+	var arrow_span = '<button type="button" class="rs-menu-parent" aria-label="Toggle submenu" aria-expanded="false">' + arrow_down + '</button>';
 	var close_button = '<div class="sub-menu-close"><i class="fa fa-times" aria-hidden="true"></i>Close</div>';
 	
 	//Insert all arrow down span element
@@ -20,14 +20,14 @@ $(document).ready(function () {
 	/*-----------------------------------------------------------------------------------*/
 	/*	OPEN SUB MENU FUNCTION
 	/*-----------------------------------------------------------------------------------*/
-	$('span.rs-menu-parent').on('click', function(e){
+	$('button.rs-menu-parent').on('click', function(e){
 		e.preventDefault();
 		
 		var t = $(this);
 		var menu = t.siblings('ul');	
 		var parent = t.parent('li');
 		var siblings = parent.siblings('li');
-		var arrow_target = 'span.rs-menu-parent';
+		var arrow_target = 'button.rs-menu-parent';
 		
 		if (menu.hasClass('sub-menu')) { 
 			var menu = t.siblings('ul.sub-menu'); 
@@ -37,10 +37,10 @@ $(document).ready(function () {
 		
 		if (menu.hasClass('visible')) {
 			setTimeout(function() { menu.removeClass('visible'); }, 10);	
-			t.html(arrow_down);		
+			t.html(arrow_down).attr('aria-expanded', 'false');
 		} else {
 			setTimeout(function() { menu.addClass('visible'); }, 10);
-			t.html(arrow_up);
+			t.html(arrow_up).attr('aria-expanded', 'true');
 		}
 			
 		/*-------------------------------------*/
@@ -61,14 +61,26 @@ $(document).ready(function () {
 		/*-------------------------------------*/	
 		
 		//Insert arrow down in sub menus
-		parent.children('ul').find(arrow_target).html(arrow_down);
+		parent.children('ul').find(arrow_target).html(arrow_down).attr('aria-expanded', 'false');
 		
 		//Insert arrow down in sub menus parents
-		siblings.children(arrow_target).html(arrow_down);
+		siblings.children(arrow_target).html(arrow_down).attr('aria-expanded', 'false');
 		
 		//Insert arrow down in sub menus child parents 
-		siblings.find(arrow_target).html(arrow_down);
+		siblings.find(arrow_target).html(arrow_down).attr('aria-expanded', 'false');
 	}); 
+
+	$('.rs-menu-link').on('click keydown', function(e){
+		if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') {
+			return;
+		}
+		e.preventDefault();
+		var control = $(this).siblings('button.rs-menu-parent');
+		if (control.length) {
+			control.trigger('click');
+			$(this).attr('aria-expanded', control.attr('aria-expanded'));
+		}
+	});
 	
 	/*-----------------------------------------------------------------------------------*/
 	/*	CLOSE BUTTON
@@ -84,15 +96,15 @@ $(document).ready(function () {
 	/*-----------------------------------------------------------------------------------*/
 	/*	EFFECTS ON MENU TOGGLE
 	/*-----------------------------------------------------------------------------------*/ 
-	$('a.rs-menu-toggle').on('click', function(e){
+	$('.rs-menu-toggle').on('click', function(e){
 		e.preventDefault();	
 		var menu_height = $('.rs-menu ul').height();
 		
 		if ($(this).hasClass('rs-menu-toggle-open')) {		
-			$(this).removeClass('rs-menu-toggle-open').addClass('rs-menu-toggle-close');
+			$(this).removeClass('rs-menu-toggle-open').addClass('rs-menu-toggle-close').attr('aria-expanded', 'false');
 			$('.rs-menu').animate({height:'0px'},{queue:false, duration:300}).addClass('rs-menu-close');	
 		} else {			
-			$(this).removeClass('rs-menu-toggle-close').addClass('rs-menu-toggle-open');
+			$(this).removeClass('rs-menu-toggle-close').addClass('rs-menu-toggle-open').attr('aria-expanded', 'true');
 			$('.rs-menu').animate({height:menu_height},{queue:false, duration:300}).removeClass('rs-menu-close');
 		}
 	});	
@@ -110,7 +122,7 @@ $(document).ready(function () {
 	$(window).resize( function(){    
 		if(window_width !== $(window).width()){		
 			$('.visible').removeClass('visible');	
-			$('.rs-menu-toggle').removeClass('rs-menu-toggle-open').addClass( "rs-menu-toggle-close" );	
+			$('.rs-menu-toggle').removeClass('rs-menu-toggle-open').addClass( "rs-menu-toggle-close" ).attr('aria-expanded', 'false');
 			$('.rs-menu').css( "height", "0" ).addClass( "rs-menu-close" );		
 		
 			$('span.rs-menu-parent').html( arrow_down );		

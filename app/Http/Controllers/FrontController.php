@@ -10,6 +10,7 @@ use App\Models\StudentManagement;
 use App\Models\StaffManagement;
 use App\Models\TeacherManagement;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use App\Models\CultivationAdmin;
 use App\Models\HomeInfo;
 use App\Models\HomeSlider;
@@ -87,16 +88,25 @@ class FrontController extends Controller
 
 
     public function homePage(){
-         $photo  =  PhotoGallery::all();
-         $insData  =   InstituteDetails::first();
-         $notice  =   Notice::orderBy('id','desc')->limit(5)->get();
-         $slider = HomeSlider::orderBy('ID','DESC')->limit(5)->get();
+            $photo = Schema::hasTable('photo_galleries') ? PhotoGallery::all() : collect();
+            $insData = Schema::hasTable('institute_details') ? InstituteDetails::first() : null;
+            $notice = Schema::hasTable('notices') ? Notice::orderBy('id','desc')->limit(5)->get() : collect();
+            $slider = Schema::hasTable('home_sliders') ? HomeSlider::orderBy('ID','DESC')->limit(5)->get() : collect();
+         $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::first() : null;
+         $principalSpeech = Schema::hasTable((new PrincipalSpeech())->getTable()) ? PrincipalSpeech::first() : null;
+         $studentCount = Schema::hasTable((new StudentManagement())->getTable()) ? StudentManagement::count() : 0;
+         $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
+         $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
 
         return view('frontend.cultivation-v2.homepage', [
             'insData' => $insData,
             'noticeBoard' => $notice,
             'sliderData' => $slider,
             'gallery' => $photo,
+            'config' => $config,
+            'principalSpeechModel' => $principalSpeech,
+            'studentCount' => $studentCount,
+            'teacherCount' => $teacherCount + $staffCount,
         ]);
     }
 
@@ -115,6 +125,11 @@ class FrontController extends Controller
         // Paginate for performance if large dataset
         $notices = Notice::orderBy('id','desc')->paginate(15);
         return view('frontend.notice.all',[ 'notices' => $notices ]);
+    }
+
+    public function showNotice(Notice $notice)
+    {
+        return view('frontend.notice.show', ['notice' => $notice]);
     }
 
     

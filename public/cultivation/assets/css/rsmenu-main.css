@@ -433,8 +433,8 @@ Version: 1.0.0
 	}
 	
 	/* Remove arrows if not in mobile */
-	.nav-menu .menu-item-has-children > span, 
-	.nav-menu .rs-mega-menu > span {
+	.nav-menu .menu-item-has-children > .rs-menu-parent,
+	.nav-menu .rs-mega-menu > .rs-menu-parent {
 		display:none;
 	}
 	
@@ -646,7 +646,7 @@ Version: 1.0.0
 		padding: 10px 15px;
 	}
 
-	.nav-menu > .menu-item-has-children > span.rs-menu-parent {		
+	.nav-menu > .menu-item-has-children > .rs-menu-parent {
 		display: block;
 		position: absolute;
 		right: 0;
@@ -657,12 +657,13 @@ Version: 1.0.0
 		text-align: center;
 		cursor:pointer;
 		background: #ddd;
+		border: 0;
 		z-index: 9;
 		
 		/* Remove the blue Webkit background when element is tapped */
 		-webkit-tap-highlight-color:rgba(0,0,0,0);    
 	}	
-	.nav-menu > .menu-item-has-children .sub-menu .menu-item-has-children span.rs-menu-parent {		
+	.nav-menu > .menu-item-has-children .sub-menu .menu-item-has-children .rs-menu-parent {
 		display: block;
 		position: absolute;
 		background: #ddd;
@@ -678,7 +679,7 @@ Version: 1.0.0
 		/* Remove the blue Webkit background when element is tapped */
 		-webkit-tap-highlight-color:rgba(0,0,0,0);    
 	}
-	.nav-menu span.rs-menu-parent i { 
+	.nav-menu .rs-menu-parent i {
 		margin:0;
 	}
 

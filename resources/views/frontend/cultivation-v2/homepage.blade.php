@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     @php
-        $config = App\Models\ServerConfig::first();
-        $principalSpeechModel = App\Models\PrincipalSpeech::first();
-        $studentCount = App\Models\StudentManagement::count();
-        $teacherCount = App\Models\TeacherManagement::count() + App\Models\StaffManagement::count();
-        $foundedYear = !empty($config?->foundedYear) ? $config->foundedYear : '1997';
+        $config = $config ?? null;
+        $principalSpeechModel = $principalSpeechModel ?? null;
+        $studentCount = $studentCount ?? 0;
+        $teacherCount = $teacherCount ?? 0;
+        $institutionName = trim((string) ($config?->instituteName ?? ''));
+        $foundedYear = !empty($config?->foundedYear) ? $config->foundedYear : null;
         $safeGallery = $gallery ?? collect();
         $firstImage = $safeGallery->get(0);
         $secondImage = $safeGallery->get(1);
@@ -37,27 +38,41 @@
             return asset($fallback);
         };
 
-        $sliderItems = ($sliderData ?? collect())->take(5);
+        $sliderItems = ($sliderData ?? collect())
+            ->filter(fn ($slide) => !empty($slide->headLine) || !empty($slide->detail) || !empty($slide->avatar))
+            ->take(5);
         if ($sliderItems->count() === 0) {
             $sliderItems = collect([
-                (object) ['headLine' => 'World Leading University', 'detail' => 'Enter to learn and leave to serve', 'avatar' => ''],
+                (object) ['headLine' => $institutionName, 'detail' => '', 'avatar' => ''],
             ]);
         }
 
-        $principalName = !empty($config?->principalName) ? $config->principalName : 'Engr. Abu Yousuf';
-        $principalRole = !empty($config?->principalDesignation) ? $config->principalDesignation : 'Principal';
+        $principalName = !empty($config?->principalName) ? $config->principalName : null;
+        $principalRole = !empty($config?->principalDesignation) ? $config->principalDesignation : null;
         $principalLead = !empty($config?->principalImportantSpeech)
             ? $config->principalImportantSpeech
-            : (!empty($principalSpeechModel?->importantSpeech) ? $principalSpeechModel->importantSpeech : 'We want to build good students as well as good people.');
+            : ($principalSpeechModel?->importantSpeech ?? null);
         $principalBody = !empty($config?->principalGeneralSpeech)
             ? $config->principalGeneralSpeech
-            : (!empty($principalSpeechModel?->generalSpeech) ? $principalSpeechModel->generalSpeech : 'Our institution is committed to quality education and character building through discipline, dedication and innovation.');
-        $principalAvatar = !empty($config?->avatar)
-            ? url('/public/upload/image/cultivation/' . rawurlencode(basename($config->avatar)))
+            : ($principalSpeechModel?->generalSpeech ?? null);
+        $principalAvatarFile = !empty($config?->avatar) ? basename((string) $config->avatar) : null;
+        $principalAvatar = $principalAvatarFile && file_exists(public_path('upload/image/cultivation/' . $principalAvatarFile))
+            ? url('/public/upload/image/cultivation/' . rawurlencode($principalAvatarFile))
             : asset('public/avatar.png');
+        $hasLeadershipContent = filled($principalName) || filled($principalRole) || filled($principalLead) || filled($principalBody);
+        $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
+            ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
+            : asset('public/logo.png');
+        $pageTitle = $institutionName ?: 'Institution Website';
+        $pageDescription = $institutionName ? $institutionName . ' official website.' : 'Official institution website.';
     @endphp
 
-    <title>{{ !empty($config?->instituteName) ? $config->instituteName : 'Cultivation High School' }}</title>
+    <title>{{ $pageTitle }}</title>
+    <meta name="description" content="{{ $pageDescription }}">
+    <link rel="canonical" href="{{ url('/') }}">
+    <meta property="og:title" content="{{ $pageTitle }}">
+    <meta property="og:description" content="{{ $pageDescription }}">
+    <meta property="og:image" content="{{ $ogImage }}">
 
     <link rel="apple-touch-icon" href="{{ asset('public/cultivation/apple-touch-icon.html') }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('public/cultivation/assets/images/fav.png') }}">
@@ -83,6 +98,27 @@
             background-size: cover;
             background-repeat: no-repeat;
             padding: 25px !important;
+        }
+
+        .visually-hidden-page-title {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
         }
 
         .rs-slider.style1 .slider-content::before {
@@ -1101,20 +1137,25 @@
     @include('frontend.cultivation-v2.partials._header')
 
     <div class="main-content">
+        <h1 class="visually-hidden-page-title">{{ $pageTitle }}</h1>
         <div class="rs-slider style1">
-            <div class="rs-carousel owl-carousel" data-loop="true" data-items="1" data-margin="0" data-autoplay="true" data-hoverpause="true" data-autoplay-timeout="5000" data-smart-speed="800" data-dots="false" data-nav="false" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="false" data-mobile-device-dots="false" data-ipad-device="1" data-ipad-device-nav="false" data-ipad-device-dots="false" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="false" data-md-device="1" data-md-device-nav="true" data-md-device-dots="false">
+            <div class="rs-carousel owl-carousel" data-loop="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-items="1" data-margin="0" data-autoplay="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-hoverpause="true" data-autoplay-timeout="5000" data-smart-speed="800" data-dots="false" data-nav="false" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="false" data-mobile-device-dots="false" data-ipad-device="1" data-ipad-device-nav="false" data-ipad-device-dots="false" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="false" data-md-device="1" data-md-device-nav="true" data-md-device-dots="false">
                 @foreach($sliderItems as $slide)
                     @php
                         $slideImage = !empty($slide->avatar)
                             ? url('/public/upload/image/webHomepage/' . rawurlencode(basename($slide->avatar)))
                             : asset('public/cultivation/assets/images/slider/h2-1.jpg');
-                        $slideHeading = !empty($slide->headLine) ? $slide->headLine : 'World Leading University';
-                        $slideDetail = !empty($slide->detail) ? $slide->detail : (!empty($config?->instituteName) ? $config->instituteName : 'Cultivation University');
+                        $slideHeading = trim((string) ($slide->headLine ?? ''));
+                        $slideDetail = trim((string) ($slide->detail ?? ''));
                     @endphp
                     <div class="slider-content" style="background-image:url('{{ $slideImage }}');">
                         <div class="container">
-                            <div class="sl-sub-title white-color wow bounceInLeft" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
-                            <h1 class="sl-title white-color wow fadeInRight" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideDetail }}</h1>
+                            @if($slideHeading)
+                                <div class="sl-sub-title white-color wow bounceInLeft" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
+                            @endif
+                            @if($slideDetail)
+                                <div class="sl-title white-color wow fadeInRight" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideDetail }}</div>
+                            @endif
                             <div class="sl-btn wow fadeInUp" data-wow-delay="900ms" data-wow-duration="2000ms">
                                 <a class="readon2 banner-style" href="{{ route('institutePage') }}">Discover More</a>
                             </div>
@@ -1149,7 +1190,7 @@
                         <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
                             <img src="{{ asset('public/cultivation/assets/images/services/icons/3.png') }}" alt="">
-                            <h4 class="title"><a href="{{ route('newExamSchedule') }}">Academics</a></h4>
+                            <h4 class="title"><a href="{{ route('newExamSchedule') }}">Exam Routine</a></h4>
                         </div>
                     </div>
                 </div>
@@ -1181,26 +1222,28 @@
                         </div>
                     </div>
                     <div class="col-lg-7 lg-pl-0 ml--25 md-ml-0">
+                        @if($studentCount > 0 || $teacherCount > 0 || $foundedYear)
                         <div class="row rs-counter couter-area mb-40">
-                            <div class="col-md-4">
+                            @if($studentCount > 0)<div class="col-md-4">
                                 <div class="counter-item one">
                                     <h2 class="number">{{ $studentCount }}</h2>
                                     <h4 class="title mb-0">Students</h4>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
+                            </div>@endif
+                            @if($teacherCount > 0)<div class="col-md-4">
                                 <div class="counter-item two">
                                     <h2 class="number">{{ $teacherCount }}</h2>
                                     <h4 class="title mb-0">Teacher & Staff</h4>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
+                            </div>@endif
+                            @if($foundedYear)<div class="col-md-4">
                                 <div class="counter-item three">
                                     <h2 class="number">{{ $foundedYear }}</h2>
                                     <h4 class="title mb-0">Founded</h4>
                                 </div>
-                            </div>
+                            </div>@endif
                         </div>
+                        @endif
                         <div class="row grid-area">
                             <div class="col-md-6 sm-mb-30">
                                 <div class="image-grid">
@@ -1223,18 +1266,21 @@
                 <div class="principal-feature-card">
                     <div class="principal-feature-head">
                         <h3>Head of Institute Message</h3>
-                        <a class="readon2" href="{{ route('headOfInstituteMessagePage') }}">Read Full Message</a>
+                        @if($hasLeadershipContent)<a class="readon2" href="{{ route('headOfInstituteMessagePage') }}">Read Full Message</a>@endif
                     </div>
                     <div class="principal-feature-body">
-                        <div class="principal-meta">
+                        @if($hasLeadershipContent)<div class="principal-meta">
                             <img src="{{ $principalAvatar }}" alt="Principal avatar" onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
                             <div>
-                                <h4>{{ $principalName }}</h4>
-                                <p>{{ $principalRole }}</p>
+                                @if($principalName)<h4>{{ $principalName }}</h4>@endif
+                                @if($principalRole)<p>{{ $principalRole }}</p>@endif
                             </div>
                         </div>
-                        <blockquote>"{{ $principalLead }}"</blockquote>
-                        <p class="desc">{{ \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string)$principalBody))), 420, '...') }}</p>
+                        @if($principalLead)<blockquote>"{{ $principalLead }}"</blockquote>@endif
+                        @if($principalBody)<p class="desc">{{ \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string)$principalBody))), 420, '...') }}</p>@endif
+                        @else
+                            <p class="desc">A message from the head of institute will be published here.</p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -1261,7 +1307,7 @@
                                 </div>
                                 <h4 class="notice-title">{{ $ntc->headline }}</h4>
                                 <div class="notice-actions">
-                                    <a class="notice-btn" href="{{ route('allNotices') }}"><i class="fa fa-eye"></i> View</a>
+                                    <a class="notice-btn" href="{{ route('notice.show', $ntc) }}"><i class="fa fa-eye"></i> View</a>
                                     @if($fileHref)
                                         <a class="notice-btn" href="{{ $fileHref }}" download="{{ $fileName }}"><i class="fa fa-download"></i> File</a>
                                     @endif
@@ -1295,8 +1341,7 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/forms.jpg') }}" alt="Admission" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/2.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">Honors Admission</span></li>
-                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">XI Class Admission</span></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('supportPage') }}">Admission Information</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1327,7 +1372,7 @@
                                     <div class="info-card-row">
                                         <img src="{{ asset('public/img/academic.png') }}" alt="Academic" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/3.png') }}';">
                                         <ul>
-                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newSemister') }}">Semister Plan</a></li>
+                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('newSemister') }}">Semester Plan</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('newSyllabus') }}">Syllabus</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('newClassSchedule') }}">Class Routine</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('newExamSchedule') }}">Exam Routine</a></li>
@@ -1344,7 +1389,6 @@
                                         <img src="{{ asset('public/img/studentCorner.png') }}" alt="Student corner" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/1.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('student') }}">Student Database</a></li>
-                                            <li><i class="fa fa-angle-right"></i><span class="info-item-text">X-Student Archive</span></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('placementCellView') }}">Placement Cell</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('jobNeedyStudentView') }}">Job Seekers</a></li>
                                         </ul>
@@ -1362,16 +1406,16 @@
                 <div class="row y-middle">
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="sec-title wow fadeInUp" data-wow-delay="300ms" data-wow-duration="2000ms">
-                            <div class="sub-title primary">Academic categories</div>
-                            <h2 class="title mb-0">Successfully Complete A Degree at {{ !empty($config?->instituteShortName) ? $config->instituteShortName : 'Our Institute' }}</h2>
+                            <div class="sub-title primary">Academic Services</div>
+                            <h2 class="title mb-0">Academic Information</h2>
                         </div>
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
                             <img src="{{ $resolveGalleryImage($thirdImage, 'public/cultivation/assets/images/degrees/1.jpg') }}" alt="">
-                            <div class="title-part"><h4 class="title">Undergraduate</h4></div>
+                            <div class="title-part"><h4 class="title">Syllabus</h4></div>
                             <div class="content-part">
-                                <h4 class="title"><a href="{{ route('newSyllabus') }}">Undergraduate</a></h4>
+                                <h4 class="title"><a href="{{ route('newSyllabus') }}">Academic Syllabus</a></h4>
                                 <p class="desc">Course guidelines, syllabus and class planning are available with updated records.</p>
                                 <div class="btn-part"><a href="{{ route('newSyllabus') }}">Read More</a></div>
                             </div>
@@ -1380,7 +1424,7 @@
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
                             <img src="{{ $resolveGalleryImage($fourthImage, 'public/cultivation/assets/images/degrees/2.jpg') }}" alt="">
-                            <div class="title-part"><h4 class="title">Routine</h4></div>
+                            <div class="title-part"><h4 class="title">Class Routine</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('newClassSchedule') }}">Class Routine</a></h4>
                                 <p class="desc">Daily routine, exam schedule and session planning are maintained dynamically.</p>
@@ -1510,19 +1554,16 @@
                     <div class="row y-bottom">
                         <div class="col-lg-6 pb-50 md-pt-100 md-pb-100">
                             <div class="video-wrap">
-                                <a class="popup-videos" href="https://www.youtube.com/watch?v=atMUy_bPoQI">
-                                    <i class="fa fa-play"></i>
-                                    <h4 class="title mb-0">Take a Video Tour at {{ !empty($config?->instituteShortName) ? $config->instituteShortName : 'Institute' }}</h4>
-                                </a>
+                                <div class="popup-videos" aria-hidden="true"></div>
                             </div>
                         </div>
                         <div class="col-lg-6 pl-62 pt-134 pb-150 md-pl-15 md-pt-45 md-pb-50">
                             <div class="sec-title mb-40 wow fadeInUp" data-wow-delay="300ms" data-wow-duration="2000ms">
-                                <h2 class="title mb-16">Admission Open</h2>
-                                <div class="desc">Apply for admission and check the latest notices, routines and institutional information from the official portal.</div>
+                                <h2 class="title mb-16">Admission Information</h2>
+                                <div class="desc">Contact the institution for current admission information and requirements.</div>
                             </div>
                             <div class="btn-part wow fadeInUp" data-wow-delay="400ms" data-wow-duration="2000ms">
-                                <a class="readon2" href="{{ route('supportPage') }}">Apply Now</a>
+                                <a class="readon2" href="{{ route('supportPage') }}">Contact Us</a>
                             </div>
                         </div>
                     </div>

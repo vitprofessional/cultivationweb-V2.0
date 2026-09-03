@@ -1,7 +1,13 @@
 @php
     if (!isset($config)) {
-        $config = App\Models\ServerConfig::first();
+        $config = \Illuminate\Support\Facades\Schema::hasTable((new App\Models\ServerConfig())->getTable())
+            ? App\Models\ServerConfig::first()
+            : null;
     }
+    $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
+    $logoUrl = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
+        ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
+        : asset('public/logo.png');
 @endphp
 
 <style>
@@ -132,6 +138,24 @@
         letter-spacing: 0.2px;
     }
 
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link {
+        appearance: none;
+        background: transparent;
+        border: 0;
+        color: #273c66;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 90px;
+        padding: 0 12px;
+    }
+
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link:focus-visible,
+    body.home-style2 .menu-area .mobile-menu .rs-menu-toggle:focus-visible {
+        outline: 2px solid #21a7d0;
+        outline-offset: 3px;
+    }
+
     body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu {
         text-align: left;
     }
@@ -152,6 +176,10 @@
         right: 0;
     }
 
+    #loader {
+        pointer-events: none;
+    }
+
     @media (max-width: 1199px) {
         body.home-style2 .menu-area .logo-part img {
             max-width: 200px;
@@ -159,6 +187,12 @@
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
+            padding: 0 9px;
+            line-height: 86px;
+            font-size: 14px;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link {
             padding: 0 9px;
             line-height: 86px;
             font-size: 14px;
@@ -175,6 +209,24 @@
             max-width: 150px;
         }
 
+        body.home-style2 .menu-area .mobile-menu {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        body.home-style2 .menu-area .mobile-menu .rs-menu-toggle {
+            align-items: center;
+            display: inline-flex;
+            height: 48px;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            text-align: center;
+            width: 48px;
+        }
+
         body.home-style2 .menu-area .rs-menu ul.nav-menu {
             display: block;
         }
@@ -183,6 +235,14 @@
             padding: 10px 0;
             line-height: 1.5;
             color: #ffffff;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link {
+            width: calc(100% - 45px);
+            padding: 10px 0;
+            line-height: 1.5;
+            color: #ffffff;
+            text-align: left;
         }
     }
 </style>
@@ -202,24 +262,20 @@
                 <div class="row y-middle">
                     <div class="col-md-7">
                         <ul class="topbar-contact">
-                            <li>
+                            @if(!empty($config?->officeEmail))<li>
                                 <i class="flaticon-email"></i>
-                                <a href="mailto:{{ !empty($config?->officeEmail) ? $config->officeEmail : 'support@rstheme.com' }}">{{ !empty($config?->officeEmail) ? $config->officeEmail : 'support@rstheme.com' }}</a>
-                            </li>
-                            <li>
+                                <a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>
+                            </li>@endif
+                            @if(!empty($config?->officeMobile))<li>
                                 <i class="flaticon-call"></i>
-                                <a href="tel:{{ !empty($config?->officeMobile) ? preg_replace('/\s+/', '', $config->officeMobile) : '+8801700000000' }}">{{ !empty($config?->officeMobile) ? $config->officeMobile : '(+880) 1700000000' }}</a>
-                            </li>
+                                <a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>
+                            </li>@endif
                         </ul>
                     </div>
                     <div class="col-md-5 text-right">
                         <ul class="topbar-right">
-                            <li class="login-register">
-                                <i class="fa fa-sign-in"></i>
-                                <a href="#">Login</a>/<a href="#">Register</a>
-                            </li>
                             <li class="btn-part">
-                                <a class="apply-btn" href="{{ route('supportPage') }}">Apply Now</a>
+                                <a class="apply-btn" href="{{ route('supportPage') }}">Admission Information</a>
                             </li>
                             <li class="lang-switcher-item">
                                 <div class="site-lang-switcher-inline js-site-lang-switcher" role="group" aria-label="Language switcher">
@@ -240,11 +296,7 @@
                         <div class="logo-cat-wrap">
                             <div class="logo-part pr-90">
                                 <a class="dark-logo" href="{{ route('homePage') }}">
-                                    @if(!empty($config?->logo))
-                                        <img src="{{ url('/public/upload/image/cultivation/' . rawurlencode(basename($config->logo))) }}" alt="logo" onerror="this.onerror=null;this.src='{{ asset('public/logo.png') }}';">
-                                    @else
-                                        <img src="{{ asset('public/logoWhite.png') }}" alt="logo">
-                                    @endif
+                                    <img src="{{ $logoUrl }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institution logo' }}">
                                 </a>
                             </div>
                         </div>
@@ -253,15 +305,15 @@
                         <div class="rs-menu-area">
                             <div class="main-menu pr-90">
                                 <div class="mobile-menu">
-                                    <a class="rs-menu-toggle">
+                                    <button type="button" class="rs-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-navigation" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">
                                         <i class="fa fa-bars"></i>
-                                    </a>
+                                    </button>
                                 </div>
-                                <nav class="rs-menu">
+                                <nav id="primary-navigation" class="rs-menu" aria-label="Primary navigation">
                                     <ul class="nav-menu">
                                         <li><a href="{{ route('homePage') }}">Home</a></li>
                                         <li class="menu-item-has-children">
-                                            <a href="#">Institute</a>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Institute</button>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('institutePage') }}">About Us</a></li>
                                                 <li><a href="{{ route('headOfInstituteMessagePage') }}">Head of Institute Message</a></li>
@@ -273,22 +325,22 @@
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <a href="#">Academic</a>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Academic</button>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('newSyllabus') }}">Syllabus</a></li>
                                                 <li><a href="{{ route('newClassSchedule') }}">Class Routine</a></li>
                                                 <li><a href="{{ route('newExamSchedule') }}">Exam Routine</a></li>
-                                                <li><a href="{{ route('newSemister') }}">Semister Plan</a></li>
+                                                <li><a href="{{ route('newSemister') }}">Semester Plan</a></li>
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <a href="#">Result</a>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Result</button>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('internalResult') }}">Internal Result</a></li>
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <a href="#">Job Placement</a>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Job Placement</button>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('placementCellView') }}">Placement Cell</a></li>
                                                 <li><a href="{{ route('jobNeedyStudentView') }}">Needy Student</a></li>
@@ -296,7 +348,7 @@
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <a href="#">Gallery</a>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Gallery</button>
                                             <ul class="sub-menu">
                                                 <li><a href="{{ route('imagePage') }}">Photo Gallery</a></li>
                                                 <li><a href="{{ route('videoPage') }}">Video Gallery</a></li>
@@ -313,4 +365,45 @@
         </div>
     </header>
 </div>
+
+<script>
+    document.addEventListener('keydown', function (event) {
+        if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.rs-menu-toggle, .rs-menu-link')) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            event.target.click();
+        }
+    }, true);
+
+    document.addEventListener('click', function (event) {
+        const menuToggle = event.target.closest('.rs-menu-toggle');
+        if (menuToggle) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            const navigation = document.getElementById(menuToggle.getAttribute('aria-controls'));
+            const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
+            menuToggle.setAttribute('aria-expanded', String(!isOpen));
+            navigation.classList.toggle('rs-menu-close', isOpen);
+            navigation.style.height = isOpen ? '0px' : navigation.querySelector('.nav-menu').scrollHeight + 'px';
+            return;
+        }
+
+        const menuLink = event.target.closest('.rs-menu-link');
+        if (!menuLink) {
+            return;
+        }
+
+        event.preventDefault();
+        const submenu = menuLink.parentElement.querySelector(':scope > .sub-menu');
+        if (!submenu) {
+            return;
+        }
+        const isOpen = menuLink.getAttribute('aria-expanded') === 'true';
+        menuLink.setAttribute('aria-expanded', String(!isOpen));
+        submenu.classList.toggle('visible', !isOpen);
+        if (window.matchMedia('(min-width: 992px)').matches) {
+            submenu.style.display = isOpen ? '' : 'block';
+        }
+    }, true);
+</script>
 
