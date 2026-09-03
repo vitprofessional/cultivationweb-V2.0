@@ -4,6 +4,19 @@
             ? App\Models\ServerConfig::first()
             : null;
     }
+    $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
+        ? $config->officeEmail
+        : null;
+    $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
+    $footerLogo = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
+        ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
+        : asset('public/logoWhite.png');
+    $socialLinks = [
+        'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
+        'Twitter' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
+        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
+        'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
+    ];
 @endphp
 
 <style>
@@ -440,14 +453,14 @@
                         </div>
                     </div>
                 </div>@endif
-                @if(!empty($config?->officeMobile) || !empty($config?->officeEmail))<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
+                @if(!empty($config?->officeMobile) || $officeEmail)<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
                     <div class="fi-card">
                         <div class="fi-icon"><i class="fa fa-phone"></i></div>
                         <div class="fi-body">
                             <h6>Phone &amp; Email</h6>
                             @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
                             @if(!empty($config?->officeMobile) && !empty($config?->officeEmail))<br>@endif
-                            @if(!empty($config?->officeEmail))<a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>@endif
+                            @if($officeEmail)<a href="mailto:{{ $officeEmail }}">{{ $officeEmail }}</a>@endif
                         </div>
                     </div>
                 </div>@endif
@@ -455,8 +468,7 @@
                     <div class="fi-card">
                         <div class="fi-icon"><i class="fa fa-globe"></i></div>
                         <div class="fi-body">
-                            <h6>Find Us Online</h6>
-                            <a href="{{ url('/') }}">{{ url('/') }}</a><br>
+                            <h6>Location</h6>
                             <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($config->address) }}" target="_blank" rel="noopener noreferrer">Open in Google Maps &rarr;</a>
                         </div>
                     </div>
@@ -476,42 +488,38 @@
                         <div class="footer-about-shell">
                             <div class="footer-about-badge">Official School Portal</div>
                             <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="Home">
-                                <img src="{{ asset('public/logoWhite.png') }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}">
+                                <img src="{{ $footerLogo }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}">
                             </a>
-                            <p class="footer-about-desc">
-                                {{ !empty($config?->instituteName) ? $config->instituteName : 'Our Institute' }} is committed to quality education, character building and academic excellence.
-                            </p>
-                            <p class="footer-about-note">Stay connected for notices, updates, and official announcements.</p>
+                            @if(!empty($config?->instituteName))<p class="footer-about-desc">{{ $config->instituteName }}</p>@endif
+                            @if(collect($socialLinks)->contains(fn ($social) => filled($social['url'])))<ul class="footer-social footer-social-inline">
+                                @foreach($socialLinks as $label => $social)
+                                    @if(filled($social['url']))<li><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}"><i class="fa {{ $social['icon'] }}"></i></a></li>@endif
+                                @endforeach
+                            </ul>@endif
                         </div>
                     </div>
 
                     {{-- Contact Us below About --}}
                     <div class="footer-sub-section">
                         <h5 class="footer-sub-title">Contact Us</h5>
-                        <ul class="address-widget footer-contact-list" style="margin-top:0">
-                            <li>
+                        @if(!empty($config?->address) || !empty($config?->officeMobile) || $officeEmail)<ul class="address-widget footer-contact-list" style="margin-top:0">
+                            @if(!empty($config?->address))<li>
                                 <i class="flaticon-location"></i>
                                 <div class="desc">{{ $config?->address }}</div>
-                            </li>
-                            <li>
+                            </li>@endif
+                            @if(!empty($config?->officeMobile))<li>
                                 <i class="flaticon-call"></i>
                                 <div class="desc">
                                     @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
                                 </div>
-                            </li>
-                            <li>
+                            </li>@endif
+                            @if($officeEmail)<li>
                                 <i class="flaticon-email"></i>
                                 <div class="desc">
-                                    @if(!empty($config?->officeEmail))<a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>@endif
+                                    <a href="mailto:{{ $officeEmail }}">{{ $officeEmail }}</a>
                                 </div>
-                            </li>
-                            <li>
-                                <i class="fa fa-external-link" style="font-size:14px;color:#6b90c8"></i>
-                                <div class="desc">
-                                    <a href="{{ url('/') }}">{{ url('/') }}</a>
-                                </div>
-                            </li>
-                        </ul>
+                            </li>@endif
+                        </ul>@endif
                     </div>
                 </div>
 

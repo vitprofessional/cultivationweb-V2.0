@@ -10,17 +10,21 @@
         $principalSpeechModel = $principalSpeechModel ?? null;
         $studentCount = $studentCount ?? 0;
         $teacherCount = $teacherCount ?? 0;
+        $staffCount = $staffCount ?? 0;
+        $chairman = $chairman ?? null;
+        $facultyPreview = $facultyPreview ?? collect();
+        $teamCount = $teacherCount + $staffCount;
         $institutionName = trim((string) ($config?->instituteName ?? ''));
-        $foundedYear = !empty($config?->foundedYear) ? $config->foundedYear : null;
+        $foundedYear = !empty($config?->establishDate) ? $config->establishDate : null;
         $safeGallery = $gallery ?? collect();
         $firstImage = $safeGallery->get(0);
         $secondImage = $safeGallery->get(1);
         $thirdImage = $safeGallery->get(2);
         $fourthImage = $safeGallery->get(3);
 
-        $resolveGalleryImage = function ($item, $fallback) {
+        $resolveGalleryImage = function ($item) {
             if (!$item || empty($item->avatar)) {
-                return asset($fallback);
+                return null;
             }
 
             $file = rawurlencode(basename((string) $item->avatar));
@@ -35,11 +39,24 @@
                 return url('/public/upload/image/webGallery/' . $file);
             }
 
-            return asset($fallback);
+            return null;
+        };
+
+        $resolveHeroImage = function ($slide) {
+            if (!$slide || empty($slide->avatar)) {
+                return null;
+            }
+
+            $file = basename((string) $slide->avatar);
+            if (!file_exists(public_path('upload/image/webHomepage/' . $file))) {
+                return null;
+            }
+
+            return url('/public/upload/image/webHomepage/' . rawurlencode($file));
         };
 
         $sliderItems = ($sliderData ?? collect())
-            ->filter(fn ($slide) => !empty($slide->headLine) || !empty($slide->detail) || !empty($slide->avatar))
+            ->filter(fn ($slide) => filled($slide->headLine ?? null) && $resolveHeroImage($slide))
             ->take(5);
         if ($sliderItems->count() === 0) {
             $sliderItems = collect([
@@ -58,13 +75,70 @@
         $principalAvatarFile = !empty($config?->avatar) ? basename((string) $config->avatar) : null;
         $principalAvatar = $principalAvatarFile && file_exists(public_path('upload/image/cultivation/' . $principalAvatarFile))
             ? url('/public/upload/image/cultivation/' . rawurlencode($principalAvatarFile))
-            : asset('public/avatar.png');
+            : asset('public/avatar.jpeg');
         $hasLeadershipContent = filled($principalName) || filled($principalRole) || filled($principalLead) || filled($principalBody);
+         $chairmanName = trim((string) ($chairman->name ?? $chairman->fullName ?? ''));
+         $chairmanRole = trim((string) ($chairman->boardChairmanDesignation ?? $chairman->designation ?? ''));
+         $chairmanMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman->boardChairmanMessage ?? $chairman->message ?? ''))));
+        $chairmanAvatarFile = !empty($chairman?->avatar) ? basename((string) $chairman->avatar) : null;
+        $chairmanAvatar = $chairmanAvatarFile && file_exists(public_path('upload/image/cultivation/' . $chairmanAvatarFile))
+            ? url('/public/upload/image/cultivation/' . rawurlencode($chairmanAvatarFile))
+            : asset('public/avatar.jpeg');
+        $leadershipCards = collect([
+            filled($chairmanName) ? [
+                'label' => 'Chairman / President',
+                'name' => $chairmanName,
+                'role' => $chairmanRole,
+                'avatar' => $chairmanAvatar,
+                'message' => $chairmanMessage,
+                'route' => route('chairmanMessagePage'),
+            ] : null,
+            $hasLeadershipContent ? [
+                'label' => 'Head of Institution',
+                'name' => $principalName,
+                'role' => $principalRole,
+                'avatar' => $principalAvatar,
+                'message' => trim(preg_replace('/\s+/', ' ', strip_tags((string) ($principalLead ?: $principalBody)))),
+                'route' => route('headOfInstituteMessagePage'),
+            ] : null,
+        ])->filter()->values();
+        $leadershipColumnClass = $leadershipCards->count() === 1 ? 'col-lg-8 mx-auto' : 'col-lg-6';
+        $facultyLabel = match ($config?->institute_type) {
+            'college' => 'Lecturers / Teachers',
+            'school_college', 'school_and_college' => 'Teachers & Lecturers',
+            default => 'Faculty Members',
+        };
+        $resolveTeacherPhoto = function ($teacher) {
+            if (!$teacher || empty($teacher->avatar)) {
+                return asset('public/avatar.jpeg');
+            }
+
+            $file = basename((string) $teacher->avatar);
+            if (file_exists(public_path('upload/image/teacher/' . $file))) {
+                return url('/public/upload/image/teacher/' . rawurlencode($file));
+            }
+
+            return asset('public/avatar.jpeg');
+        };
         $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
             ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
             : asset('public/logo.png');
         $pageTitle = $institutionName ?: 'Institution Website';
         $pageDescription = $institutionName ? $institutionName . ' official website.' : 'Official institution website.';
+        $aboutHeading = trim((string) ($insData?->insHeadline ?? ''));
+        $aboutDetails = trim(strip_tags((string) ($insData?->insDetails ?? '')));
+        $hasAboutContent = filled($aboutHeading) || filled($aboutDetails);
+        $overviewImages = collect([$resolveGalleryImage($firstImage), $resolveGalleryImage($secondImage)])->filter()->values();
+        $overviewMetrics = collect([
+            ['value' => $studentCount, 'label' => 'Students', 'class' => 'one'],
+            ['value' => $teamCount, 'label' => 'Teacher & Staff', 'class' => 'two'],
+            ['value' => $foundedYear, 'label' => 'Established', 'class' => 'three'],
+        ])->filter(fn ($metric) => filled($metric['value']) && $metric['value'] > 0)->values();
+        $metricColumnClass = match ($overviewMetrics->count()) {
+            1 => 'col-md-12',
+            2 => 'col-md-6',
+            default => 'col-md-4',
+        };
     @endphp
 
     <title>{{ $pageTitle }}</title>
@@ -282,6 +356,168 @@
             background: #f3f8f9;
         }
 
+        .leadership-section-title {
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .leadership-section-title .sub-title {
+            margin-bottom: 8px;
+        }
+
+        .leadership-profile-card {
+            background: #ffffff;
+            border: 1px solid #dce9f4;
+            border-radius: 10px;
+            box-shadow: 0 10px 28px rgba(39, 60, 102, 0.08);
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .leadership-profile-head {
+            align-items: center;
+            background: linear-gradient(90deg, #112958, #273c66);
+            color: #ffffff;
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 20px;
+        }
+
+        .leadership-profile-head h3 {
+            color: #ffffff;
+            font-size: 19px;
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .leadership-role-label {
+            color: #21a7d0;
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .8px;
+            margin-bottom: 7px;
+            text-transform: uppercase;
+        }
+
+        .leadership-profile-body {
+            padding: 22px;
+        }
+
+        .leadership-meta {
+            align-items: center;
+            display: flex;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+
+        .leadership-meta img {
+            border: 4px solid #eaf3ff;
+            border-radius: 10px;
+            height: 124px;
+            object-fit: cover;
+            width: 98px;
+        }
+
+        .leadership-meta h4 {
+            font-size: 21px;
+            line-height: 1.25;
+            margin: 0 0 4px;
+        }
+
+        .leadership-meta p {
+            color: #5b6d87;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .leadership-profile-body .desc {
+            color: #4a5f7a;
+            line-height: 1.8;
+            margin: 0 0 16px;
+        }
+
+        .leadership-read-more {
+            color: #0f6d8b;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .faculty-preview-section {
+            background: #ffffff;
+        }
+
+        .faculty-preview-head {
+            align-items: flex-end;
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .faculty-preview-head h2 {
+            color: #102c63;
+            font-size: 34px;
+            line-height: 1.1;
+            margin: 0;
+        }
+
+        .faculty-preview-grid {
+            row-gap: 24px;
+        }
+
+        .faculty-card {
+            background: #ffffff;
+            border: 1px solid #dce9f4;
+            border-radius: 8px;
+            box-shadow: 0 10px 24px rgba(16, 44, 99, 0.08);
+            height: 100%;
+            overflow: hidden;
+            transition: transform .25s ease, box-shadow .25s ease;
+        }
+
+        .faculty-card:hover {
+            box-shadow: 0 16px 30px rgba(16, 44, 99, 0.14);
+            transform: translateY(-2px);
+        }
+
+        .faculty-photo-link {
+            background: #eef6fb;
+            display: block;
+            aspect-ratio: 4 / 5;
+            overflow: hidden;
+        }
+
+        .faculty-photo-link img {
+            display: block;
+            height: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .faculty-card-body {
+            padding: 16px;
+        }
+
+        .faculty-card-body h3 {
+            font-size: 18px;
+            line-height: 1.3;
+            margin: 0 0 6px;
+        }
+
+        .faculty-card-body h3 a {
+            color: #112958;
+        }
+
+        .faculty-designation {
+            color: #21a7d0;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.4;
+            margin: 0;
+        }
+
         .principal-feature-card {
             background: #ffffff;
             border-radius: 6px;
@@ -394,12 +630,12 @@
 
         .latest-notice-modern .notice-item {
             display: grid;
-            grid-template-columns: 78px minmax(0, 1fr) auto;
+            grid-template-columns: 76px minmax(0, 1fr) auto;
             align-items: center;
             gap: 12px;
             border: 1px solid #e2edf6;
-            border-radius: 10px;
-            padding: 8px 10px;
+            border-radius: 12px;
+            padding: 10px 12px;
             background: #fdfefe;
         }
 
@@ -431,14 +667,16 @@
         }
 
         .latest-notice-modern .notice-title {
-            font-size: 25px;
-            line-height: 1.2;
+            font-size: 19px;
+            line-height: 1.35;
             color: #132e63;
             font-weight: 700;
             margin: 0;
-            white-space: nowrap;
+            white-space: normal;
             overflow: hidden;
-            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .latest-notice-modern .notice-actions {
@@ -459,6 +697,28 @@
             align-items: center;
             gap: 8px;
             line-height: 1.1;
+        }
+
+        .latest-notice-modern .notice-file-pill {
+            border: 1px solid #b9d8e7;
+            border-radius: 999px;
+            color: #1c6d8c;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1;
+            padding: 6px 9px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .latest-notice-modern .notice-empty-state {
+            border: 1px dashed #c7dceb;
+            border-radius: 10px;
+            color: #4a6484;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 18px;
+            text-align: center;
         }
 
         .latest-notice-modern .notice-btn:hover {
@@ -711,6 +971,15 @@
         }
 
         .ref-photo-gallery .gallery-grid .gallery-tile:first-child {
+            grid-column: span 6;
+            grid-row: span 4;
+        }
+
+        .ref-photo-gallery .gallery-grid.gallery-count-1 .gallery-tile:first-child {
+            grid-column: span 12;
+        }
+
+        .ref-photo-gallery .gallery-grid.gallery-count-2 .gallery-tile {
             grid-column: span 6;
             grid-row: span 4;
         }
@@ -1142,9 +1411,7 @@
             <div class="rs-carousel owl-carousel" data-loop="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-items="1" data-margin="0" data-autoplay="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-hoverpause="true" data-autoplay-timeout="5000" data-smart-speed="800" data-dots="false" data-nav="false" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="false" data-mobile-device-dots="false" data-ipad-device="1" data-ipad-device-nav="false" data-ipad-device-dots="false" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="false" data-md-device="1" data-md-device-nav="true" data-md-device-dots="false">
                 @foreach($sliderItems as $slide)
                     @php
-                        $slideImage = !empty($slide->avatar)
-                            ? url('/public/upload/image/webHomepage/' . rawurlencode(basename($slide->avatar)))
-                            : asset('public/cultivation/assets/images/slider/h2-1.jpg');
+                        $slideImage = $resolveHeroImage($slide) ?: asset('public/cultivation/assets/images/slider/h2-1.jpg');
                         $slideHeading = trim((string) ($slide->headLine ?? ''));
                         $slideDetail = trim((string) ($slide->detail ?? ''));
                     @endphp
@@ -1206,85 +1473,85 @@
             </div>
         </div>
 
+        @if($hasAboutContent || $overviewMetrics->isNotEmpty() || $overviewImages->isNotEmpty())
         <div id="rs-about" class="rs-about style2 pt-72 pb-56 md-pt-54 md-pb-38">
             <div class="container">
                 <div class="row">
+                    @if($hasAboutContent)
                     <div class="col-lg-5 pr-65 md-pr-15 md-mb-50">
                         <div class="about-intro">
                             <div class="sec-title mb-40 wow fadeInUp" data-wow-delay="300ms" data-wow-duration="2000ms">
                                 <div class="sub-title primary">About {{ !empty($config?->instituteShortName) ? $config->instituteShortName : 'Institute' }}</div>
-                                <h2 class="title mb-21 white-color">{{ !empty($insData?->insHeadline) ? $insData->insHeadline : 'Welcome to our institute' }}</h2>
-                                <div class="desc big white-color">{{ \Illuminate\Support\Str::limit(strip_tags((string)($insData->insDetails ?? '')), 180, '...') }}</div>
+                                @if($aboutHeading)<h2 class="title mb-21 white-color">{{ $aboutHeading }}</h2>@endif
+                                @if($aboutDetails)<div class="desc big white-color">{{ \Illuminate\Support\Str::limit($aboutDetails, 180, '...') }}</div>@endif
                             </div>
                             <div class="btn-part wow fadeInUp" data-wow-delay="400ms" data-wow-duration="2000ms">
                                 <a class="readon2" href="{{ route('institutePage') }}">Read More</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-7 lg-pl-0 ml--25 md-ml-0">
-                        @if($studentCount > 0 || $teacherCount > 0 || $foundedYear)
+                    @endif
+                    <div class="{{ $hasAboutContent ? 'col-lg-7 lg-pl-0 ml--25 md-ml-0' : 'col-12' }}">
+                        @if($overviewMetrics->isNotEmpty())
                         <div class="row rs-counter couter-area mb-40">
-                            @if($studentCount > 0)<div class="col-md-4">
-                                <div class="counter-item one">
-                                    <h2 class="number">{{ $studentCount }}</h2>
-                                    <h4 class="title mb-0">Students</h4>
+                            @foreach($overviewMetrics as $metric)<div class="{{ $metricColumnClass }}">
+                                <div class="counter-item {{ $metric['class'] }}">
+                                    <h2 class="number">{{ $metric['value'] }}</h2>
+                                    <h4 class="title mb-0">{{ $metric['label'] }}</h4>
                                 </div>
-                            </div>@endif
-                            @if($teacherCount > 0)<div class="col-md-4">
-                                <div class="counter-item two">
-                                    <h2 class="number">{{ $teacherCount }}</h2>
-                                    <h4 class="title mb-0">Teacher & Staff</h4>
-                                </div>
-                            </div>@endif
-                            @if($foundedYear)<div class="col-md-4">
-                                <div class="counter-item three">
-                                    <h2 class="number">{{ $foundedYear }}</h2>
-                                    <h4 class="title mb-0">Founded</h4>
-                                </div>
-                            </div>@endif
+                            </div>@endforeach
                         </div>
                         @endif
+                        @if($overviewImages->isNotEmpty())
                         <div class="row grid-area">
-                            <div class="col-md-6 sm-mb-30">
+                            @foreach($overviewImages as $image)<div class="{{ $overviewImages->count() === 1 ? 'col-12' : 'col-md-6 sm-mb-30' }}">
                                 <div class="image-grid">
-                                    <img src="{{ $resolveGalleryImage($firstImage, 'public/cultivation/assets/images/about/style2/grid1.jpg') }}" alt="">
+                                    <img src="{{ $image }}" alt="">
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="image-grid">
-                                    <img src="{{ $resolveGalleryImage($secondImage, 'public/cultivation/assets/images/about/style2/grid2.jpg') }}" alt="">
-                                </div>
-                            </div>
+                            </div>@endforeach
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
+        @endif
 
+        @if($leadershipCards->isNotEmpty())
         <div class="principal-feature-section pt-10 pb-64 md-pt-10 md-pb-42">
             <div class="container">
-                <div class="principal-feature-card">
-                    <div class="principal-feature-head">
-                        <h3>Head of Institute Message</h3>
-                        @if($hasLeadershipContent)<a class="readon2" href="{{ route('headOfInstituteMessagePage') }}">Read Full Message</a>@endif
-                    </div>
-                    <div class="principal-feature-body">
-                        @if($hasLeadershipContent)<div class="principal-meta">
-                            <img src="{{ $principalAvatar }}" alt="Principal avatar" onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
-                            <div>
-                                @if($principalName)<h4>{{ $principalName }}</h4>@endif
-                                @if($principalRole)<p>{{ $principalRole }}</p>@endif
-                            </div>
+                <div class="leadership-section-title sec-title">
+                    <div class="sub-title primary">Institution Leadership</div>
+                    <h2 class="title mb-0">Leadership Messages</h2>
+                </div>
+                <div class="row">
+                    @foreach($leadershipCards as $leader)
+                        <div class="{{ $leadershipColumnClass }} mb-4 mb-lg-0">
+                            <article class="leadership-profile-card">
+                                <div class="leadership-profile-head">
+                                    <h3>{{ $leader['label'] }}</h3>
+                                </div>
+                                <div class="leadership-profile-body">
+                                    <div class="leadership-meta">
+                                        <img src="{{ $leader['avatar'] }}" alt="Photo of {{ $leader['name'] }}" loading="lazy">
+                                        <div>
+                                            <span class="leadership-role-label">{{ $leader['label'] }}</span>
+                                            <h4>{{ $leader['name'] }}</h4>
+                                            @if($leader['role'])<p>{{ $leader['role'] }}</p>@endif
+                                        </div>
+                                    </div>
+                                    @if($leader['message'])
+                                        <p class="desc">{{ \Illuminate\Support\Str::limit($leader['message'], 240, '...') }}</p>
+                                    @endif
+                                    <a class="leadership-read-more" href="{{ $leader['route'] }}" aria-label="Read full message for {{ $leader['name'] }}">Read Full Message <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
+                                </div>
+                            </article>
                         </div>
-                        @if($principalLead)<blockquote>"{{ $principalLead }}"</blockquote>@endif
-                        @if($principalBody)<p class="desc">{{ \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags((string)$principalBody))), 420, '...') }}</p>@endif
-                        @else
-                            <p class="desc">A message from the head of institute will be published here.</p>
-                        @endif
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="latest-notice-wrap md-pb-42">
             <div class="container">
@@ -1307,23 +1574,15 @@
                                 </div>
                                 <h4 class="notice-title">{{ $ntc->headline }}</h4>
                                 <div class="notice-actions">
-                                    <a class="notice-btn" href="{{ route('notice.show', $ntc) }}"><i class="fa fa-eye"></i> View</a>
+                                    @if($fileHref)<span class="notice-file-pill">File</span>@endif
+                                    <a class="notice-btn" href="{{ route('notice.show', $ntc) }}" aria-label="View notice: {{ $ntc->headline }}"><i class="fa fa-eye"></i> View</a>
                                     @if($fileHref)
                                         <a class="notice-btn" href="{{ $fileHref }}" download="{{ $fileName }}"><i class="fa fa-download"></i> File</a>
                                     @endif
                                 </div>
                             </div>
                         @empty
-                            <div class="notice-item">
-                                <div class="date-box">
-                                    <div class="day">--</div>
-                                    <div class="mon">---</div>
-                                </div>
-                                <h4 class="notice-title">No notices available right now.</h4>
-                                <div class="notice-actions">
-                                    <a class="notice-btn" href="{{ route('allNotices') }}"><i class="fa fa-eye"></i> View</a>
-                                </div>
-                            </div>
+                            <div class="notice-empty-state">No notices are currently published.</div>
                         @endforelse
                     </div>
                 </div>
@@ -1412,7 +1671,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ $resolveGalleryImage($thirdImage, 'public/cultivation/assets/images/degrees/1.jpg') }}" alt="">
+                            <img src="{{ $resolveGalleryImage($thirdImage) ?: asset('public/cultivation/assets/images/degrees/1.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Syllabus</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('newSyllabus') }}">Academic Syllabus</a></h4>
@@ -1423,7 +1682,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ $resolveGalleryImage($fourthImage, 'public/cultivation/assets/images/degrees/2.jpg') }}" alt="">
+                            <img src="{{ $resolveGalleryImage($fourthImage) ?: asset('public/cultivation/assets/images/degrees/2.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Class Routine</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('newClassSchedule') }}">Class Routine</a></h4>
@@ -1469,9 +1728,46 @@
             </div>
         </div>
 
+        @if(($facultyPreview ?? collect())->isNotEmpty())
+        <section class="faculty-preview-section pt-64 pb-64 md-pt-42 md-pb-42">
+            <div class="container">
+                <div class="faculty-preview-head">
+                    <div class="sec-title">
+                        <div class="sub-title primary">Our Faculty</div>
+                        <h2 class="title mb-0">{{ $facultyLabel }}</h2>
+                    </div>
+                    <a class="readon2" href="{{ route('teacherPage') }}">View All Teachers</a>
+                </div>
+                <div class="row faculty-preview-grid">
+                    @foreach($facultyPreview as $teacher)
+                        @php
+                            $teacherName = trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''));
+                            $teacherDesignation = \App\Models\TeacherManagement::getDesignationName($teacher->designation ?? $teacher->designation_id ?? null);
+                            $teacherPhoto = $resolveTeacherPhoto($teacher);
+                        @endphp
+                        @if($teacherName)
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                                <article class="faculty-card">
+                                    <a class="faculty-photo-link" href="{{ route('teacher.show', ['id' => $teacher->id]) }}" aria-label="View {{ $teacherName }} profile">
+                                        <img src="{{ $teacherPhoto }}" alt="Photo of {{ $teacherName }}" loading="lazy">
+                                    </a>
+                                    <div class="faculty-card-body">
+                                        <h3><a href="{{ route('teacher.show', ['id' => $teacher->id]) }}">{{ $teacherName }}</a></h3>
+                                        @if($teacherDesignation)<p class="faculty-designation">{{ $teacherDesignation }}</p>@endif
+                                    </div>
+                                </article>
+                            </div>
+                        @endif
+                    @endforeach
+                </div>
+            </div>
+        </section>
+        @endif
+
         @php
             $galleryPreviewItems = ($gallery ?? collect())->take(6);
         @endphp
+        @if($galleryPreviewItems->isNotEmpty())
         <div class="pt-64 pb-64 md-pt-42 md-pb-42">
             <div class="container">
                 <div class="ref-photo-gallery">
@@ -1484,48 +1780,33 @@
                         </div>
                         <a class="view-all-btn" href="{{ route('imagePage') }}">View All <i class="fa fa-arrow-right"></i></a>
                     </div>
-                    <div class="gallery-grid">
+                    <div class="gallery-grid gallery-count-{{ $galleryPreviewItems->count() }}">
                         @forelse($galleryPreviewItems as $img)
                             @php
-                                $galleryImageSrc = $resolveGalleryImage($img, 'public/cultivation/assets/images/blog/style2/1.jpg');
-                                $galleryTitle = trim((string) ($img->title ?? 'Gallery Image'));
-                                $galleryDesc = trim((string) ($img->description ?? 'Memorable moment captured from our campus activities.'));
+                                $galleryImageSrc = $resolveGalleryImage($img);
+                                $galleryTitle = trim((string) ($img->title ?? ''));
+                                $galleryDesc = trim((string) ($img->description ?? ''));
                                 $galleryDate = optional($img->created_at)->format('d M Y');
                             @endphp
-                            <button type="button"
+                            @if($galleryImageSrc)<button type="button"
                                class="gallery-tile gallery-modal-trigger"
                                data-image="{{ $galleryImageSrc }}"
                                data-title="{{ $galleryTitle }}"
                                data-description="{{ $galleryDesc }}"
                                data-date="{{ $galleryDate }}"
-                               aria-label="Open photo details">
-                                <img src="{{ $galleryImageSrc }}" alt="{{ $galleryTitle }}">
+                               aria-label="{{ $galleryTitle ? 'Open ' . $galleryTitle : 'Open photo details' }}">
+                                <img src="{{ $galleryImageSrc }}" alt="{{ $galleryTitle }}" loading="lazy">
                                 <span class="gallery-shade"></span>
                                 <span class="gallery-plus"><i class="fa fa-search-plus" aria-hidden="true"></i></span>
                                 <span class="gallery-mini-date">{{ $galleryDate }}</span>
-                                <span class="gallery-mini-title">{{ $galleryTitle }}</span>
-                            </button>
-                        @empty
-                            @for($i = 0; $i < 6; $i++)
-                                <button type="button"
-                                        class="gallery-tile gallery-modal-trigger"
-                                        data-image="{{ asset('public/cultivation/assets/images/blog/style2/1.jpg') }}"
-                                        data-title="Gallery Image"
-                                        data-description="Memorable moment captured from our campus activities."
-                                        data-date=""
-                                        aria-label="Open photo details">
-                                    <img src="{{ asset('public/cultivation/assets/images/blog/style2/1.jpg') }}" alt="Gallery image">
-                                    <span class="gallery-shade"></span>
-                                    <span class="gallery-plus"><i class="fa fa-search-plus" aria-hidden="true"></i></span>
-                                    <span class="gallery-mini-date"></span>
-                                    <span class="gallery-mini-title">Gallery Image</span>
-                                </button>
-                            @endfor
-                        @endforelse
+                                @if($galleryTitle)<span class="gallery-mini-title">{{ $galleryTitle }}</span>@endif
+                            </button>@endif
+                        @endforeach
                     </div>
                 </div>
             </div>
         </div>
+        @endif
 
         <div class="modal fade gallery-preview-modal" id="galleryPreviewModal" tabindex="-1" role="dialog" aria-labelledby="galleryPreviewTitle" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">

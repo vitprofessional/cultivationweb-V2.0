@@ -413,7 +413,7 @@ Version: 1.0.0
 /*-----------------------------------------------------------------------------------*/
 /*  MEDIA QUERIES
 /*-----------------------------------------------------------------------------------*/
-@media screen and (min-width: 992px) {
+@media screen and (min-width: 1101px) {
 	
 	/*RESPONSE MENU*/
 	.rs-menu {
@@ -430,6 +430,13 @@ Version: 1.0.0
 	.rs-menu ul ul.visible {
 		visibility: hidden;
     	opacity:0;
+	}
+
+	.rs-header .menu-area .main-menu .rs-menu ul.nav-menu > li > ul.sub-menu.visible {
+		visibility: visible !important;
+		opacity: 1 !important;
+		transform: scaleY(1) !important;
+		z-index: 1100 !important;
 	}
 	
 	/* Remove arrows if not in mobile */
@@ -551,7 +558,7 @@ Version: 1.0.0
 		
 }
 
-@media only screen and (max-width: 991px) {
+@media only screen and (max-width: 1100px) {
 	
 	.rs-header .menu-area .logo-area {
 	    position: absolute;

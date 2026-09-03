@@ -1211,6 +1211,15 @@
         -webkit-animation-fill-mode: both;
         animation-fill-mode: both;
     }
+
+    .full-width-header.header-style2 .rs-header .menu-area.menu-sticky.sticky {
+        background: #273c66 !important;
+    }
+
+    .full-width-header.header-style2 .rs-header .menu-area.menu-sticky.sticky .main-menu .rs-menu ul.nav-menu > li > a,
+    .full-width-header.header-style2 .rs-header .menu-area.menu-sticky.sticky .main-menu .rs-menu ul.nav-menu > li > .rs-menu-link {
+        color: #ffffff !important;
+    }
 }
 
 @media only screen and (max-width: 991px) {

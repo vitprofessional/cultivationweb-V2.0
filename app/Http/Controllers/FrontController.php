@@ -97,6 +97,23 @@ class FrontController extends Controller
          $studentCount = Schema::hasTable((new StudentManagement())->getTable()) ? StudentManagement::count() : 0;
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
          $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
+         $chairman = null;
+         if ($config && (!empty($config->boardChairmanName) || !empty($config->boardChairmanImg))) {
+             $chairman = (object) [
+                 'name' => $config->boardChairmanName,
+                 'designation' => 'Board Chairman',
+                 'avatar' => $config->boardChairmanImg,
+             ];
+         } elseif (Schema::hasTable((new ManagingComittee())->getTable())) {
+             $chairman = ManagingComittee::where('designation', 'like', '%Chair%')
+                 ->orWhere('designation', 'like', '%President%')
+                 ->orWhere('designation', 'like', '%সভাপতি%')
+                 ->orderBy('id')
+                 ->first();
+         }
+         $facultyPreview = Schema::hasTable((new TeacherManagement())->getTable())
+             ? TeacherManagement::orderByRaw('CAST(rank AS UNSIGNED) IS NULL, CAST(rank AS UNSIGNED), id')->limit(8)->get()
+             : collect();
 
         return view('frontend.cultivation-v2.homepage', [
             'insData' => $insData,
@@ -106,7 +123,10 @@ class FrontController extends Controller
             'config' => $config,
             'principalSpeechModel' => $principalSpeech,
             'studentCount' => $studentCount,
-            'teacherCount' => $teacherCount + $staffCount,
+            'teacherCount' => $teacherCount,
+            'staffCount' => $staffCount,
+            'chairman' => $chairman,
+            'facultyPreview' => $facultyPreview,
         ]);
     }
 
@@ -130,6 +150,32 @@ class FrontController extends Controller
     public function showNotice(Notice $notice)
     {
         return view('frontend.notice.show', ['notice' => $notice]);
+    }
+
+    public function chairmanMessagePage()
+    {
+        $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::orderBy('id','DESC')->first() : null;
+        $chairman = null;
+
+        if ($config && (!empty($config->boardChairmanName) || !empty($config->boardChairmanImg) || !empty($config->boardChairmanMessage))) {
+            $chairman = (object) [
+                'name' => $config->boardChairmanName,
+                'designation' => $config->boardChairmanDesignation ?? null,
+                'avatar' => $config->boardChairmanImg,
+                'message' => $config->boardChairmanMessage ?? null,
+            ];
+        } elseif (Schema::hasTable((new ManagingComittee())->getTable())) {
+            $chairman = ManagingComittee::where('designation', 'like', '%Chair%')
+                ->orWhere('designation', 'like', '%President%')
+                ->orWhere('designation', 'like', '%সভাপতি%')
+                ->orderBy('id')
+                ->first();
+        }
+
+        return view('frontend.institute.chairmanMessage', [
+            'config' => $config,
+            'chairman' => $chairman,
+        ]);
     }
 
     

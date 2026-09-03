@@ -129,6 +129,11 @@ Route::get('/head-of-institute-message', [
     'headOfInstituteMessagePage'
 ])->name('headOfInstituteMessagePage');
 
+Route::get('/chairman-message', [
+    FrontController::class,
+    'chairmanMessagePage'
+])->name('chairmanMessagePage');
+
 // Legacy URL/name kept for backward compatibility.
 Route::get('/principal-speech', function () {
     return redirect()->route('headOfInstituteMessagePage');

@@ -70,16 +70,56 @@ $(document).ready(function () {
 		siblings.find(arrow_target).html(arrow_down).attr('aria-expanded', 'false');
 	}); 
 
-	$('.rs-menu-link').on('click keydown', function(e){
-		if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') {
+	$('.rs-menu-link').on('click', function(e){
+		e.preventDefault();
+		e.stopImmediatePropagation();
+		var control = $(this);
+		var menu = control.siblings('ul.sub-menu');
+		var isOpen = control.attr('aria-expanded') === 'true';
+
+		control.closest('li').siblings('li').children('.rs-menu-link').attr('aria-expanded', 'false');
+		control.closest('li').siblings('li').children('ul.sub-menu').removeClass('visible').css({
+			display: '',
+			visibility: '',
+			opacity: '',
+			zIndex: ''
+		});
+		control.attr('aria-expanded', String(!isOpen));
+		menu.toggleClass('visible', !isOpen);
+		if ($(window).width() >= 1101) {
+			menu.css({
+				display: !isOpen ? 'block' : '',
+				visibility: !isOpen ? 'visible' : '',
+				opacity: !isOpen ? 1 : '',
+				zIndex: !isOpen ? 1100 : ''
+			});
+		}
+	});
+
+	$('.nav-menu > .menu-item-has-children').on('mouseenter focusin', function(){
+		if ($(window).width() < 1101) {
 			return;
 		}
-		e.preventDefault();
-		var control = $(this).siblings('button.rs-menu-parent');
-		if (control.length) {
-			control.trigger('click');
-			$(this).attr('aria-expanded', control.attr('aria-expanded'));
+
+		$(this).children('.rs-menu-link').attr('aria-expanded', 'true');
+		$(this).children('ul.sub-menu').addClass('visible').css({
+			display: 'block',
+			visibility: 'visible',
+			opacity: 1,
+			zIndex: 1100
+		});
+	}).on('mouseleave', function(){
+		if ($(window).width() < 1101) {
+			return;
 		}
+
+		$(this).children('.rs-menu-link').attr('aria-expanded', 'false');
+		$(this).children('ul.sub-menu').removeClass('visible').css({
+			display: '',
+			visibility: '',
+			opacity: '',
+			zIndex: ''
+		});
 	});
 	
 	/*-----------------------------------------------------------------------------------*/
@@ -90,7 +130,7 @@ $(document).ready(function () {
 		  
 	   var a = $(this).parent('ul');      
 	   a.removeClass('visible');
-	   a.siblings('span.rs-menu-parent').html(arrow_down);
+	   a.siblings('button.rs-menu-parent').html(arrow_down).attr('aria-expanded', 'false');
 	}); 
 	
 	/*-----------------------------------------------------------------------------------*/
