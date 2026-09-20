@@ -204,7 +204,6 @@ Route::post('jobNeedyStudentPanel/save',[
     'saveNeedyStdPanel'
 ])->middleware('throttle:10,1')->name('saveNeedyStdPanel');
 
-
     //web font end
 
 

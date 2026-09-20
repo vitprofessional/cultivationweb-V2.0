@@ -97,12 +97,14 @@ class FrontController extends Controller
          $studentCount = Schema::hasTable((new StudentManagement())->getTable()) ? StudentManagement::count() : 0;
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
          $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
+         $classCount = Schema::hasTable((new \App\Models\classManage())->getTable()) ? \App\Models\classManage::count() : 0;
          $chairman = null;
          if ($config && (!empty($config->boardChairmanName) || !empty($config->boardChairmanImg))) {
              $chairman = (object) [
                  'name' => $config->boardChairmanName,
-                 'designation' => 'Board Chairman',
+                 'designation' => $config->boardChairmanDesignation ?: 'Board Chairman',
                  'avatar' => $config->boardChairmanImg,
+                 'message' => $config->boardChairmanMessage,
              ];
          } elseif (Schema::hasTable((new ManagingComittee())->getTable())) {
              $chairman = ManagingComittee::where('designation', 'like', '%Chair%')
@@ -125,6 +127,7 @@ class FrontController extends Controller
             'studentCount' => $studentCount,
             'teacherCount' => $teacherCount,
             'staffCount' => $staffCount,
+            'classCount' => $classCount,
             'chairman' => $chairman,
             'facultyPreview' => $facultyPreview,
         ]);

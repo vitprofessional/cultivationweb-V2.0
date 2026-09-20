@@ -7,6 +7,10 @@
     $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
         ? $config->officeEmail
         : null;
+    $demoContact = config('cultivation_demo.contact', []);
+    $footerAddress = $config?->address ?: ($demoContact['address'] ?? null);
+    $footerPhone = $config?->officeMobile ?: ($demoContact['phone'] ?? null);
+    $footerEmail = $officeEmail ?: ($demoContact['email'] ?? null);
     $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
     $footerLogo = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
         ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
@@ -117,7 +121,7 @@
     }
 
     .footer-main-row .widget-title {
-        font-size: 15px;
+        font-size: 16px;
         font-weight: 800;
         letter-spacing: 0.8px;
         text-transform: uppercase;
@@ -246,6 +250,41 @@
         margin-top: 10px !important;
     }
 
+    .footer-about .footer-contact-list li.footer-contact-row {
+        align-items: flex-start;
+        color: #a0c2e8;
+        display: flex;
+        font-size: 13.5px;
+        gap: 10px;
+        line-height: 1.55;
+        margin-bottom: 12px;
+    }
+
+    .footer-contact-row .footer-contact-icon {
+        align-items: center;
+        background: rgba(33, 167, 208, 0.12);
+        border: 1px solid rgba(33, 167, 208, 0.24);
+        border-radius: 8px;
+        color: #21a7d0;
+        display: inline-flex;
+        flex: 0 0 34px;
+        font-size: 14px;
+        height: 34px;
+        justify-content: center;
+        margin-top: 0;
+        width: 34px;
+    }
+
+    .footer-contact-row .footer-contact-value {
+        min-width: 0;
+        padding-top: 6px;
+        word-break: break-word;
+    }
+
+    .footer-contact-row a {
+        color: #a0c2e8;
+    }
+
     /* address widget (inside sub-section) */
     .footer-sub-section .address-widget {
         list-style: none;
@@ -307,13 +346,14 @@
     }
 
     .footer-main-row .site-map li a {
-        color: #90b4d8;
-        font-size: 13.5px;
+        color: #a0c2e8;
+        font-size: 14.2px;
         display: flex;
         align-items: center;
         gap: 6px;
         transition: all 0.2s ease;
         text-decoration: none;
+        line-height: 1.6;
     }
 
     .footer-main-row .site-map li a:hover {
@@ -440,86 +480,50 @@
 
 <footer id="rs-footer" class="rs-footer">
 
-    {{-- Info strip: Address / Phone+Email / Find Us Online --}}
-    <div class="footer-info-strip">
-        <div class="container">
-            <div class="row y-middle">
-                @if(!empty($config?->address))<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
-                    <div class="fi-card">
-                        <div class="fi-icon"><i class="fa fa-map-marker"></i></div>
-                        <div class="fi-body">
-                            <h6>Address</h6>
-                            <p>{{ $config->address }}</p>
-                        </div>
-                    </div>
-                </div>@endif
-                @if(!empty($config?->officeMobile) || $officeEmail)<div class="col-lg-4 col-md-6 mb-lg-0 mb-3">
-                    <div class="fi-card">
-                        <div class="fi-icon"><i class="fa fa-phone"></i></div>
-                        <div class="fi-body">
-                            <h6>Phone &amp; Email</h6>
-                            @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
-                            @if(!empty($config?->officeMobile) && !empty($config?->officeEmail))<br>@endif
-                            @if($officeEmail)<a href="mailto:{{ $officeEmail }}">{{ $officeEmail }}</a>@endif
-                        </div>
-                    </div>
-                </div>@endif
-                @if(!empty($config?->address))<div class="col-lg-4 col-md-6">
-                    <div class="fi-card">
-                        <div class="fi-icon"><i class="fa fa-globe"></i></div>
-                        <div class="fi-body">
-                            <h6>Location</h6>
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($config->address) }}" target="_blank" rel="noopener noreferrer">Open in Google Maps &rarr;</a>
-                        </div>
-                    </div>
-                </div>@endif
-            </div>
-        </div>
-    </div>
-
     <div class="footer-top">
         <div class="container">
-            <div class="footer-sidebar-strip"></div>
             <div class="row footer-main-row">
 
-                {{-- Col 1: About + Contact --}}
+                {{-- Col 1: Institution Identity & Contact --}}
                 <div class="col-lg-3 col-md-6 col-sm-12 footer-widget md-mb-50">
                     <div class="footer-about">
-                        <div class="footer-about-shell">
-                            <div class="footer-about-badge">Official School Portal</div>
-                            <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="Home">
-                                <img src="{{ $footerLogo }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}">
+                        <h4 class="widget-title" style="color: #ffffff; font-size: 18px; font-weight: 800; margin-bottom: 14px; text-transform: none; letter-spacing: 0;">
+                            {{ !empty($config?->instituteName) ? $config->instituteName : 'Sankuchail High School' }}
+                        </h4>
+                        @if($logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile)))
+                            <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="Home" style="display: block; margin-bottom: 12px;">
+                                <img src="{{ url('/public/upload/image/cultivation/' . rawurlencode($logoFile)) }}" alt="{{ $config?->instituteName }}" style="max-height: 48px; width: auto;">
                             </a>
-                            @if(!empty($config?->instituteName))<p class="footer-about-desc">{{ $config->instituteName }}</p>@endif
-                            @if(collect($socialLinks)->contains(fn ($social) => filled($social['url'])))<ul class="footer-social footer-social-inline">
+                        @endif
+                        <ul class="address-widget footer-contact-list" style="list-style: none; padding: 0; margin: 12px 0 0;">
+                            @if($footerAddress)
+                                <li class="footer-contact-row">
+                                    <i class="fa fa-map-marker footer-contact-icon" aria-hidden="true"></i>
+                                    <span class="footer-contact-value">{{ $footerAddress }}</span>
+                                </li>
+                            @endif
+                            @if($footerPhone)
+                                <li class="footer-contact-row">
+                                    <i class="fa fa-phone footer-contact-icon" aria-hidden="true"></i>
+                                    <a class="footer-contact-value" href="tel:{{ preg_replace('/\s+/', '', $footerPhone) }}">{{ $footerPhone }}</a>
+                                </li>
+                            @endif
+                            @if($footerEmail)
+                                <li class="footer-contact-row">
+                                    <i class="fa fa-envelope footer-contact-icon" aria-hidden="true"></i>
+                                    <a class="footer-contact-value" href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a>
+                                </li>
+                            @endif
+                        </ul>
+                        @if(collect($socialLinks)->contains(fn ($social) => filled($social['url'])))
+                            <ul class="footer-social footer-social-inline" style="display: flex; gap: 8px; list-style: none; padding: 0; margin-top: 14px;">
                                 @foreach($socialLinks as $label => $social)
-                                    @if(filled($social['url']))<li><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}"><i class="fa {{ $social['icon'] }}"></i></a></li>@endif
+                                    @if(filled($social['url']))
+                                        <li><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #a0c2e8; font-size: 14px;"><i class="fa {{ $social['icon'] }}"></i></a></li>
+                                    @endif
                                 @endforeach
-                            </ul>@endif
-                        </div>
-                    </div>
-
-                    {{-- Contact Us below About --}}
-                    <div class="footer-sub-section">
-                        <h5 class="footer-sub-title">Contact Us</h5>
-                        @if(!empty($config?->address) || !empty($config?->officeMobile) || $officeEmail)<ul class="address-widget footer-contact-list" style="margin-top:0">
-                            @if(!empty($config?->address))<li>
-                                <i class="flaticon-location"></i>
-                                <div class="desc">{{ $config?->address }}</div>
-                            </li>@endif
-                            @if(!empty($config?->officeMobile))<li>
-                                <i class="flaticon-call"></i>
-                                <div class="desc">
-                                    @if(!empty($config?->officeMobile))<a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>@endif
-                                </div>
-                            </li>@endif
-                            @if($officeEmail)<li>
-                                <i class="flaticon-email"></i>
-                                <div class="desc">
-                                    <a href="mailto:{{ $officeEmail }}">{{ $officeEmail }}</a>
-                                </div>
-                            </li>@endif
-                        </ul>@endif
+                            </ul>
+                        @endif
                     </div>
                 </div>
 
@@ -548,7 +552,6 @@
                         <li><a href="{{ route('student') }}"><i class="fa fa-angle-right"></i> Student Database</a></li>
                         <li><a href="{{ route('placementCellView') }}"><i class="fa fa-angle-right"></i> Placement Cell</a></li>
                         <li><a href="{{ route('jobNeedyStudentView') }}"><i class="fa fa-angle-right"></i> Job Seekers</a></li>
-                        <li><a href="{{ route('internalResult') }}"><i class="fa fa-angle-right"></i> Internal Result</a></li>
                     </ul>
                 </div>
 

@@ -11,6 +11,7 @@
         $studentCount = $studentCount ?? 0;
         $teacherCount = $teacherCount ?? 0;
         $staffCount = $staffCount ?? 0;
+        $classCount = $classCount ?? 0;
         $chairman = $chairman ?? null;
         $facultyPreview = $facultyPreview ?? collect();
         $teamCount = $teacherCount + $staffCount;
@@ -59,12 +60,24 @@
             ->filter(fn ($slide) => filled($slide->headLine ?? null) && $resolveHeroImage($slide))
             ->take(5);
         if ($sliderItems->count() === 0) {
-            $sliderItems = collect([
-                (object) ['headLine' => $institutionName, 'detail' => '', 'avatar' => ''],
-            ]);
+            $demoSlides = config('cultivation_demo.hero.fallback_slides', []);
+            $sliderItems = collect($demoSlides)->map(function ($s) use ($institutionName) {
+                return (object) [
+                    'headLine' => $s['title'],
+                    'detail' => $s['subtitle'],
+                    'supporting_text' => $s['subtitle'],
+                    'eyebrow' => $institutionName ?: 'Institutional Learning Community',
+                    'fallback_image' => asset($s['image']),
+                    'button_text' => $s['button_text'] ?? 'Discover More',
+                    'button_url' => $s['button_url'] ?? route('institutePage'),
+                ];
+            });
         }
 
-        $principalName = !empty($config?->principalName) ? $config->principalName : null;
+        $demoLeadership = config('cultivation_demo.leadership', []);
+        $demoPrincipal = $demoLeadership['head'] ?? [];
+        $demoChairman = $demoLeadership['chairman'] ?? [];
+        $principalName = !empty($config?->principalName) ? $config->principalName : ($demoPrincipal['name'] ?? null);
         $principalRole = !empty($config?->principalDesignation) ? $config->principalDesignation : null;
         $principalLead = !empty($config?->principalImportantSpeech)
             ? $config->principalImportantSpeech
@@ -75,33 +88,40 @@
         $principalAvatarFile = !empty($config?->avatar) ? basename((string) $config->avatar) : null;
         $principalAvatar = $principalAvatarFile && file_exists(public_path('upload/image/cultivation/' . $principalAvatarFile))
             ? url('/public/upload/image/cultivation/' . rawurlencode($principalAvatarFile))
-            : asset('public/avatar.jpeg');
-        $hasLeadershipContent = filled($principalName) || filled($principalRole) || filled($principalLead) || filled($principalBody);
+            : asset($demoPrincipal['image'] ?? 'public/avatar.jpeg');
+        $principalRole = $principalRole ?: ($demoPrincipal['designation'] ?? 'Principal / Head of Institution');
+        $principalMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($principalLead ?: $principalBody ?: ($demoPrincipal['message'] ?? '')))));
+        $hasLeadershipContent = filled($principalName);
          $chairmanName = trim((string) ($chairman->name ?? $chairman->fullName ?? ''));
          $chairmanRole = trim((string) ($chairman->boardChairmanDesignation ?? $chairman->designation ?? ''));
          $chairmanMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman->boardChairmanMessage ?? $chairman->message ?? ''))));
         $chairmanAvatarFile = !empty($chairman?->avatar) ? basename((string) $chairman->avatar) : null;
         $chairmanAvatar = $chairmanAvatarFile && file_exists(public_path('upload/image/cultivation/' . $chairmanAvatarFile))
             ? url('/public/upload/image/cultivation/' . rawurlencode($chairmanAvatarFile))
-            : asset('public/avatar.jpeg');
+            : asset($demoChairman['image'] ?? 'public/avatar.jpeg');
+        $chairmanName = $chairmanName ?: ($demoChairman['name'] ?? 'Governing Body Chairman');
+        $chairmanRole = $chairmanRole ?: ($demoChairman['designation'] ?? 'Governing Body Chairman');
+        $chairmanMessage = $chairmanMessage ?: ($demoChairman['message'] ?? '');
         $leadershipCards = collect([
-            filled($chairmanName) ? [
+            [
                 'label' => 'Chairman / President',
                 'name' => $chairmanName,
                 'role' => $chairmanRole,
                 'avatar' => $chairmanAvatar,
                 'message' => $chairmanMessage,
                 'route' => route('chairmanMessagePage'),
-            ] : null,
-            $hasLeadershipContent ? [
+                'is_demo' => !$chairman,
+            ],
+            [
                 'label' => 'Head of Institution',
                 'name' => $principalName,
                 'role' => $principalRole,
                 'avatar' => $principalAvatar,
-                'message' => trim(preg_replace('/\s+/', ' ', strip_tags((string) ($principalLead ?: $principalBody)))),
+                'message' => $principalMessage,
                 'route' => route('headOfInstituteMessagePage'),
-            ] : null,
-        ])->filter()->values();
+                'is_demo' => !$hasLeadershipContent || (!$config?->principalName && !$principalLead && !$principalBody),
+            ],
+        ])->values();
         $leadershipColumnClass = $leadershipCards->count() === 1 ? 'col-lg-8 mx-auto' : 'col-lg-6';
         $facultyLabel = match ($config?->institute_type) {
             'college' => 'Lecturers / Teachers',
@@ -129,16 +149,49 @@
         $aboutDetails = trim(strip_tags((string) ($insData?->insDetails ?? '')));
         $hasAboutContent = filled($aboutHeading) || filled($aboutDetails);
         $overviewImages = collect([$resolveGalleryImage($firstImage), $resolveGalleryImage($secondImage)])->filter()->values();
+        $demoStatistics = config('cultivation_demo.statistics', []);
+        $establishedYear = preg_match('/\b(19|20)\d{2}\b/', (string) $foundedYear, $yearMatch) ? $yearMatch[0] : null;
         $overviewMetrics = collect([
-            ['value' => $studentCount, 'label' => 'Students', 'class' => 'one'],
-            ['value' => $teamCount, 'label' => 'Teacher & Staff', 'class' => 'two'],
-            ['value' => $foundedYear, 'label' => 'Established', 'class' => 'three'],
-        ])->filter(fn ($metric) => filled($metric['value']) && $metric['value'] > 0)->values();
-        $metricColumnClass = match ($overviewMetrics->count()) {
-            1 => 'col-md-12',
-            2 => 'col-md-6',
-            default => 'col-md-4',
+            ['key' => 'established', 'value' => $establishedYear, 'real' => filled($establishedYear)],
+            ['key' => 'students', 'value' => $studentCount > 0 ? $studentCount : null, 'real' => $studentCount > 0],
+            ['key' => 'teachers', 'value' => $teacherCount > 0 ? $teacherCount : null, 'real' => $teacherCount > 0],
+            ['key' => 'staff', 'value' => $staffCount > 0 ? $staffCount : null, 'real' => $staffCount > 0],
+            ['key' => 'classes', 'value' => $classCount > 0 ? $classCount : null, 'real' => $classCount > 0],
+            ['key' => 'experience', 'value' => $establishedYear ? max(1, now()->year - (int) $establishedYear) . '+' : null, 'real' => filled($establishedYear)],
+        ])->map(function ($metric) use ($demoStatistics) {
+            $fallback = $demoStatistics[$metric['key']] ?? [];
+            return array_merge($fallback, [
+                'value' => $metric['real'] ? $metric['value'] : ($fallback['value'] ?? '—'),
+                'real' => $metric['real'],
+                'source' => $metric['real'] ? ($metric['key'] === 'experience' ? 'DERIVED' : 'REAL') : 'DEMO',
+            ]);
+        })->values();
+
+        $demoFaculty = collect(config('cultivation_demo.faculty', []))->map(fn ($teacher) => (object) array_merge($teacher, ['is_demo' => true]));
+        $facultyPreview = $facultyPreview->take(4)->map(function ($teacher) {
+            $teacher->is_demo = false;
+            return $teacher;
+        });
+        if ($facultyPreview->count() < 4) {
+            $facultyPreview = $facultyPreview->concat($demoFaculty->take(4 - $facultyPreview->count()));
+        }
+
+        $welcomeFallback = config('cultivation_demo.welcome', []);
+        $welcomeTitle = $aboutHeading ?: ($welcomeFallback['heading'] ?? 'Welcome to Sankuchail High School');
+        $welcomeSubHeading = $welcomeFallback['sub_heading'] ?? 'Knowledge, Discipline and Moral Values';
+        $welcomeDetails = $aboutDetails ?: ($welcomeFallback['details'] ?? '');
+        $welcomeImage = $overviewImages->get(0) ?: asset($welcomeFallback['image'] ?? 'public/cultivation/assets/images/about/history.png');
+
+        $newsEventsList = config('cultivation_demo.news_events', []);
+
+        $facultyCount = $facultyPreview->count();
+        $facultyColClass = match(true) {
+            $facultyCount === 1 => 'col-6 col-sm-5 col-md-4 col-lg-3 mx-auto',
+            $facultyCount === 2 => 'col-6 col-sm-5 col-md-4 col-lg-3',
+            $facultyCount === 3 => 'col-6 col-sm-4 col-md-4 col-lg-3',
+            default => 'col-6 col-sm-6 col-md-4 col-lg-3',
         };
+        $facultyGridJustify = $facultyCount === 2 ? 'justify-content-center' : '';
     @endphp
 
     <title>{{ $pageTitle }}</title>
@@ -167,11 +220,16 @@
 
     <style>
         .rs-slider.style1 .slider-content {
-            min-height: 460px;
+            min-height: 400px;
+            max-height: 450px;
+            height: 430px;
+            display: flex;
+            align-items: center;
             background-position: center center;
             background-size: cover;
             background-repeat: no-repeat;
-            padding: 25px !important;
+            padding: 0 !important;
+            position: relative;
         }
 
         .visually-hidden-page-title {
@@ -199,13 +257,119 @@
             content: "";
             position: absolute;
             inset: 0;
-            background: rgba(17, 41, 88, 0.45);
+            background: linear-gradient(90deg, rgba(11, 29, 68, 0.7) 0%, rgba(11, 29, 68, 0.38) 60%, rgba(11, 29, 68, 0.2) 100%);
         }
 
         .rs-slider.style1 .slider-content .container {
             position: relative;
             z-index: 2;
-            padding-top: 150px;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        .rs-slider.style1 .sl-sub-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            color: #7ed9f4;
+            text-transform: uppercase;
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+        }
+
+        .rs-slider.style1 .sl-title {
+            font-size: 40px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 22px;
+            max-width: 680px;
+            max-height: 100px;
+            overflow: hidden;
+            color: #ffffff;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        }
+
+        .rs-slider.style1 .sl-support {
+            color: rgba(255,255,255,.92);
+            font-size: 17px;
+            line-height: 1.55;
+            margin: 0 0 22px;
+            max-width: 590px;
+        }
+
+        .news-events-section {
+            background: #f4f8fc;
+            border-top: 1px solid #e1edf7;
+            border-bottom: 1px solid #e1edf7;
+        }
+
+        .news-card {
+            background: #ffffff;
+            border: 1px solid #dce9f4;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 100%;
+            box-shadow: 0 8px 24px rgba(16, 44, 99, 0.06);
+            transition: transform .25s ease, box-shadow .25s ease;
+        }
+
+        .news-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 30px rgba(16, 44, 99, 0.12);
+        }
+
+        .news-card .news-img {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            background: #eef6fb;
+        }
+
+        .news-card .news-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .news-card .news-category {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #112958;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .news-card .news-body {
+            padding: 20px;
+        }
+
+        .news-card .news-date {
+            display: inline-block;
+            font-size: 12px;
+            color: #21a7d0;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .news-card .news-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #102c63;
+            line-height: 1.35;
+            margin: 0 0 10px;
+        }
+
+        .news-card .news-desc {
+            font-size: 14px;
+            color: #4a5f7a;
+            line-height: 1.6;
+            margin: 0;
         }
 
         .rs-about.style2 .about-intro {
@@ -372,6 +536,8 @@
             box-shadow: 0 10px 28px rgba(39, 60, 102, 0.08);
             height: 100%;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .leadership-profile-head {
@@ -402,7 +568,62 @@
         }
 
         .leadership-profile-body {
-            padding: 22px;
+            display: flex;
+            flex: 1;
+            padding: 24px;
+        }
+
+        .leadership-meta-horizontal {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .leadership-portrait {
+            width: 120px;
+            height: 150px;
+            object-fit: cover;
+            object-position: center top;
+            border: 3px solid #eaf3ff;
+            border-radius: 10px;
+            box-shadow: 0 6px 16px rgba(16, 44, 99, 0.1);
+            flex-shrink: 0;
+        }
+
+        .leadership-copy {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .leadership-copy h4 {
+            color: #102c63;
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.25;
+            margin: 0 0 4px;
+        }
+
+        .leadership-copy .designation {
+            color: #5b6d87;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 12px;
+        }
+
+        .leadership-copy .desc {
+            color: #4a5f7a;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+            min-height: 68px;
+        }
+
+        .leadership-cta {
+            margin-top: auto;
+            padding-top: 14px;
         }
 
         .leadership-meta {
@@ -471,14 +692,15 @@
             background: #ffffff;
             border: 1px solid #dce9f4;
             border-radius: 8px;
-            box-shadow: 0 10px 24px rgba(16, 44, 99, 0.08);
-            height: 100%;
+            box-shadow: 0 4px 12px rgba(16, 44, 99, 0.05);
+            max-width: 100%;
+            margin: 0 auto;
             overflow: hidden;
             transition: transform .25s ease, box-shadow .25s ease;
         }
 
         .faculty-card:hover {
-            box-shadow: 0 16px 30px rgba(16, 44, 99, 0.14);
+            box-shadow: 0 10px 20px rgba(16, 44, 99, 0.10);
             transform: translateY(-2px);
         }
 
@@ -486,6 +708,7 @@
             background: #eef6fb;
             display: block;
             aspect-ratio: 4 / 5;
+            height: auto;
             overflow: hidden;
         }
 
@@ -493,17 +716,19 @@
             display: block;
             height: 100%;
             object-fit: cover;
+            object-position: center 15%;
             width: 100%;
         }
 
         .faculty-card-body {
-            padding: 16px;
+            padding: 10px 12px;
         }
 
         .faculty-card-body h3 {
-            font-size: 18px;
+            font-size: 14px;
+            font-weight: 700;
             line-height: 1.3;
-            margin: 0 0 6px;
+            margin: 0 0 3px;
         }
 
         .faculty-card-body h3 a {
@@ -512,10 +737,31 @@
 
         .faculty-designation {
             color: #21a7d0;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.4;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.3;
             margin: 0;
+        }
+
+        .faculty-subject {
+            color: #71849b;
+            font-size: 12px;
+            line-height: 1.3;
+            margin: 4px 0 0;
+        }
+
+        @media (max-width: 767px) {
+            .rs-slider.style1 .slider-content {
+                height: 400px;
+                min-height: 400px;
+            }
+
+            .rs-slider.style1 .sl-sub-title { font-size: 15px; }
+            .rs-slider.style1 .sl-title { font-size: 30px; max-width: 500px; }
+            .rs-slider.style1 .sl-support { font-size: 15px; max-width: 420px; }
+            .leadership-meta-horizontal { gap: 14px; }
+            .leadership-portrait { width: 96px; height: 120px; }
+            .leadership-copy h4 { font-size: 19px; }
         }
 
         .principal-feature-card {
@@ -1408,23 +1654,26 @@
     <div class="main-content">
         <h1 class="visually-hidden-page-title">{{ $pageTitle }}</h1>
         <div class="rs-slider style1">
-            <div class="rs-carousel owl-carousel" data-loop="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-items="1" data-margin="0" data-autoplay="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-hoverpause="true" data-autoplay-timeout="5000" data-smart-speed="800" data-dots="false" data-nav="false" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="false" data-mobile-device-dots="false" data-ipad-device="1" data-ipad-device-nav="false" data-ipad-device-dots="false" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="false" data-md-device="1" data-md-device-nav="true" data-md-device-dots="false">
+            <div class="rs-carousel owl-carousel" data-loop="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-items="1" data-margin="0" data-autoplay="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-hoverpause="true" data-autoplay-timeout="5600" data-smart-speed="800" data-dots="true" data-nav="true" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="true" data-mobile-device-dots="true" data-ipad-device="1" data-ipad-device-nav="true" data-ipad-device-dots="true" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="true" data-md-device="1" data-md-device-nav="true" data-md-device-dots="true">
                 @foreach($sliderItems as $slide)
                     @php
-                        $slideImage = $resolveHeroImage($slide) ?: asset('public/cultivation/assets/images/slider/h2-1.jpg');
-                        $slideHeading = trim((string) ($slide->headLine ?? ''));
-                        $slideDetail = trim((string) ($slide->detail ?? ''));
+                        $slideImage = isset($slide->fallback_image) ? $slide->fallback_image : ($resolveHeroImage($slide) ?: asset('public/cultivation/assets/images/slider/h2-1.jpg'));
+                        $slideInstName = trim((string) (($slide->eyebrow ?? null) ?: $institutionName ?: 'Institutional Learning Community'));
+                        $slideHeading = trim((string) ($slide->headLine ?? 'Knowledge, Discipline & Future Leadership'));
+                        $slideSupport = trim((string) ($slide->supporting_text ?? $slide->description ?? ''));
+                        if (empty($slideSupport) && isset($slide->fallback_image)) {
+                            $slideSupport = trim((string) ($slide->detail ?? ''));
+                        }
+                        $slideBtnText = $slide->button_text ?? 'Discover More &rarr;';
+                        $slideBtnUrl = $slide->button_url ?? route('institutePage');
                     @endphp
                     <div class="slider-content" style="background-image:url('{{ $slideImage }}');">
                         <div class="container">
-                            @if($slideHeading)
-                                <div class="sl-sub-title white-color wow bounceInLeft" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
-                            @endif
-                            @if($slideDetail)
-                                <div class="sl-title white-color wow fadeInRight" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideDetail }}</div>
-                            @endif
+                            <div class="sl-sub-title white-color wow bounceInLeft" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideInstName }}</div>
+                            <div class="sl-title white-color wow fadeInRight" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
+                            @if($slideSupport)<p class="sl-support wow fadeInUp" data-wow-delay="750ms" data-wow-duration="1800ms">{{ $slideSupport }}</p>@endif
                             <div class="sl-btn wow fadeInUp" data-wow-delay="900ms" data-wow-duration="2000ms">
-                                <a class="readon2 banner-style" href="{{ route('institutePage') }}">Discover More</a>
+                                <a class="readon2 banner-style" href="{{ $slideBtnUrl }}">{!! $slideBtnText !!}</a>
                             </div>
                         </div>
                     </div>
@@ -1439,7 +1688,7 @@
                         <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
                             <img src="{{ asset('public/cultivation/assets/images/services/icons/1.png') }}" alt="">
-                            <h4 class="title"><a href="{{ route('student') }}">Student Life</a></h4>
+                            <h4 class="title"><a href="{{ route('allNotices') }}">Notice Board</a></h4>
                         </div>
                     </div>
                 </div>
@@ -1473,77 +1722,88 @@
             </div>
         </div>
 
-        @if($hasAboutContent || $overviewMetrics->isNotEmpty() || $overviewImages->isNotEmpty())
-        <div id="rs-about" class="rs-about style2 pt-72 pb-56 md-pt-54 md-pb-38">
+        {{-- Section 5: Welcome / About Institution --}}
+        <div id="rs-about-welcome" class="pt-72 pb-64 md-pt-54 md-pb-42" style="background: #ffffff;">
             <div class="container">
-                <div class="row">
-                    @if($hasAboutContent)
-                    <div class="col-lg-5 pr-65 md-pr-15 md-mb-50">
-                        <div class="about-intro">
-                            <div class="sec-title mb-40 wow fadeInUp" data-wow-delay="300ms" data-wow-duration="2000ms">
-                                <div class="sub-title primary">About {{ !empty($config?->instituteShortName) ? $config->instituteShortName : 'Institute' }}</div>
-                                @if($aboutHeading)<h2 class="title mb-21 white-color">{{ $aboutHeading }}</h2>@endif
-                                @if($aboutDetails)<div class="desc big white-color">{{ \Illuminate\Support\Str::limit($aboutDetails, 180, '...') }}</div>@endif
-                            </div>
-                            <div class="btn-part wow fadeInUp" data-wow-delay="400ms" data-wow-duration="2000ms">
-                                <a class="readon2" href="{{ route('institutePage') }}">Read More</a>
+                <div class="row y-middle">
+                    <div class="col-lg-6 pr-50 md-pr-15 md-mb-40">
+                        <div class="about-img-wrap" style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 16px 36px rgba(16, 44, 99, 0.12); border: 4px solid #f0f6fc;">
+                            <img src="{{ $welcomeImage }}" alt="{{ $welcomeTitle }}" style="width: 100%; height: auto; display: block; object-fit: cover;">
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="sec-title">
+                            <div class="sub-title primary">ABOUT OUR INSTITUTION</div>
+                            <h2 class="title mb-20" style="color: #102c63; font-size: 32px; font-weight: 800; line-height: 1.2;">{{ $welcomeTitle }}</h2>
+                            @if($welcomeSubHeading)
+                                <h4 style="color: #21a7d0; font-size: 18px; font-weight: 700; margin-bottom: 16px;">{{ $welcomeSubHeading }}</h4>
+                            @endif
+                            <p class="desc" style="color: #4a5f7a; font-size: 16px; line-height: 1.8; margin-bottom: 24px;">{{ $welcomeDetails }}</p>
+                            <div class="btn-part">
+                                <a class="readon2" href="{{ route('institutePage') }}">Learn More About Us &rarr;</a>
                             </div>
                         </div>
                     </div>
-                    @endif
-                    <div class="{{ $hasAboutContent ? 'col-lg-7 lg-pl-0 ml--25 md-ml-0' : 'col-12' }}">
-                        @if($overviewMetrics->isNotEmpty())
-                        <div class="row rs-counter couter-area mb-40">
-                            @foreach($overviewMetrics as $metric)<div class="{{ $metricColumnClass }}">
-                                <div class="counter-item {{ $metric['class'] }}">
-                                    <h2 class="number">{{ $metric['value'] }}</h2>
-                                    <h4 class="title mb-0">{{ $metric['label'] }}</h4>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 6: At a Glance / Statistics --}}
+        @if($overviewMetrics->isNotEmpty())
+        <div id="rs-at-a-glance" class="pt-50 pb-50" style="background: #f4f8fc; border-top: 1px solid #e1edf7; border-bottom: 1px solid #e1edf7;">
+            <div class="container">
+                <div class="sec-title text-center mb-32">
+                    <div class="sub-title primary">AT A GLANCE</div>
+                    <h2 class="title mb-0">Institutional Key Statistics</h2>
+                </div>
+                <div class="row {{ $overviewMetrics->count() <= 2 ? 'justify-content-center' : '' }}">
+                    @foreach($overviewMetrics as $metric)
+                        <div class="col-6 col-md-4 col-lg-2 mb-20">
+                            <div class="stat-card" style="background: #ffffff; border: 1px solid #d4e2f0; border-radius: 12px; padding: 22px 16px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.06); height: 100%; text-align: center;">
+                                <div class="stat-icon" style="width: 48px; height: 48px; border-radius: 12px; background: #eef6fc; color: #21a7d0; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 14px;">
+                                    <i class="fa {{ $metric['icon'] }}"></i>
                                 </div>
-                            </div>@endforeach
-                        </div>
-                        @endif
-                        @if($overviewImages->isNotEmpty())
-                        <div class="row grid-area">
-                            @foreach($overviewImages as $image)<div class="{{ $overviewImages->count() === 1 ? 'col-12' : 'col-md-6 sm-mb-30' }}">
-                                <div class="image-grid">
-                                    <img src="{{ $image }}" alt="">
+                                <div class="stat-body">
+                                    <h2 class="number" style="font-size: 32px; font-weight: 800; color: #102c63; line-height: 1.1; margin: 0 0 2px;">{{ $metric['value'] }}</h2>
+                                    <h4 class="title mb-0" style="font-size: 14px; font-weight: 700; color: #4b6382; text-transform: uppercase; letter-spacing: 0.5px;">{{ $metric['label'] }}</h4>
+                                    <small style="display: block; color: #8aa1bb; font-size: 10px; margin-top: 8px;">{{ $metric['real'] ? 'Verified information' : 'Institutional profile' }}</small>
                                 </div>
-                            </div>@endforeach
+                            </div>
                         </div>
-                        @endif
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
         @endif
 
+        @php
+            $hasRealLeadershipMessage = collect($leadershipCards)->contains(fn ($l) => filled($l['message'] ?? null));
+            $leadershipHeadingText = $hasRealLeadershipMessage ? 'Leadership Messages' : 'Head of Institution';
+        @endphp
         @if($leadershipCards->isNotEmpty())
-        <div class="principal-feature-section pt-10 pb-64 md-pt-10 md-pb-42">
+        <div class="principal-feature-section pt-50 pb-56 md-pt-36 md-pb-36" style="background: #ffffff;">
             <div class="container">
-                <div class="leadership-section-title sec-title">
-                    <div class="sub-title primary">Institution Leadership</div>
-                    <h2 class="title mb-0">Leadership Messages</h2>
+                <div class="leadership-section-title sec-title text-center mb-32">
+                    <div class="sub-title primary">INSTITUTION LEADERSHIP</div>
+                    <h2 class="title mb-0">{{ $leadershipHeadingText }}</h2>
                 </div>
-                <div class="row">
+                <div class="row justify-content-center">
                     @foreach($leadershipCards as $leader)
-                        <div class="{{ $leadershipColumnClass }} mb-4 mb-lg-0">
-                            <article class="leadership-profile-card">
-                                <div class="leadership-profile-head">
-                                    <h3>{{ $leader['label'] }}</h3>
-                                </div>
+                        <div class="{{ $leadershipCards->count() === 1 ? 'col-lg-8 col-xl-7 mx-auto' : 'col-lg-6' }} mb-4 mb-lg-0">
+                            <article class="leadership-profile-card" style="background: #ffffff; border: 1px solid #dce9f4; border-radius: 12px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.07); overflow: hidden; height: 100%;">
                                 <div class="leadership-profile-body">
-                                    <div class="leadership-meta">
-                                        <img src="{{ $leader['avatar'] }}" alt="Photo of {{ $leader['name'] }}" loading="lazy">
-                                        <div>
+                                    <div class="leadership-meta-horizontal">
+                                        <img class="leadership-portrait" src="{{ $leader['avatar'] }}" alt="Photo of {{ $leader['name'] }}" loading="lazy">
+                                        <div class="leadership-copy">
                                             <span class="leadership-role-label">{{ $leader['label'] }}</span>
                                             <h4>{{ $leader['name'] }}</h4>
-                                            @if($leader['role'])<p>{{ $leader['role'] }}</p>@endif
+                                            @if($leader['role'])<p class="designation">{{ $leader['role'] }}</p>@endif
+                                            <p class="desc">{{ \Illuminate\Support\Str::limit($leader['message'], 220, '...') }}</p>
+                                            <div class="leadership-cta">
+                                                @if(!$leader['is_demo'])<a class="readon2" href="{{ $leader['route'] }}" aria-label="Read full message for {{ $leader['name'] }}">Read Full Message &rarr;</a>@else<span class="leadership-read-more">Leadership Profile</span>@endif
+                                            </div>
                                         </div>
                                     </div>
-                                    @if($leader['message'])
-                                        <p class="desc">{{ \Illuminate\Support\Str::limit($leader['message'], 240, '...') }}</p>
-                                    @endif
-                                    <a class="leadership-read-more" href="{{ $leader['route'] }}" aria-label="Read full message for {{ $leader['name'] }}">Read Full Message <i class="fa fa-arrow-right" aria-hidden="true"></i></a>
                                 </div>
                             </article>
                         </div>
@@ -1556,9 +1816,9 @@
         <div class="latest-notice-wrap md-pb-42">
             <div class="container">
                 <div class="latest-notice-modern">
-                    <div class="notice-head">
-                        <h3>Latest Notice</h3>
-                        <a class="all-notice-btn" href="{{ route('allNotices') }}">All Notice</a>
+                    <div class="notice-head d-flex justify-content-between align-items-center mb-16">
+                        <h3 class="m-0" style="color: #102c63; font-size: 24px; font-weight: 800;">Latest Notice</h3>
+                        <a class="all-notice-btn" href="{{ route('allNotices') }}">All Notices &rarr;</a>
                     </div>
                     <div class="notice-shell">
                         @forelse(($noticeBoard ?? collect())->take(5) as $ntc)
@@ -1582,7 +1842,11 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="notice-empty-state">No notices are currently published.</div>
+                            <div class="notice-empty-state text-center py-4 px-3" style="background: #ffffff; border: 1px dashed #b8d4e8; border-radius: 10px; padding: 24px 18px;">
+                                <i class="fa fa-bell-o mb-2" style="font-size: 28px; color: #21a7d0; display: block;"></i>
+                                <span style="font-size: 15px; font-weight: 700; color: #102c63; display: block; margin-bottom: 2px;">Notice Board</span>
+                                <span style="font-size: 14px; color: #5c748d;">No notices are currently published.</span>
+                            </div>
                         @endforelse
                     </div>
                 </div>
@@ -1728,32 +1992,36 @@
             </div>
         </div>
 
+        {{-- Section 11: Faculty / Teachers --}}
         @if(($facultyPreview ?? collect())->isNotEmpty())
-        <section class="faculty-preview-section pt-64 pb-64 md-pt-42 md-pb-42">
+        <section class="faculty-preview-section pt-40 pb-40 md-pt-30 md-pb-30" style="background: #ffffff;">
             <div class="container">
-                <div class="faculty-preview-head">
+                <div class="faculty-preview-head mb-24">
                     <div class="sec-title">
                         <div class="sub-title primary">Our Faculty</div>
                         <h2 class="title mb-0">{{ $facultyLabel }}</h2>
                     </div>
                     <a class="readon2" href="{{ route('teacherPage') }}">View All Teachers</a>
                 </div>
-                <div class="row faculty-preview-grid">
+                <div class="row faculty-preview-grid {{ $facultyGridJustify }}">
                     @foreach($facultyPreview as $teacher)
                         @php
-                            $teacherName = trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''));
-                            $teacherDesignation = \App\Models\TeacherManagement::getDesignationName($teacher->designation ?? $teacher->designation_id ?? null);
-                            $teacherPhoto = $resolveTeacherPhoto($teacher);
+                            $teacherName = $teacher->is_demo ?? false ? $teacher->name : trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''));
+                            $teacherDesignation = $teacher->is_demo ?? false ? $teacher->designation : \App\Models\TeacherManagement::getDesignationName($teacher->designation ?? $teacher->designation_id ?? null);
+                            $teacherSubject = $teacher->is_demo ?? false ? ($teacher->subject ?? null) : null;
+                            $teacherPhoto = $teacher->is_demo ?? false ? asset($teacher->photo) : $resolveTeacherPhoto($teacher);
+                            $teacherUrl = $teacher->is_demo ?? false ? null : route('teacher.show', ['id' => $teacher->id]);
                         @endphp
                         @if($teacherName)
-                            <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="{{ $facultyColClass }}">
                                 <article class="faculty-card">
-                                    <a class="faculty-photo-link" href="{{ route('teacher.show', ['id' => $teacher->id]) }}" aria-label="View {{ $teacherName }} profile">
+                                    @if($teacherUrl)<a class="faculty-photo-link" href="{{ $teacherUrl }}" aria-label="View {{ $teacherName }} profile">@else<a class="faculty-photo-link" href="{{ route('teacherPage') }}" aria-label="View faculty directory">@endif
                                         <img src="{{ $teacherPhoto }}" alt="Photo of {{ $teacherName }}" loading="lazy">
                                     </a>
-                                    <div class="faculty-card-body">
-                                        <h3><a href="{{ route('teacher.show', ['id' => $teacher->id]) }}">{{ $teacherName }}</a></h3>
+                                    <div class="faculty-card-body text-center">
+                                        <h3>@if($teacherUrl)<a href="{{ $teacherUrl }}">{{ $teacherName }}</a>@else{{ $teacherName }}@endif</h3>
                                         @if($teacherDesignation)<p class="faculty-designation">{{ $teacherDesignation }}</p>@endif
+                                        @if($teacherSubject)<p class="faculty-subject">{{ $teacherSubject }}</p>@endif
                                     </div>
                                 </article>
                             </div>

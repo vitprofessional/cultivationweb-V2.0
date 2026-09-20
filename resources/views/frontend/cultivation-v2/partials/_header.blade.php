@@ -108,10 +108,23 @@
     }
 
     body.home-style2 .menu-area .logo-part img {
-        height: 52px;
+        height: 48px;
         width: auto;
-        max-width: 240px;
+        max-width: 52px;
         object-fit: contain;
+    }
+
+    body.home-style2 .menu-area .header-institute-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #0f2b5c;
+        line-height: 1.2;
+        letter-spacing: -0.3px;
+        transition: color 0.25s ease;
+    }
+
+    body.home-style2 .menu-area.menu-sticky.sticky .header-institute-title {
+        color: #ffffff !important;
     }
 
     body.home-style2 .menu-area .rs-menu-area {
@@ -126,31 +139,25 @@
 
     body.home-style2 .menu-area .rs-menu ul.nav-menu {
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         align-items: center;
         flex-wrap: nowrap;
         gap: 0;
     }
 
-    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
-        color: #273c66;
-        font-size: 15px;
-        font-weight: 700;
-        padding: 0 12px;
-        line-height: 90px;
-        letter-spacing: 0.2px;
-    }
-
+    body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a,
     body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link {
-        appearance: none;
-        background: transparent;
-        border: 0;
-        color: #273c66;
-        cursor: pointer;
+        color: #1a365d;
         font-size: 15px;
         font-weight: 700;
-        line-height: 90px;
         padding: 0 12px;
+        line-height: 90px;
+        letter-spacing: 0;
+        white-space: nowrap !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        transition: color 0.2s ease;
     }
 
     body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link:focus-visible,
@@ -361,16 +368,19 @@
         <div class="menu-area menu-sticky">
             <div class="container">
                 <div class="row y-middle">
-                    <div class="col-lg-3">
+                    <div class="col-lg-4 col-xl-4">
                         <div class="logo-cat-wrap">
                             <div class="logo-part pr-90">
-                                <a class="dark-logo" href="{{ route('homePage') }}">
+                                <a class="dark-logo" href="{{ route('homePage') }}" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none;">
                                     <img src="{{ $logoUrl }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institution logo' }}">
+                                    @if(!empty($config?->instituteName))
+                                        <span class="header-institute-title">{{ $config->instituteName }}</span>
+                                    @endif
                                 </a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-9 text-center">
+                    <div class="col-lg-8 col-xl-8 text-center">
                         <div class="rs-menu-area">
                             <div class="main-menu pr-90">
                                 <div class="mobile-menu">
