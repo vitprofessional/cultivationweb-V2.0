@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
+    @include('frontend.cultivation-v2.partials._original-language')
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -24,6 +25,9 @@
         $fourthImage = $safeGallery->get(3);
 
         $resolveGalleryImage = function ($item) {
+            if (!empty($item->demo_image)) {
+                return is_file(base_path($item->demo_image)) ? asset($item->demo_image) : null;
+            }
             if (!$item || empty($item->avatar)) {
                 return null;
             }
@@ -57,7 +61,7 @@
         };
 
         $sliderItems = ($sliderData ?? collect())
-            ->filter(fn ($slide) => filled($slide->headLine ?? null) && $resolveHeroImage($slide))
+            ->filter(fn ($slide) => $resolveHeroImage($slide))
             ->take(5);
         if ($sliderItems->count() === 0) {
             $demoSlides = config('cultivation_demo.hero.fallback_slides', []);
@@ -74,6 +78,9 @@
             });
         }
 
+        $neutralAvatar = asset(config('cultivation_demo.branding.default_avatar'));
+        $principalIsReal = filled(trim((string) ($config?->principalName ?? '')));
+        $chairmanIsReal = filled(trim((string) ($chairman->name ?? $chairman->fullName ?? '')));
         $demoLeadership = config('cultivation_demo.leadership', []);
         $demoPrincipal = $demoLeadership['head'] ?? [];
         $demoChairman = $demoLeadership['chairman'] ?? [];
@@ -88,7 +95,7 @@
         $principalAvatarFile = !empty($config?->avatar) ? basename((string) $config->avatar) : null;
         $principalAvatar = $principalAvatarFile && file_exists(public_path('upload/image/cultivation/' . $principalAvatarFile))
             ? url('/public/upload/image/cultivation/' . rawurlencode($principalAvatarFile))
-            : asset($demoPrincipal['image'] ?? 'public/avatar.jpeg');
+            : $neutralAvatar;
         $principalRole = $principalRole ?: ($demoPrincipal['designation'] ?? 'Principal / Head of Institution');
         $principalMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($principalLead ?: $principalBody ?: ($demoPrincipal['message'] ?? '')))));
         $hasLeadershipContent = filled($principalName);
@@ -98,7 +105,7 @@
         $chairmanAvatarFile = !empty($chairman?->avatar) ? basename((string) $chairman->avatar) : null;
         $chairmanAvatar = $chairmanAvatarFile && file_exists(public_path('upload/image/cultivation/' . $chairmanAvatarFile))
             ? url('/public/upload/image/cultivation/' . rawurlencode($chairmanAvatarFile))
-            : asset($demoChairman['image'] ?? 'public/avatar.jpeg');
+            : $neutralAvatar;
         $chairmanName = $chairmanName ?: ($demoChairman['name'] ?? 'Governing Body Chairman');
         $chairmanRole = $chairmanRole ?: ($demoChairman['designation'] ?? 'Governing Body Chairman');
         $chairmanMessage = $chairmanMessage ?: ($demoChairman['message'] ?? '');
@@ -110,7 +117,7 @@
                 'avatar' => $chairmanAvatar,
                 'message' => $chairmanMessage,
                 'route' => route('chairmanMessagePage'),
-                'is_demo' => !$chairman,
+                'is_demo' => !$chairmanIsReal,
             ],
             [
                 'label' => 'Head of Institution',
@@ -119,7 +126,7 @@
                 'avatar' => $principalAvatar,
                 'message' => $principalMessage,
                 'route' => route('headOfInstituteMessagePage'),
-                'is_demo' => !$hasLeadershipContent || (!$config?->principalName && !$principalLead && !$principalBody),
+                'is_demo' => !$principalIsReal,
             ],
         ])->values();
         $leadershipColumnClass = $leadershipCards->count() === 1 ? 'col-lg-8 mx-auto' : 'col-lg-6';
@@ -130,7 +137,7 @@
         };
         $resolveTeacherPhoto = function ($teacher) {
             if (!$teacher || empty($teacher->avatar)) {
-                return asset('public/avatar.jpeg');
+                return asset(config('cultivation_demo.branding.default_avatar'));
             }
 
             $file = basename((string) $teacher->avatar);
@@ -138,7 +145,7 @@
                 return url('/public/upload/image/teacher/' . rawurlencode($file));
             }
 
-            return asset('public/avatar.jpeg');
+            return asset(config('cultivation_demo.branding.default_avatar'));
         };
         $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
             ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
@@ -150,14 +157,14 @@
         $hasAboutContent = filled($aboutHeading) || filled($aboutDetails);
         $overviewImages = collect([$resolveGalleryImage($firstImage), $resolveGalleryImage($secondImage)])->filter()->values();
         $demoStatistics = config('cultivation_demo.statistics', []);
-        $establishedYear = preg_match('/\b(19|20)\d{2}\b/', (string) $foundedYear, $yearMatch) ? $yearMatch[0] : null;
+        $establishedYear = preg_match('/\b(18|19|20)\d{2}\b/', (string) $foundedYear, $yearMatch) && (int) $yearMatch[0] <= now()->year ? $yearMatch[0] : null;
         $overviewMetrics = collect([
             ['key' => 'established', 'value' => $establishedYear, 'real' => filled($establishedYear)],
             ['key' => 'students', 'value' => $studentCount > 0 ? $studentCount : null, 'real' => $studentCount > 0],
             ['key' => 'teachers', 'value' => $teacherCount > 0 ? $teacherCount : null, 'real' => $teacherCount > 0],
             ['key' => 'staff', 'value' => $staffCount > 0 ? $staffCount : null, 'real' => $staffCount > 0],
             ['key' => 'classes', 'value' => $classCount > 0 ? $classCount : null, 'real' => $classCount > 0],
-            ['key' => 'experience', 'value' => $establishedYear ? max(1, now()->year - (int) $establishedYear) . '+' : null, 'real' => filled($establishedYear)],
+            ['key' => 'experience', 'value' => $establishedYear ? max(0, now()->year - (int) $establishedYear) . '+' : null, 'real' => filled($establishedYear)],
         ])->map(function ($metric) use ($demoStatistics) {
             $fallback = $demoStatistics[$metric['key']] ?? [];
             return array_merge($fallback, [
@@ -168,7 +175,7 @@
         })->values();
 
         $demoFaculty = collect(config('cultivation_demo.faculty', []))->map(fn ($teacher) => (object) array_merge($teacher, ['is_demo' => true]));
-        $facultyPreview = $facultyPreview->take(4)->map(function ($teacher) {
+        $facultyPreview = $facultyPreview->filter(fn ($teacher) => filled(trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''))))->take(4)->map(function ($teacher) {
             $teacher->is_demo = false;
             return $teacher;
         });
@@ -177,7 +184,7 @@
         }
 
         $welcomeFallback = config('cultivation_demo.welcome', []);
-        $welcomeTitle = $aboutHeading ?: ($welcomeFallback['heading'] ?? 'Welcome to Sankuchail High School');
+        $welcomeTitle = $aboutHeading ?: ($institutionName ? 'Welcome to ' . $institutionName : $welcomeFallback['heading']);
         $welcomeSubHeading = $welcomeFallback['sub_heading'] ?? 'Knowledge, Discipline and Moral Values';
         $welcomeDetails = $aboutDetails ?: ($welcomeFallback['details'] ?? '');
         $welcomeImage = $overviewImages->get(0) ?: asset($welcomeFallback['image'] ?? 'public/cultivation/assets/images/about/history.png');
@@ -189,7 +196,7 @@
             $facultyCount === 1 => 'col-6 col-sm-5 col-md-4 col-lg-3 mx-auto',
             $facultyCount === 2 => 'col-6 col-sm-5 col-md-4 col-lg-3',
             $facultyCount === 3 => 'col-6 col-sm-4 col-md-4 col-lg-3',
-            default => 'col-6 col-sm-6 col-md-4 col-lg-3',
+            default => 'col-6 col-sm-6 col-md-6 col-lg-3',
         };
         $facultyGridJustify = $facultyCount === 2 ? 'justify-content-center' : '';
     @endphp
@@ -1326,31 +1333,6 @@
             transform: translate(-50%, -50%) scale(1);
         }
 
-        body.translated-ltr,
-        body.translated-rtl {
-            top: 0 !important;
-        }
-
-        .goog-te-banner-frame.skiptranslate,
-        .goog-te-balloon-frame,
-        .goog-te-gadget,
-        .goog-te-gadget > span,
-        .goog-te-combo,
-        #goog-gt-tt,
-        .goog-tooltip,
-        .goog-tooltip:hover {
-            display: none !important;
-            visibility: hidden !important;
-        }
-
-        #google_translate_element {
-            position: fixed;
-            left: -9999px;
-            bottom: -9999px;
-            opacity: 0;
-            pointer-events: none;
-        }
-
         .gallery-preview-modal .modal-dialog {
             max-width: 920px;
         }
@@ -1644,10 +1626,63 @@
                 font-size: 12px;
             }
         }
+        /* Consistency pass: preserve the existing section architecture. */
+        .rs-slider.style1 .slider-content { background-position: center 45%; }
+        .rs-slider.style1 .slider-content::before { background: linear-gradient(90deg,rgba(8,27,57,.88),rgba(8,27,57,.55) 48%,rgba(8,27,57,.12)); }
+        .rs-slider.style1 .slider-content .sl-title { font-size:40px; max-width:620px; line-height:1.2; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; margin:0 0 16px; }
+        .rs-slider.style1 .slider-content .sl-sub-title { font-size:16px; line-height:1.5; margin:0 0 12px; }
+        .rs-slider.style1 .sl-support { max-width:530px; margin-bottom:18px; }
+        .hero-demo-note { display:block; width:fit-content; font-size:11px; color:#d7e8f5; margin:0 0 12px; }
+        .rs-slider.style1 .owl-nav { display:block !important; }
+        .rs-slider.style1 .owl-nav [class*="owl-"] { width:40px !important; height:40px !important; line-height:40px !important; border-radius:50%; background:rgba(8,27,57,.65) !important; color:#fff !important; font-size:24px !important; opacity:1 !important; visibility:visible !important; }
+        .rs-slider.style1 .owl-nav .owl-prev { left:18px !important; }
+        .rs-slider.style1 .owl-nav .owl-next { right:18px !important; }
+        .rs-slider.style1 .owl-dots { position:absolute; bottom:14px; left:0; right:0; text-align:center; }
+        .rs-slider.style1 .owl-dot { width:10px; height:10px; margin:0 5px; border-radius:50%; background:#b9d2e1; }
+        .rs-slider.style1 .owl-dot.active { background:#21a7d0; box-shadow:0 0 0 3px rgba(255,255,255,.3); }
+        #rs-at-a-glance .row { margin-left:-7px; margin-right:-7px; }
+        #rs-at-a-glance .row > div { padding-left:7px; padding-right:7px; }
+        #rs-at-a-glance .stat-card { padding:26px 10px !important; }
+        #rs-at-a-glance .stat-icon { width:56px !important; height:56px !important; font-size:25px !important; }
+        #rs-at-a-glance .number { font-size:38px !important; margin-bottom:10px !important; }
+        #rs-at-a-glance .stat-body .title { font-size:13px !important; line-height:1.5; min-height:39px; letter-spacing:.2px !important; }
+        .leadership-portrait { background:#edf4f9; object-fit:cover; }
+        .leadership-copy { align-self:stretch; }
+        .leadership-copy h4 { min-height:55px; }
+        .leadership-copy .designation { min-height:42px; }
+        .leadership-profile-body .desc { height:101px; min-height:101px; line-height:1.8; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; margin:0; }
+        .leadership-cta { min-height:60px; display:flex; align-items:flex-end; }
+        .leadership-cta .leadership-read-more { display:inline-flex; align-items:center; min-height:50px; padding:12px 20px; border-radius:3px; background:#e8f5fa; }
+        .faculty-card { height:100%; border-radius:12px; }
+        .faculty-photo-link { aspect-ratio: 5 / 4; }
+        .faculty-photo-link img { object-position:center 25%; }
+        .faculty-card-body { padding:20px 14px; }
+        .faculty-card-body h3 { font-size:17px; min-height:44px; margin-bottom:8px; }
+        .faculty-designation { font-size:14px; line-height:1.5; }
+        .faculty-subject { font-size:13px; line-height:1.5; }
+        @media(max-width:767px) {
+            body.home-style2 .menu-area .logo-part img { max-width:42px !important; }
+            body.home-style2 .menu-area .header-institute-title { font-size:16px; line-height:1.25; }
+            .rs-slider.style1 .slider-content .sl-title { font-size:30px; max-height:none; }
+            .rs-slider.style1 .slider-content .sl-sub-title { font-size:13px; }
+            .rs-slider.style1 .slider-content .container { padding-left:40px; padding-right:40px; }
+            .rs-slider.style1 .owl-nav [class*="owl-"] { width:28px !important; height:28px !important; line-height:28px !important; }
+            .rs-slider.style1 .owl-nav .owl-prev { left:5px !important; }
+            .rs-slider.style1 .owl-nav .owl-next { right:5px !important; }
+            .hero-demo-note { font-size:10px; }
+            .faculty-preview-head { align-items:flex-start; flex-direction:column; }
+            .faculty-card-body h3 { font-size:14px; }
+            .faculty-card-body { padding:16px 10px; }
+            .leadership-profile-body { padding:20px; }
+            .leadership-meta-horizontal { flex-wrap:wrap; }
+            .leadership-copy { flex-basis:100%; }
+            .leadership-copy h4,.leadership-copy .designation { min-height:0; }
+            .leadership-portrait { width:100px; height:125px; }
+        }
     </style>
+    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/homepage-responsive.css') }}?v={{ filemtime(public_path('cultivation/assets/css/homepage-responsive.css')) }}">
 </head>
-<body class="home-style2">
-    <div id="google_translate_element" aria-hidden="true"></div>
+<body class="home-style2 v2-homepage">
 
     @include('frontend.cultivation-v2.partials._header')
 
@@ -1659,21 +1694,22 @@
                     @php
                         $slideImage = isset($slide->fallback_image) ? $slide->fallback_image : ($resolveHeroImage($slide) ?: asset('public/cultivation/assets/images/slider/h2-1.jpg'));
                         $slideInstName = trim((string) (($slide->eyebrow ?? null) ?: $institutionName ?: 'Institutional Learning Community'));
-                        $slideHeading = trim((string) ($slide->headLine ?? 'Knowledge, Discipline & Future Leadership'));
-                        $slideSupport = trim((string) ($slide->supporting_text ?? $slide->description ?? ''));
+                        $slideHeading = trim((string) ($slide->headLine ?: config('cultivation_demo.hero.fallback_slides.0.title')));
+                        $slideSupport = \Illuminate\Support\Str::limit(trim(strip_tags((string) ($slide->supporting_text ?? $slide->description ?? $slide->detail ?? ''))), 150);
                         if (empty($slideSupport) && isset($slide->fallback_image)) {
                             $slideSupport = trim((string) ($slide->detail ?? ''));
                         }
-                        $slideBtnText = $slide->button_text ?? 'Discover More &rarr;';
+                        $slideBtnText = $slide->button_text ?? 'Discover More →';
                         $slideBtnUrl = $slide->button_url ?? route('institutePage');
                     @endphp
                     <div class="slider-content" style="background-image:url('{{ $slideImage }}');">
                         <div class="container">
-                            <div class="sl-sub-title white-color wow bounceInLeft" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideInstName }}</div>
-                            <div class="sl-title white-color wow fadeInRight" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
-                            @if($slideSupport)<p class="sl-support wow fadeInUp" data-wow-delay="750ms" data-wow-duration="1800ms">{{ $slideSupport }}</p>@endif
-                            <div class="sl-btn wow fadeInUp" data-wow-delay="900ms" data-wow-duration="2000ms">
-                                <a class="readon2 banner-style" href="{{ $slideBtnUrl }}">{!! $slideBtnText !!}</a>
+                            <div class="sl-sub-title white-color" data-wow-delay="300ms" data-wow-duration="2000ms">{{ $slideInstName }}</div>
+                            <div class="sl-title white-color" data-wow-delay="600ms" data-wow-duration="2000ms">{{ $slideHeading }}</div>
+                            @if($slideSupport)<p class="sl-support" data-wow-delay="750ms" data-wow-duration="1800ms">{{ $slideSupport }}</p>@endif
+                            @if(isset($slide->fallback_image))<span class="hero-demo-note">Illustrative education imagery</span>@endif
+                            <div class="sl-btn" data-wow-delay="900ms" data-wow-duration="2000ms">
+                                <a class="readon2 banner-style" href="{{ $slideBtnUrl }}">{{ $slideBtnText }}</a>
                             </div>
                         </div>
                     </div>
@@ -1759,14 +1795,14 @@
                 <div class="row {{ $overviewMetrics->count() <= 2 ? 'justify-content-center' : '' }}">
                     @foreach($overviewMetrics as $metric)
                         <div class="col-6 col-md-4 col-lg-2 mb-20">
-                            <div class="stat-card" style="background: #ffffff; border: 1px solid #d4e2f0; border-radius: 12px; padding: 22px 16px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.06); height: 100%; text-align: center;">
+                            <div class="stat-card" data-source="{{ $metric['source'] }}" style="background: #ffffff; border: 1px solid #d4e2f0; border-radius: 12px; padding: 22px 16px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.06); height: 100%; text-align: center;">
                                 <div class="stat-icon" style="width: 48px; height: 48px; border-radius: 12px; background: #eef6fc; color: #21a7d0; display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 14px;">
                                     <i class="fa {{ $metric['icon'] }}"></i>
                                 </div>
                                 <div class="stat-body">
                                     <h2 class="number" style="font-size: 32px; font-weight: 800; color: #102c63; line-height: 1.1; margin: 0 0 2px;">{{ $metric['value'] }}</h2>
                                     <h4 class="title mb-0" style="font-size: 14px; font-weight: 700; color: #4b6382; text-transform: uppercase; letter-spacing: 0.5px;">{{ $metric['label'] }}</h4>
-                                    <small style="display: block; color: #8aa1bb; font-size: 10px; margin-top: 8px;">{{ $metric['real'] ? 'Verified information' : 'Institutional profile' }}</small>
+                                    <small style="display: block; color: #8aa1bb; font-size: 10px; margin-top: 8px;">{{ $metric['real'] ? ($metric['source'] === 'DERIVED' ? 'Since establishment' : 'Institution records') : 'Institutional profile' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -1790,7 +1826,7 @@
                 <div class="row justify-content-center">
                     @foreach($leadershipCards as $leader)
                         <div class="{{ $leadershipCards->count() === 1 ? 'col-lg-8 col-xl-7 mx-auto' : 'col-lg-6' }} mb-4 mb-lg-0">
-                            <article class="leadership-profile-card" style="background: #ffffff; border: 1px solid #dce9f4; border-radius: 12px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.07); overflow: hidden; height: 100%;">
+                            <article class="leadership-profile-card" data-source="{{ $leader['is_demo'] ? 'DEMO' : 'REAL' }}" style="background: #ffffff; border: 1px solid #dce9f4; border-radius: 12px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.07); overflow: hidden; height: 100%;">
                                 <div class="leadership-profile-body">
                                     <div class="leadership-meta-horizontal">
                                         <img class="leadership-portrait" src="{{ $leader['avatar'] }}" alt="Photo of {{ $leader['name'] }}" loading="lazy">
@@ -2001,20 +2037,20 @@
                         <div class="sub-title primary">Our Faculty</div>
                         <h2 class="title mb-0">{{ $facultyLabel }}</h2>
                     </div>
-                    <a class="readon2" href="{{ route('teacherPage') }}">View All Teachers</a>
+                    <a class="readon2" href="{{ route('teacherPage') }}">View All Teachers &rarr;</a>
                 </div>
                 <div class="row faculty-preview-grid {{ $facultyGridJustify }}">
                     @foreach($facultyPreview as $teacher)
                         @php
                             $teacherName = $teacher->is_demo ?? false ? $teacher->name : trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''));
                             $teacherDesignation = $teacher->is_demo ?? false ? $teacher->designation : \App\Models\TeacherManagement::getDesignationName($teacher->designation ?? $teacher->designation_id ?? null);
-                            $teacherSubject = $teacher->is_demo ?? false ? ($teacher->subject ?? null) : null;
+                            $teacherSubject = ($teacher->is_demo ?? false) ? ($teacher->subject ?? null) : ($teacher->subject ?? $teacher->department ?? null);
                             $teacherPhoto = $teacher->is_demo ?? false ? asset($teacher->photo) : $resolveTeacherPhoto($teacher);
                             $teacherUrl = $teacher->is_demo ?? false ? null : route('teacher.show', ['id' => $teacher->id]);
                         @endphp
                         @if($teacherName)
                             <div class="{{ $facultyColClass }}">
-                                <article class="faculty-card">
+                                <article class="faculty-card" data-source="{{ $teacher->is_demo ? 'DEMO' : 'REAL' }}">
                                     @if($teacherUrl)<a class="faculty-photo-link" href="{{ $teacherUrl }}" aria-label="View {{ $teacherName }} profile">@else<a class="faculty-photo-link" href="{{ route('teacherPage') }}" aria-label="View faculty directory">@endif
                                         <img src="{{ $teacherPhoto }}" alt="Photo of {{ $teacherName }}" loading="lazy">
                                     </a>
@@ -2033,23 +2069,30 @@
         @endif
 
         @php
-            $galleryPreviewItems = ($gallery ?? collect())->take(6);
+            $galleryPreviewItems = ($gallery ?? collect())->filter(fn ($item) => $resolveGalleryImage($item))->take(5);
+            $galleryIsDemo = $galleryPreviewItems->isEmpty();
+            if ($galleryIsDemo) {
+                $galleryPreviewItems = collect(config('cultivation_demo.gallery', []))->map(fn ($item) => (object) [
+                    'title' => $item['title'], 'description' => $item['description'],
+                    'demo_image' => $item['image'], 'created_at' => null,
+                ])->filter(fn ($item) => $resolveGalleryImage($item))->take(5);
+            }
         @endphp
         @if($galleryPreviewItems->isNotEmpty())
         <div class="pt-64 pb-64 md-pt-42 md-pb-42">
             <div class="container">
-                <div class="ref-photo-gallery">
+                <div class="ref-photo-gallery" data-source="{{ $galleryIsDemo ? 'DEMO' : 'REAL' }}">
                     <div class="gallery-head">
                         <div class="head-copy">
-                            <span>Campus Memories</span>
+                            <span>{{ $galleryIsDemo ? 'Learning in Focus' : 'Campus Memories' }}</span>
                             <h2>Photo Gallery</h2>
-                            <p class="head-note">A curated look at student achievements, events, and everyday campus moments.</p>
+                            <p class="head-note">{{ $galleryIsDemo ? 'Illustrations of learning spaces, academic activities and student development.' : 'A curated look at student achievements, events, and everyday campus moments.' }}</p>
                             <div class="gallery-meta"><i class="fa fa-camera"></i> {{ $galleryPreviewItems->count() > 0 ? $galleryPreviewItems->count() : 6 }} highlighted photos</div>
                         </div>
                         <a class="view-all-btn" href="{{ route('imagePage') }}">View All <i class="fa fa-arrow-right"></i></a>
                     </div>
                     <div class="gallery-grid gallery-count-{{ $galleryPreviewItems->count() }}">
-                        @forelse($galleryPreviewItems as $img)
+                        @foreach($galleryPreviewItems as $img)
                             @php
                                 $galleryImageSrc = $resolveGalleryImage($img);
                                 $galleryTitle = trim((string) ($img->title ?? ''));
@@ -2086,7 +2129,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <img id="galleryPreviewImage" class="preview-image" src="" alt="Preview image">
+                        <img id="galleryPreviewImage" class="preview-image" alt="Preview image">
                         <div class="preview-info">
                             <h4 id="galleryPreviewHeading">Gallery Image</h4>
                             <span class="preview-date" id="galleryPreviewDate"></span>
@@ -2145,7 +2188,6 @@
     <script src="{{ asset('public/cultivation/assets/js/modernizr-2.8.3.min.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/jquery.min.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/rsmenu-main.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/jquery.nav.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/owl.carousel.min.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/slick.min.js') }}"></script>
@@ -2160,6 +2202,7 @@
     <script src="{{ asset('public/cultivation/assets/js/plugins.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/contact.form.js') }}"></script>
     <script src="{{ asset('public/cultivation/assets/js/main.js') }}"></script>
+    <script src="{{ asset('public/cultivation/assets/js/homepage-responsive.js') }}"></script>
     <script>
         (function () {
             var galleryGrid = document.querySelector('.ref-photo-gallery .gallery-grid');
@@ -2200,74 +2243,5 @@
             });
         })();
     </script>
-    <script>
-        (function () {
-            const STORAGE_KEY = 'site_language_pref';
-
-            function setTranslateCookie(value) {
-                document.cookie = 'googtrans=' + value + ';path=/';
-                document.cookie = 'googtrans=' + value + ';path=/;domain=' + window.location.hostname;
-            }
-
-            function getSavedLanguage() {
-                const lang = localStorage.getItem(STORAGE_KEY);
-                return lang === 'bn' ? 'bn' : 'en';
-            }
-
-            function markActiveButton(lang) {
-                document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
-                    button.classList.toggle('active', button.getAttribute('data-lang') === lang);
-                });
-            }
-
-            function applyLanguage(lang) {
-                localStorage.setItem(STORAGE_KEY, lang);
-                markActiveButton(lang);
-                document.documentElement.setAttribute('lang', lang === 'bn' ? 'bn' : 'en');
-                setTranslateCookie(lang === 'bn' ? '/auto/bn' : '/auto/en');
-                window.location.reload();
-            }
-
-            function syncSavedLanguageCookie() {
-                const savedLang = getSavedLanguage();
-                const desired = savedLang === 'bn' ? '/auto/bn' : '/auto/en';
-                if (!document.cookie.includes('googtrans=' + desired)) {
-                    setTranslateCookie(desired);
-                    window.location.reload();
-                    return true;
-                }
-                return false;
-            }
-
-            document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
-                button.addEventListener('click', function () {
-                    const lang = button.getAttribute('data-lang') === 'bn' ? 'bn' : 'en';
-                    applyLanguage(lang);
-                });
-            });
-
-            markActiveButton(getSavedLanguage());
-            if (syncSavedLanguageCookie()) {
-                return;
-            }
-
-            window.googleTranslateElementInit = function () {
-                try {
-                    new google.translate.TranslateElement(
-                        {
-                            pageLanguage: 'en',
-                            includedLanguages: 'en,bn',
-                            autoDisplay: false,
-                        },
-                        'google_translate_element'
-                    );
-                } catch (error) {
-                    // Keep UI functional even if translate script fails.
-                }
-            };
-        })();
-    </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
-

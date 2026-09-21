@@ -4,23 +4,37 @@
             ? App\Models\ServerConfig::first()
             : null;
     }
+    $publicUrl = static function ($value) {
+        $value = trim((string) $value);
+        if (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($value, PHP_URL_SCHEME) ?? ''), ['http', 'https'])) return null;
+        $host = strtolower(parse_url($value, PHP_URL_HOST) ?? '');
+        if (!str_contains($host, '.') || preg_match('/(^localhost$|\.localhost$|\.local$|\.test$|\.example$|\.invalid$)/', $host) || filter_var($host, FILTER_VALIDATE_IP)) return null;
+        if (parse_url($value, PHP_URL_USER) || parse_url($value, PHP_URL_PASS)) return null;
+        return $value;
+    };
+    $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
     $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
         ? $config->officeEmail
         : null;
     $demoContact = config('cultivation_demo.contact', []);
-    $footerAddress = $config?->address ?: ($demoContact['address'] ?? null);
-    $footerPhone = $config?->officeMobile ?: ($demoContact['phone'] ?? null);
-    $footerEmail = $officeEmail ?: ($demoContact['email'] ?? null);
+    $footerAddress = $contactValue($config?->address) ?: ($demoContact['address'] ?? null);
+    $footerPhone = $contactValue($config?->officeMobile) ?: ($demoContact['phone'] ?? null);
+    $footerEmail = filter_var($officeEmail, FILTER_VALIDATE_EMAIL) ? $officeEmail : ($demoContact['email'] ?? null);
+    $footerWebsite = collect([$config?->website, $config?->webAddress, $config?->websiteUrl, $config?->siteUrl])->map($publicUrl)->filter()->first();
+    $footerName = $contactValue($config?->instituteName) ?: config('cultivation_demo.branding.institution_name');
+    $footerDescription = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($config?->instituteDescription ?? ($insData->insDetails ?? ''))))), 125) ?: $demoContact['description'];
+    $footerMap = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($footerAddress);
     $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
     $footerLogo = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
         ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
-        : asset('public/logoWhite.png');
+        : null;
     $socialLinks = [
         'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
-        'Twitter' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
-        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
+        'Twitter / X' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
+        'Instagram' => ['url' => $config?->instagramLink ?? $config?->instagram, 'icon' => 'fa-instagram'],
         'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
     ];
+    $socialLinks = collect($socialLinks)->filter(fn ($social) => $publicUrl($social['url']));
 @endphp
 
 <style>
@@ -451,6 +465,43 @@
         line-height: 1.5;
     }
 
+    /* Restored contact strip and institution panel. */
+    #rs-footer .footer-info-strip { background:#142e56; padding:32px 0; }
+    .footer-contact-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:36px; }
+    #rs-footer .fi-icon { width:48px; height:48px; font-size:20px; }
+    #rs-footer .fi-body { min-width:0; }
+    #rs-footer .fi-body h6 { font-size:16px; margin-bottom:8px; }
+    #rs-footer .fi-body p,#rs-footer .fi-body a { font-size:14px; overflow-wrap:anywhere; word-break:normal; line-height:1.7; }
+    #rs-footer .fi-body .footer-map-link { color:#7ed9f4; font-weight:600; }
+    #rs-footer .footer-top { padding:56px 0 !important; background:#0b1d38; }
+    #rs-footer .footer-main-row { row-gap:40px; }
+    #rs-footer .footer-widget { margin-bottom:0; }
+    #rs-footer .footer-about { gap:14px; }
+    #rs-footer .footer-about-shell { padding:22px 18px; }
+    #rs-footer .footer-about-badge { font-size:9px; margin:0; }
+    #rs-footer .footer-education-mark { width:54px; height:54px; display:flex; align-items:center; justify-content:center; background:rgba(33,167,208,.13); border-radius:12px; color:#7ed9f4; font-size:28px; }
+    #rs-footer .footer-institution-name { color:#fff; font-size:20px; line-height:1.4; margin:0; overflow-wrap:anywhere; }
+    #rs-footer .footer-brand-logo img { max-width:100%; max-height:64px; margin:0; }
+    #rs-footer .footer-about-desc { font-size:14px; line-height:1.7; }
+    #rs-footer .footer-social-inline { margin:4px 0 2px; }
+    #rs-footer .footer-sub-section { margin-top:8px; padding-top:22px; }
+    #rs-footer .footer-contact-list { list-style:none; padding:0; margin-bottom:0; }
+    #rs-footer .footer-contact-row { display:flex; align-items:center; gap:10px; min-height:64px; padding:10px; margin-bottom:10px; border:1px solid rgba(255,255,255,.09); border-radius:10px; background:rgba(255,255,255,.03); }
+    #rs-footer .footer-contact-icon { width:30px; height:30px; flex:0 0 30px; font-size:14px; margin:0; }
+    #rs-footer .footer-contact-icon i { width:14px; font-size:14px; line-height:1; text-align:center; }
+    #rs-footer .footer-contact-value { padding:0; font-size:13px; line-height:1.6; overflow-wrap:anywhere; word-break:normal; }
+    #rs-footer .site-map li { padding:9px 0; }
+    #rs-footer .site-map li::before { display:none; }
+    #rs-footer .site-map a { overflow-wrap:anywhere; }
+    #rs-footer .footer-link-group-label { color:#7ed9f4; margin-top:16px; }
+    #rs-footer .footer-link-group-label:first-child { margin-top:0; }
+    #rs-footer .footer-bottom { background:#07162c; padding:28px 0; }
+    #rs-footer .footer-bottom-links { justify-content:flex-end; }
+    #rs-footer a:focus-visible { outline:2px solid #7ed9f4; outline-offset:4px; }
+    @media(min-width:992px) { #rs-footer .footer-main-row > :first-child { flex:0 0 31%; max-width:31%; } #rs-footer .footer-main-row > :not(:first-child) { flex:0 0 23%; max-width:23%; } }
+    @media(max-width:991px) { .footer-contact-grid { grid-template-columns:1fr; gap:24px; } #rs-footer .footer-bottom-links { justify-content:flex-start; margin-top:16px; } }
+    @media(max-width:767px) { #rs-footer .footer-top { padding:40px 0 !important; } #rs-footer .footer-widget { padding-right:15px; } #rs-footer .footer-bottom-links { justify-content:center; } #rs-footer .footer-bottom-legal { text-align:center; } }
+
     /* sidebar-strip (kept for compat â€” hidden on footer redesign) */
     .footer-sidebar-strip {
         display: none;
@@ -479,51 +530,44 @@
 </style>
 
 <footer id="rs-footer" class="rs-footer">
+    <div class="footer-info-strip">
+        <div class="container footer-contact-grid">
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><div class="fi-body"><h6>Address</h6><p>{{ $footerAddress }}</p></div></div>
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><div class="fi-body"><h6>Phone &amp; Email</h6><p><a href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></p><p><a href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></p></div></div>
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-globe" aria-hidden="true"></i></span><div class="fi-body"><h6>Find Us Online</h6><p>@if($footerWebsite)<a href="{{ $footerWebsite }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://#', '', rtrim($footerWebsite, '/')) }}</a>@else<span>Website information coming soon</span>@endif</p><a class="footer-map-link" href="{{ $footerMap }}" target="_blank" rel="noopener noreferrer">Open in Google Maps &rarr;</a></div></div>
+        </div>
+    </div>
 
     <div class="footer-top">
         <div class="container">
             <div class="row footer-main-row">
 
-                {{-- Col 1: Institution Identity & Contact --}}
-                <div class="col-lg-3 col-md-6 col-sm-12 footer-widget md-mb-50">
-                    <div class="footer-about">
-                        <h4 class="widget-title" style="color: #ffffff; font-size: 18px; font-weight: 800; margin-bottom: 14px; text-transform: none; letter-spacing: 0;">
-                            {{ !empty($config?->instituteName) ? $config->instituteName : 'Sankuchail High School' }}
-                        </h4>
-                        @if($logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile)))
-                            <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="Home" style="display: block; margin-bottom: 12px;">
-                                <img src="{{ url('/public/upload/image/cultivation/' . rawurlencode($logoFile)) }}" alt="{{ $config?->instituteName }}" style="max-height: 48px; width: auto;">
-                            </a>
-                        @endif
-                        <ul class="address-widget footer-contact-list" style="list-style: none; padding: 0; margin: 12px 0 0;">
-                            @if($footerAddress)
-                                <li class="footer-contact-row">
-                                    <i class="fa fa-map-marker footer-contact-icon" aria-hidden="true"></i>
-                                    <span class="footer-contact-value">{{ $footerAddress }}</span>
-                                </li>
-                            @endif
-                            @if($footerPhone)
-                                <li class="footer-contact-row">
-                                    <i class="fa fa-phone footer-contact-icon" aria-hidden="true"></i>
-                                    <a class="footer-contact-value" href="tel:{{ preg_replace('/\s+/', '', $footerPhone) }}">{{ $footerPhone }}</a>
-                                </li>
-                            @endif
-                            @if($footerEmail)
-                                <li class="footer-contact-row">
-                                    <i class="fa fa-envelope footer-contact-icon" aria-hidden="true"></i>
-                                    <a class="footer-contact-value" href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a>
-                                </li>
-                            @endif
-                        </ul>
-                        @if(collect($socialLinks)->contains(fn ($social) => filled($social['url'])))
-                            <ul class="footer-social footer-social-inline" style="display: flex; gap: 8px; list-style: none; padding: 0; margin-top: 14px;">
+                {{-- Institution identity remains supplied by ServerConfig. --}}
+                <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
+                    <div class="footer-about footer-about-shell">
+                        <span class="footer-about-badge">Official School Portal</span>
+                        <a href="{{ route('homePage') }}" class="footer-brand-logo" aria-label="{{ $footerName }} home">
+                            @if($footerLogo)<img src="{{ $footerLogo }}" alt="{{ $footerName }} logo" loading="lazy">
+                            @else<span class="footer-education-mark"><i class="fa fa-university" aria-hidden="true"></i></span>@endif
+                        </a>
+                        <h4 class="footer-institution-name">{{ $footerName }}</h4>
+                        <p class="footer-about-desc">{{ $footerDescription }}</p>
+                        @if($socialLinks->isNotEmpty())
+                            <ul class="footer-social-inline">
                                 @foreach($socialLinks as $label => $social)
-                                    @if(filled($social['url']))
-                                        <li><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #a0c2e8; font-size: 14px;"><i class="fa {{ $social['icon'] }}"></i></a></li>
-                                    @endif
+                                    <li><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $label }}"><i class="fa {{ $social['icon'] }}" aria-hidden="true"></i></a></li>
                                 @endforeach
                             </ul>
                         @endif
+                        <div class="footer-sub-section">
+                            <h5 class="footer-sub-title">Contact Us</h5>
+                            <ul class="footer-contact-list">
+                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><span class="footer-contact-value">{{ $footerAddress }}</span></li>
+                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><a class="footer-contact-value" href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></li>
+                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-envelope" aria-hidden="true"></i></span><a class="footer-contact-value" href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></li>
+                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>@if($footerWebsite)<a class="footer-contact-value" href="{{ $footerWebsite }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://#', '', rtrim($footerWebsite, '/')) }}</a>@else<span class="footer-contact-value">Website information coming soon</span>@endif</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
 
@@ -537,8 +581,6 @@
                         <li><a href="https://www.dhakaeducationboard.gov.bd/" target="_blank" rel="noopener"><i class="fa fa-angle-right"></i> মাধ্যমিক ও উচ্চ মাধ্যমিক শিক্ষা বোর্ড</a></li>
                         <li><a href="https://shed.gov.bd/" target="_blank" rel="noopener"><i class="fa fa-angle-right"></i> মাধ্যমিক ও উচ্চ শিক্ষা বিভাগ</a></li>
                         <li><a href="https://ebook.gov.bd/" target="_blank" rel="noopener"><i class="fa fa-angle-right"></i> ই-বুক</a></li>
-                        <li><a href="https://www.i-book.com.bd/" target="_blank" rel="noopener"><i class="fa fa-angle-right"></i> আই-বুক</a></li>
-                        <li><a href="https://www.dshe.gov.bd/" target="_blank" rel="noopener"><i class="fa fa-angle-right"></i> মাউশি</a></li>
                     </ul>
                 </div>
 
@@ -559,6 +601,7 @@
                 <div class="col-lg-3 col-md-6 col-sm-12 footer-widget">
                     <h4 class="widget-title">Gallery &amp; Academic</h4>
                     <ul class="site-map">
+                        <li class="footer-link-group-label">Gallery</li>
                         <li><a href="{{ route('imagePage') }}"><i class="fa fa-angle-right"></i> Photo Gallery</a></li>
                         <li><a href="{{ route('videoPage') }}"><i class="fa fa-angle-right"></i> Video Gallery</a></li>
                     </ul>
@@ -582,7 +625,7 @@
                 <div class="col-lg-7 col-md-12 md-mb-10 text-lg-start">
                     <div class="footer-bottom-legal">
                         <div class="copyright">
-                            <p>&copy; <span>{{ date('Y') }}</span> {{ !empty($config?->instituteName) ? $config->instituteName : 'Institute' }}. All Rights Reserved.</p>
+                            <p>&copy; <span>{{ date('Y') }}</span> {{ $footerName }}. All Rights Reserved.</p>
                         </div>
                         <p class="subcopy">Developed &amp; Powered By <strong>Cultivation</strong></p>
                     </div>
@@ -603,4 +646,3 @@
 <div id="scrollUp">
     <i class="fa fa-angle-up"></i>
 </div>
-

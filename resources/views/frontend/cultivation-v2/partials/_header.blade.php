@@ -46,37 +46,6 @@
         color: #ffffff;
     }
 
-    body.home-style2 .topbar-area .topbar-right .lang-switcher-item {
-        padding-right: 8px;
-        display: none !important;
-    }
-
-    body.home-style2 .site-lang-switcher-inline {
-        display: inline-flex;
-        align-items: center;
-        border: 1px solid rgba(126, 217, 244, 0.65);
-        border-radius: 999px;
-        overflow: hidden;
-        background: rgba(7, 28, 62, 0.3);
-    }
-
-    body.home-style2 .site-lang-switcher-inline .lang-btn {
-        border: 0;
-        background: transparent;
-        color: #dff6ff;
-        padding: 7px 12px;
-        font-size: 11px;
-        font-weight: 800;
-        letter-spacing: 0.4px;
-        line-height: 1;
-        cursor: pointer;
-    }
-
-    body.home-style2 .site-lang-switcher-inline .lang-btn.active {
-        background: #21a7d0;
-        color: #ffffff;
-    }
-
     body.home-style2 .menu-area.menu-sticky {
         background: #ffffff;
         border-bottom: 1px solid #e7edf5;
@@ -353,12 +322,6 @@
                             <li class="btn-part">
                                 <a class="apply-btn" href="{{ route('supportPage') }}">Admission Information</a>
                             </li>
-                            <li class="lang-switcher-item">
-                                <div class="site-lang-switcher-inline js-site-lang-switcher" role="group" aria-label="Language switcher">
-                                    <button type="button" class="lang-btn" data-lang="en">EN</button>
-                                    <button type="button" class="lang-btn" data-lang="bn">বাংলা</button>
-                                </div>
-                            </li>
                         </ul>
                     </div>
                 </div>
@@ -446,6 +409,8 @@
 </div>
 
 <script>
+    // The homepage uses its own responsive navigation controller; inner pages retain this one.
+    if (!document.body.classList.contains('v2-homepage')) {
     document.addEventListener('keydown', function (event) {
         if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.rs-menu-toggle, .rs-menu-link')) {
             event.preventDefault();
@@ -530,5 +495,6 @@
         }
 
     }, true);
+    }
 </script>
 

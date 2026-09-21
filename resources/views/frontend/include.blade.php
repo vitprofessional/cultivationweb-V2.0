@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        <meta charset="utf-8" />
+    <meta charset="utf-8" />
+    @include('frontend.cultivation-v2.partials._original-language')
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         @php
         $config =App\Models\ServerConfig::first();
@@ -44,8 +45,6 @@
                 font-family: 'Roboto', sans-serif;
             }
 
-            
-            
             /* Header Top Section Styles */
             .header-top {
                 background: linear-gradient(135deg, #1e7e34 0%, #155724 50%, #0d4016 100%);
@@ -157,40 +156,6 @@
                 position: relative;
             }
 
-            .site-lang-switcher-inline {
-                display: inline-flex;
-                align-items: center;
-                border: 1px solid rgba(255,255,255,0.5);
-                border-radius: 999px;
-                overflow: hidden;
-                background: rgba(11, 44, 18, 0.35);
-            }
-
-            .site-lang-switcher-inline .lang-btn {
-                border: 0;
-                background: transparent;
-                color: #e9ffe9;
-                padding: 7px 12px;
-                font-size: 11px;
-                font-weight: 800;
-                letter-spacing: 0.4px;
-                line-height: 1;
-                cursor: pointer;
-            }
-
-            .site-lang-switcher-inline .lang-btn.active {
-                background: #ffc107;
-                color: #164417;
-            }
-
-            .header-lang-switcher {
-                position: absolute;
-                right: 0;
-                top: 10px;
-                z-index: 3;
-                display: none !important;
-            }
-
             /* Professional Navbar Styles */
             .menubar {
                 background: #f8f9fa;
@@ -268,8 +233,6 @@
                 color: #fff !important;
             }
 
-            
-
             /* Professional Carousel Styles */
             .carousel {
                 box-shadow: 0 5px 20px rgba(0,0,0,0.2);
@@ -328,9 +291,6 @@
                 }
                 
 
-                .header-lang-switcher {
-                    position: static;
-                }
                 .header-logo {
                     padding-right: 0;
                 }
@@ -567,49 +527,15 @@
                 border-color: rgba(255,255,255,0.5) !important;
                 color: #fff !important;
             }
-
-            body.translated-ltr,
-            body.translated-rtl {
-                top: 0 !important;
-            }
-
-            .goog-te-banner-frame.skiptranslate,
-            .goog-te-balloon-frame,
-            .goog-te-gadget,
-            .goog-logo-link,
-            .goog-te-gadget > span,
-            .goog-te-combo,
-            #goog-gt-tt,
-            .goog-tooltip,
-            .goog-tooltip:hover {
-                display: none !important;
-                visibility: hidden !important;
-            }
-
-            #google_translate_element {
-                position: fixed;
-                left: -9999px;
-                bottom: -9999px;
-                opacity: 0;
-                pointer-events: none;
-            }
         </style>
     </head>
     <body>
-        <div id="google_translate_element" aria-hidden="true"></div>
-
         <!-- Header Top Section -->
         <div class="header-top">
             <div class="container">
                 <div class="row">
                     <div class="col-12">
                         <div class="header-content text-center">
-                            <div class="header-lang-switcher">
-                                <div class="site-lang-switcher-inline js-site-lang-switcher" role="group" aria-label="Language switcher">
-                                    <button type="button" class="lang-btn" data-lang="en">EN</button>
-                                    <button type="button" class="lang-btn" data-lang="bn">বাংলা</button>
-                                </div>
-                            </div>
 
                             <!-- Logo on the left -->
                             <div class="header-logo">
@@ -1604,75 +1530,6 @@
                 });
             });
         </script>
-        <script>
-            (function () {
-                const STORAGE_KEY = 'site_language_pref';
-
-                function setTranslateCookie(value) {
-                    document.cookie = 'googtrans=' + value + ';path=/';
-                    document.cookie = 'googtrans=' + value + ';path=/;domain=' + window.location.hostname;
-                }
-
-                function getSavedLanguage() {
-                    const lang = localStorage.getItem(STORAGE_KEY);
-                    return lang === 'bn' ? 'bn' : 'en';
-                }
-
-                function syncSavedLanguageCookie() {
-                    const savedLang = getSavedLanguage();
-                    const desired = savedLang === 'bn' ? '/auto/bn' : '/auto/en';
-                    if (!document.cookie.includes('googtrans=' + desired)) {
-                        setTranslateCookie(desired);
-                        window.location.reload();
-                        return true;
-                    }
-                    return false;
-                }
-
-                function markActiveButton(lang) {
-                    document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
-                        button.classList.toggle('active', button.getAttribute('data-lang') === lang);
-                    });
-                }
-
-                function applyLanguage(lang) {
-                    localStorage.setItem(STORAGE_KEY, lang);
-                    markActiveButton(lang);
-                    document.documentElement.setAttribute('lang', lang === 'bn' ? 'bn' : 'en');
-                    setTranslateCookie(lang === 'bn' ? '/auto/bn' : '/auto/en');
-                    window.location.reload();
-                }
-
-                document.querySelectorAll('.js-site-lang-switcher .lang-btn').forEach(function (button) {
-                    button.addEventListener('click', function () {
-                        const lang = button.getAttribute('data-lang') === 'bn' ? 'bn' : 'en';
-                        applyLanguage(lang);
-                    });
-                });
-
-                markActiveButton(getSavedLanguage());
-                if (syncSavedLanguageCookie()) {
-                    return;
-                }
-
-                window.googleTranslateElementInit = function () {
-                    try {
-                        new google.translate.TranslateElement(
-                            {
-                                pageLanguage: 'en',
-                                includedLanguages: 'en,bn',
-                                autoDisplay: false,
-                            },
-                            'google_translate_element'
-                        );
-                    } catch (error) {
-                        // Keep UI functional even if translate script fails.
-                    }
-                };
-            })();
-        </script>
-        <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
         @stack('scripts')
     </body>
 </html>
