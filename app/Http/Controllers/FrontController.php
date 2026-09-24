@@ -591,31 +591,41 @@ class FrontController extends Controller
      
 
     public function savePlacementCell(Request $requ){
-        if(empty($requ->itemId)):
-            $item   = new PlacementCell();
-        else:
-            $item   = PlacementCell::find($requ->itemId);
-        endif;
+        // Public forms create profiles only; record IDs never grant edit authority.
+        if ($requ->exists('itemId')) {
+            return response('Forbidden', 403);
+        }
 
-        $item->fullName            = $requ->fullName;
-        $item->mobile              = $requ->mobile;
-        $item->email               = $requ->email;
-        $item->sessionYear         = $requ->sessionYear;
-        $item->rollNumber          = $requ->rollNumber;
-        $item->companyName         = $requ->companyName;
-        $item->joinDate            = $requ->joinDate;
-        $item->designation         = $requ->designation;
-        $item->jobDetails          = $requ->jobDetails;
-        if(!empty($requ->avatar)):
-            $validated = $requ->validate([
-                    'avatar' => 'required|mimes:pdf,jpeg,png,jpg,gif,webp,avif,|max:5120',
-                     // max 5 MB
-                ],[
-                    'avatar.mimes'  => 'Allowed formats: PDF, JPEG, PNG, JPG, GIF, WEBP, AVIF.',
-                    'avatar.max'    => 'Each file must be less than 5MB.'
-                ]);
+        $validated = $requ->validate([
+            'fullName' => ['required', 'string', 'max:255'],
+            'mobile' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email:rfc', 'max:255'],
+            'sessionYear' => ['required', 'string', 'max:255'],
+            'rollNumber' => ['required', 'digits:6'],
+            'companyName' => ['required', 'string', 'max:255'],
+            'joinDate' => ['nullable', 'date', 'max:255'],
+            'designation' => ['required', 'string', 'max:255'],
+            'jobDetails' => ['required', 'string', 'max:255'],
+            'avatar' => ['required', 'file', 'mimes:pdf,jpeg,png,jpg,gif,webp,avif', 'extensions:pdf,jpeg,png,jpg,gif,webp,avif', 'max:5120'],
+        ], [
+            'avatar.mimes' => 'Allowed formats: PDF, JPEG, PNG, JPG, GIF, WEBP, AVIF.',
+            'avatar.extensions' => 'Allowed formats: PDF, JPEG, PNG, JPG, GIF, WEBP, AVIF.',
+            'avatar.max' => 'Each file must be less than 5MB.',
+        ]);
+
+        $item = new PlacementCell();
+        $item->fullName            = $validated['fullName'];
+        $item->mobile              = $validated['mobile'];
+        $item->email               = $validated['email'];
+        $item->sessionYear         = $validated['sessionYear'];
+        $item->rollNumber          = $validated['rollNumber'];
+        $item->companyName         = $validated['companyName'];
+        $item->joinDate            = $validated['joinDate'] ?? null;
+        $item->designation         = $validated['designation'];
+        $item->jobDetails          = $validated['jobDetails'];
+        if($requ->hasFile('avatar')):
             $stdAvatar = $requ->file('avatar');
-            $newAvatar = rand().date('Ymd').'.'.$stdAvatar->getClientOriginalExtension();
+            $newAvatar = (string) \Illuminate\Support\Str::uuid().'.'.$stdAvatar->extension();
             $stdAvatar->move(public_path('upload/image/placementCell/'),$newAvatar);
 
             $item->avatar = $newAvatar;
@@ -630,6 +640,11 @@ class FrontController extends Controller
     }
     
     public function saveNeedyStdPanel(Request $requ){
+        // Check before validation, lookup, or uploads; all target IDs fail identically.
+        if ($requ->exists('itemId')) {
+            return response('Forbidden', 403);
+        }
+
         // Simple honeypot check
         if($requ->filled('website')){
             return back()->with('error','Invalid submission detected.');
@@ -643,7 +658,10 @@ class FrontController extends Controller
 
         // Basic content check to avoid obvious spam/scam inputs
         foreach (['fullName','sessionYear'] as $field) {
-            $val = (string) $requ->input($field, '');
+            $val = $requ->input($field, '');
+            if (!is_string($val)) {
+                continue; // The type validator below rejects non-string values.
+            }
             if (stripos($val, 'http://') !== false || stripos($val, 'https://') !== false) {
                 return back()->with('error','Links are not allowed in this form.');
             }
@@ -656,8 +674,8 @@ class FrontController extends Controller
             'mobile'       => ['required','regex:/^\+?[0-9]{10,15}$/'],
             'sessionYear'  => ['required','string','min:4','max:20'],
             'rollNumber'   => ['required','digits:6'],
-            'avatar'       => ['required','image','mimes:jpeg,png,jpg,gif,webp,avif','max:5120'],
-            'attachment'   => ['required','mimes:pdf','max:5120'],
+            'avatar'       => ['required','image','mimes:jpeg,png,jpg,gif,webp,avif','extensions:jpeg,png,jpg,gif,webp,avif','max:5120'],
+            'attachment'   => ['required','file','mimes:pdf','extensions:pdf','max:5120'],
         ],[
             'mobile.regex'      => 'Mobile must be 10-15 digits, optionally starting with +',
             'rollNumber.digits' => 'Roll number must be exactly 6 digits',
@@ -665,22 +683,14 @@ class FrontController extends Controller
             'attachment.mimes'  => 'CV must be a PDF file',
         ]);
 
-        // Prepare model
-        if(empty($requ->itemId)){
-            $item   = new needyStudentPanel();
-        } else {
-            $item   = needyStudentPanel::find($requ->itemId);
-            if(!$item){
-                return back()->with('error','Record not found.');
-            }
-        }
+        $item = new needyStudentPanel();
 
         // Assign sanitized values
-        $item->fullName    = trim(strip_tags($requ->fullName));
-        $item->mobile      = trim($requ->mobile);
-        $item->email       = trim(strtolower($requ->email));
-        $item->sessionYear = trim(strip_tags($requ->sessionYear));
-        $item->rollNumber  = trim($requ->rollNumber);
+        $item->fullName    = trim(strip_tags($validated['fullName']));
+        $item->mobile      = trim($validated['mobile']);
+        $item->email       = trim(strtolower($validated['email']));
+        $item->sessionYear = trim(strip_tags($validated['sessionYear']));
+        $item->rollNumber  = trim($validated['rollNumber']);
 
         // Ensure upload directory exists
         $uploadDir = public_path('upload/image/neddyStudent/');
@@ -691,7 +701,7 @@ class FrontController extends Controller
         // Save avatar (photo)
         if($requ->hasFile('avatar')){
             $stdAvatar = $requ->file('avatar');
-            $extA = strtolower($stdAvatar->getClientOriginalExtension());
+            $extA = $stdAvatar->extension();
             $newAvatar = (string) \Illuminate\Support\Str::uuid().'.'.$extA;
             $stdAvatar->move($uploadDir, $newAvatar);
             $item->avatar = $newAvatar;
@@ -700,7 +710,7 @@ class FrontController extends Controller
         // Save CV (PDF)
         if($requ->hasFile('attachment')){
             $stdAttachment = $requ->file('attachment');
-            $extC = strtolower($stdAttachment->getClientOriginalExtension());
+            $extC = $stdAttachment->extension();
             $newAttachment = (string) \Illuminate\Support\Str::uuid().'.'.$extC;
             $stdAttachment->move($uploadDir, $newAttachment);
             $item->attachment = $newAttachment;

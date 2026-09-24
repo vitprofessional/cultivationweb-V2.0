@@ -8,9 +8,15 @@
         </div>
         <div class="row">
             <div class="col-md-12">
-                @error('avatar')
-                    <div class="alert alert-danger">{{ $message }}</div>
-                @enderror
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
 
                 @if(Session::get('success'))
                 <div class="alert alert-success">
@@ -73,13 +79,13 @@
                                     <tbody>
                                         @if(!empty($Datakey)) @foreach($Datakey as $data)
                                         <tr>
-                                            <td class="d-none">{!!$data->id!!}</td>
+                                            <td class="d-none">{{ $data->id }}</td>
                                             <td>
                                                 <div class="placement-info">
-                                                    <img class="placement-photo" src="{{ config('app.url') }}/public/upload/image/placementCell/{{ $data->attachment }}" alt="{!! $data->fullName !!}" />
+                                                    <img class="placement-photo" src="{{ config('app.url') }}/public/upload/image/placementCell/{{ $data->attachment }}" alt="{{ $data->fullName }}" />
                                                     <div>
-                                                        <span class="placement-name">{!!$data->fullName!!}</span>
-                                                        <span class="placement-id">Roll: {!!$data->rollNumber!!}</span>
+                                                        <span class="placement-name">{{ $data->fullName }}</span>
+                                                        <span class="placement-id">Roll: {{ $data->rollNumber }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -87,19 +93,19 @@
                                                 <div class="placement-meta-grid">
                                                     <div class="placement-meta-item placement-meta-session">
                                                         <span class="placement-meta-label"><i class="fa fa-calendar"></i> Session</span>
-                                                        <span class="placement-meta-value">{!!$data->sessionYear!!}</span>
+                                                        <span class="placement-meta-value">{{ $data->sessionYear }}</span>
                                                     </div>
                                                     <div class="placement-meta-item placement-meta-company">
                                                         <span class="placement-meta-label"><i class="fa fa-building"></i> Company</span>
-                                                        <span class="placement-meta-value">{!!$data->companyName!!}</span>
+                                                        <span class="placement-meta-value">{{ $data->companyName }}</span>
                                                     </div>
                                                     <div class="placement-meta-item placement-meta-position">
                                                         <span class="placement-meta-label"><i class="fa fa-user"></i> Position</span>
-                                                        <span class="placement-meta-value">{!!$data->designation!!}</span>
+                                                        <span class="placement-meta-value">{{ $data->designation }}</span>
                                                     </div>
                                                     <div class="placement-meta-item placement-meta-roll">
                                                         <span class="placement-meta-label"><i class="fa fa-envelope"></i> Email</span>
-                                                        <span class="placement-meta-value">{!!$data->email!!}</span>
+                                                        <span class="placement-meta-value">{{ $data->email }}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -117,32 +123,32 @@
                                                             </div>
                                                             <div class="modal-body">
                                                                 <div class="text-center mb-3">
-                                                                    <img class="w-50 border" src="{{ asset('/public/upload/image/placementCell/').'/'.$data->avatar}}" alt="{!! $data->fullName !!}" />
+                                                                    <img class="w-50 border" src="{{ asset('/public/upload/image/placementCell/').'/'.$data->avatar}}" alt="{{ $data->fullName }}" />
                                                                 </div>
                                                                 <table class="table table-bordered">
                                                                     <tr>
                                                                         <th class="fw-bold">Session</th>
-                                                                        <td class="text-start">: {!! $data->sessionYear !!}</td>
+                                                                        <td class="text-start">: {{ $data->sessionYear }}</td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="fw-bold">Roll Number</th>
-                                                                        <td class="text-start">: {!! $data->rollNumber !!}</td>
+                                                                        <td class="text-start">: {{ $data->rollNumber }}</td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="fw-bold">Company</th>
-                                                                        <td class="text-start">: {!! $data->companyName !!}</td>
+                                                                        <td class="text-start">: {{ $data->companyName }}</td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="fw-bold">Position</th>
-                                                                        <td class="text-start">: {!! $data->designation !!}</td>
+                                                                        <td class="text-start">: {{ $data->designation }}</td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="fw-bold">Mobile</th>
-                                                                        <td class="text-start">: {!! $data->mobile!!}</td>
+                                                                        <td class="text-start">: {{ $data->mobile }}</td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="fw-bold">Email</th>
-                                                                        <td class="text-start">: {!! $data->email !!}</td>
+                                                                        <td class="text-start">: {{ $data->email }}</td>
                                                                     </tr>
                                                                 </table>
                                                             </div>
