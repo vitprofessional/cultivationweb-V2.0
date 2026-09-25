@@ -16,19 +16,14 @@
                         @php
                             // Use 'headline' as seen elsewhere; fallback chain ensures some text
                             $rawTitle = $notice->headline ?? $notice->title ?? $notice->name ?? 'Untitled';
-                            $title = e($rawTitle);
+                            $title = $rawTitle;
                             $body  = $notice->body ?? $notice->details ?? $notice->description ?? '';
-                            // Base64 encode body for safe transport (avoid attribute HTML breakage)
-                            $body64 = base64_encode($body ?? '');
                             $date = optional($notice->created_at)->format('d M Y');
                             $attachment = $notice->attachment ?? '';
                             $attachmentUrl = app(\App\Services\PublicMediaUrl::class)->notice($attachment);
                         @endphp
-                        <a href="{{ route('notice.show', $notice) }}" class="list-group-item list-group-item-action notice-view py-3"
-                           data-title="{{ $title }}"
-                           data-body64="{{ $body64 }}"
-                           data-date="{{ $date }}"
-                           @if($attachment) data-attachment="{{ $attachment }}" @endif
+                        <a href="{{ route('notice.show', $notice) }}" class="list-group-item list-group-item-action py-3"
+                           data-public-notice-open="{{ $notice->id }}" aria-haspopup="dialog" aria-controls="public-notice-dialog"
                            @if($attachmentUrl) data-attachment-url="{{ $attachmentUrl }}" @endif
                         >
                             <div class="d-flex w-100 justify-content-between align-items-center">
@@ -65,4 +60,5 @@
         </div>
     </div>
 </div>
+@include('frontend.notice._viewer', ['viewerNotices' => $notices])
 @endsection

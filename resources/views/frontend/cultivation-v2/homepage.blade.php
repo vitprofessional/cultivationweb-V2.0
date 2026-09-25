@@ -1861,7 +1861,7 @@
                                 <h4 class="notice-title">{{ $ntc->headline }}</h4>
                                 <div class="notice-actions">
                                     @if($fileHref)<span class="notice-file-pill">File</span>@endif
-                                    <a class="notice-btn" href="{{ route('notice.show', $ntc) }}" aria-label="View notice: {{ $ntc->headline }}"><i class="fa fa-eye"></i> View</a>
+                                    <a class="notice-btn" href="{{ route('notice.show', $ntc) }}" data-public-notice-open="{{ $ntc->id }}" aria-haspopup="dialog" aria-controls="public-notice-dialog" aria-label="View notice: {{ $ntc->headline }}"><i class="fa fa-eye"></i> View</a>
                                     @if($fileHref)
                                         <a class="notice-btn" href="{{ $fileHref }}" download="{{ $fileName }}"><i class="fa fa-download"></i> File</a>
                                     @endif
@@ -2233,5 +2233,6 @@
             });
         })();
     </script>
+@include('frontend.notice._viewer', ['viewerNotices' => ($noticeBoard ?? collect())->take(5)])
 </body>
 </html>
