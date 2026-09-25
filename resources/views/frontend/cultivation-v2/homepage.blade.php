@@ -47,18 +47,8 @@
             return null;
         };
 
-        $resolveHeroImage = function ($slide) {
-            if (!$slide || empty($slide->avatar)) {
-                return null;
-            }
-
-            $file = basename((string) $slide->avatar);
-            if (!file_exists(public_path('upload/image/webHomepage/' . $file))) {
-                return null;
-            }
-
-            return url('/public/upload/image/webHomepage/' . rawurlencode($file));
-        };
+        $publicMedia = app(\App\Services\PublicMediaUrl::class);
+        $resolveHeroImage = fn ($slide) => $publicMedia->slider($slide?->avatar);
 
         $sliderItems = ($sliderData ?? collect())
             ->filter(fn ($slide) => $resolveHeroImage($slide))
