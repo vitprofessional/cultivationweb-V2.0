@@ -6,8 +6,7 @@
     @php
         $title = trim((string) ($notice->headline ?? $notice->title ?? $notice->name ?? 'Notice'));
         $body = $notice->body ?? $notice->details ?? $notice->description ?? '';
-        $attachmentFile = !empty($notice->attachment) ? basename((string) $notice->attachment) : null;
-        $attachmentUrl = $attachmentFile ? url('/public/upload/notice/' . rawurlencode($attachmentFile)) : null;
+        $attachmentUrl = app(\App\Services\PublicMediaUrl::class)->notice($notice->attachment);
     @endphp
 
     <div class="col-12 col-lg-10 mx-auto">

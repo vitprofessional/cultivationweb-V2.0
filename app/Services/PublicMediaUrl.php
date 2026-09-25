@@ -19,6 +19,17 @@ final class PublicMediaUrl
         return $this->url('upload/image/webHomepage/'.$filename);
     }
 
+    /** Resolve existing Notice relative paths and legacy filename-only values. */
+    public function notice(?string $value): ?string
+    {
+        $value = trim($value ?? '');
+        if (! preg_match('~\A(?:(?:public/)?upload/notice/)?([^/\\\\]+\.(?:jpe?g|png|gif|pdf))\z~i', $value, $match)) {
+            return null;
+        }
+
+        return $this->url('upload/notice/'.$match[1]);
+    }
+
     /** URL construction only: never reads local files or makes remote requests. */
     public function url(?string $relativePath): ?string
     {

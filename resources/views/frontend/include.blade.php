@@ -1005,15 +1005,6 @@
         <!--Fancybox-->
         <script src="{{ asset('/') }}public/lightbox/fancybox/jquery.fancybox.min.js"></script>
         <script>
-            // Base URL for building absolute paths (falls back to url('/'))
-            let APP_URL = {!! json_encode(config('app.url') ?: url('/')) !!};
-            APP_URL = (APP_URL || '').replace(/\/+$/,'');
-            // Normalize: if APP_URL ends with /public, strip it to avoid duplicating /public in constructed paths
-            if(/\/public$/i.test(APP_URL)){ APP_URL = APP_URL.replace(/\/public$/i,''); }
-            // Align scheme with current page to avoid mixed-content
-            if(window.location?.protocol === 'https:' && APP_URL.startsWith('http:')){
-                APP_URL = APP_URL.replace(/^http:/,'https:');
-            }
             $(document).ready(function() {
                 $(".alert").fadeTo(2000, 500).slideUp(500, function() {
                     $(".alert").slideUp(500);
@@ -1041,10 +1032,9 @@
                     let body = $(this).data('body') || '';
                     const body64 = $(this).data('body64') || '';
                     const date = $(this).data('date') || '';
-                    const attachment = $(this).data('attachment') || '';
                     const attachmentUrl = $(this).data('attachmentUrl') || '';
 
-                    // Safely resolve attachment path under APP_URL/public/... (default to upload/notice for bare filenames)
+                    // The server's canonical media resolver is the only attachment authority.
                     function safeBasename(p){
                         try{
                             if(!p) return '';
@@ -1060,30 +1050,6 @@
                         }
                     }
 
-                    function sanitizeRelativePath(p){
-                        try{
-                            if(!p) return '';
-                            p = String(p);
-                            p = p.split('?')[0].split('#')[0];
-                            p = p.replace(/\\/g,'/');
-                            // remove leading slashes
-                            p = p.replace(/^\/+/, '');
-                            // prevent path traversal
-                            p = p.replace(/\.\./g,'');
-                            // collapse multiple slashes
-                            p = p.replace(/\/+/g,'/');
-                            return p;
-                        }catch(_){
-                            return '';
-                        }
-                    }
-                    function encodeRelPath(p){
-                        try{
-                            if(!p) return '';
-                            return p.split('/').map(seg => encodeURIComponent(seg)).join('/');
-                        }catch(_){ return p; }
-                    }
-
                     function getUrlOrigin(u){
                         try{
                             const full = new URL(u, window.location.href);
@@ -1095,43 +1061,8 @@
                         return !!o && o === window.location.origin;
                     }
 
-                    let attachmentPath = '';
-                    let candidateUrls = [];
-                    // If server provided an absolute attachment URL, normalize and use it
-                    if (attachmentUrl && typeof attachmentUrl === 'string') {
-                        let abs = attachmentUrl;
-                        if(window.location?.protocol === 'https:' && abs.startsWith('http:')){
-                            try{ abs = abs.replace(/^http:/,'https:'); }catch(_){}
-                        }
-                        candidateUrls.push(abs);
-                    } else if (attachment && attachment.length) {
-                        const isAbsolute = /^(?:https?:)?\/\//i.test(attachment) || /^data:/i.test(attachment);
-                        if (isAbsolute) {
-                            let abs = attachment;
-                            // If page is HTTPS, try to use HTTPS for absolute HTTP URLs
-                            if(window.location?.protocol === 'https:' && abs.startsWith('http:')){
-                                try{ abs = abs.replace(/^http:/,'https:'); }catch(_){}
-                            }
-                            candidateUrls.push(abs);
-                        } else {
-                            const rel = sanitizeRelativePath(attachment);
-                            const fname = safeBasename(rel);
-                            if (rel && rel.includes('/')) {
-                                // Relative path provided
-                                const encRel = encodeRelPath(rel);
-                                // Force the desired pattern when rel looks like upload/notice/...
-                                if(/^upload\/notice\//i.test(encRel)){
-                                    candidateUrls.push(APP_URL + '/public/' + encRel);
-                                } else {
-                                    candidateUrls.push(APP_URL + '/public/' + encRel);
-                                }
-                            } else if (fname) {
-                                // Bare filename: try common buckets
-                                candidateUrls.push(APP_URL + '/public/upload/notice/' + encodeURIComponent(fname));
-                            }
-                        }
-                    }
-                    attachmentPath = candidateUrls[0] || '';
+                    const candidateUrls = typeof attachmentUrl === 'string' && /^https?:\/\//i.test(attachmentUrl) ? [attachmentUrl] : [];
+                    const attachmentPath = candidateUrls[0] || '';
                     const attachExt = (safeBasename(attachmentPath).split('.').pop() || '').toLowerCase();
 
                     // Prefer base64 body to safely carry HTML and decode as UTF-8

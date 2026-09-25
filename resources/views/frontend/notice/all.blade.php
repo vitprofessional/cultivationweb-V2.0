@@ -22,16 +22,9 @@
                             $body64 = base64_encode($body ?? '');
                             $date = optional($notice->created_at)->format('d M Y');
                             $attachment = $notice->attachment ?? '';
-                            // Build absolute URL exactly as APP_URL/public/upload/notice/filename
-                            $baseUrl = rtrim(config('app.url') ?: url('/'), '/');
-                            // If APP_URL ends with /public, strip it to avoid double /public/public
-                            if (preg_match('#/public$#i', $baseUrl)) { $baseUrl = preg_replace('#/public$#i', '', $baseUrl); }
-                            // If current request is HTTPS but base URL is HTTP, normalize to HTTPS
-                            if (request()->isSecure() && preg_match('#^http:#i', $baseUrl)) { $baseUrl = preg_replace('#^http:#i', 'https:', $baseUrl); }
-                            $attachmentFile = $attachment ? basename((string)$attachment) : '';
-                            $attachmentUrl = $attachmentFile ? ($baseUrl.'/public/upload/notice/'.rawurlencode($attachmentFile)) : '';
+                            $attachmentUrl = app(\App\Services\PublicMediaUrl::class)->notice($attachment);
                         @endphp
-                        <a href="#" class="list-group-item list-group-item-action notice-view py-3"
+                        <a href="{{ route('notice.show', $notice) }}" class="list-group-item list-group-item-action notice-view py-3"
                            data-title="{{ $title }}"
                            data-body64="{{ $body64 }}"
                            data-date="{{ $date }}"

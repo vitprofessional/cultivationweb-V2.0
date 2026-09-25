@@ -180,12 +180,8 @@ Enter to learn & Leave to serve
                     $nday = $rawDate ? $rawDate->format('d') : '';
                     $nmon = $rawDate ? $rawDate->format('M') : '';
                     $__nb2 = ($ntc->body ?? $ntc->details ?? $ntc->description ?? '');
-                    // Build absolute attachment URL as APP_URL/public/upload/notice/{filename}
-                    $__baseUrl = rtrim(config('app.url') ?: url('/'), '/');
-                    if (preg_match('#/public$#i', $__baseUrl)) { $__baseUrl = preg_replace('#/public$#i', '', $__baseUrl); }
-                    if (request()->isSecure() && preg_match('#^http:#i', $__baseUrl)) { $__baseUrl = preg_replace('#^http:#i', 'https:', $__baseUrl); }
                     $__file = !empty($ntc->attachment) ? basename((string)$ntc->attachment) : '';
-                    $__attachUrl = $__file ? ($__baseUrl . '/public/upload/notice/' . rawurlencode($__file)) : '';
+                    $__attachUrl = app(\App\Services\PublicMediaUrl::class)->notice($ntc->attachment);
                 @endphp
                 <div class="notice-item {{ $loop->iteration > 5 ? 'extra-notice' : '' }}">
                     <div class="notice-date" aria-label="Notice date {{ $rawDate ? $rawDate->format('d M Y') : '' }}">
@@ -198,13 +194,12 @@ Enter to learn & Leave to serve
                             data-title="{{ $ntc->headline }}"
                             data-body64="{{ base64_encode($__nb2) }}"
                             data-date="{{ $rawDate ? $rawDate->format('d M Y') : '' }}"
-                            data-attachment="{{ !empty($ntc->attachment) ? url('/').'/public/'.$ntc->attachment : '' }}"
                             @if($__attachUrl) data-attachment-url="{{ $__attachUrl }}" @endif
                             data-attachtype="{{ !empty($ntc->attachment) ? strtolower(pathinfo($ntc->attachment, PATHINFO_EXTENSION)) : '' }}">
                             <i class="fa-regular fa-eye"></i> View
                         </button>
                         @php
-                            $fileHref = $__attachUrl ?: (!empty($ntc->attachment) ? url('/').'/public/'.$ntc->attachment : '');
+                            $fileHref = $__attachUrl;
                             $fileName = $__file;
                         @endphp
                         @if(!empty($fileHref))

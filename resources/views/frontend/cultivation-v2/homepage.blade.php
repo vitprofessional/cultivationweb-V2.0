@@ -1851,7 +1851,7 @@
                             @php
                                 $nDate = $ntc->created_at;
                                 $fileName = !empty($ntc->attachment) ? basename((string)$ntc->attachment) : '';
-                                $fileHref = !empty($fileName) ? url('/public/upload/notice/' . rawurlencode($fileName)) : '';
+                                $fileHref = app(\App\Services\PublicMediaUrl::class)->notice($ntc->attachment);
                             @endphp
                             <div class="notice-item">
                                 <div class="date-box">
