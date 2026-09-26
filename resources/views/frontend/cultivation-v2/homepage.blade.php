@@ -32,19 +32,7 @@
                 return null;
             }
 
-            $file = rawurlencode(basename((string) $item->avatar));
-
-            $photoGalleryPath = public_path('upload/image/PhotoGallery/' . basename((string) $item->avatar));
-            if (file_exists($photoGalleryPath)) {
-                return url('/public/upload/image/PhotoGallery/' . $file);
-            }
-
-            $webGalleryPath = public_path('upload/image/webGallery/' . basename((string) $item->avatar));
-            if (file_exists($webGalleryPath)) {
-                return url('/public/upload/image/webGallery/' . $file);
-            }
-
-            return null;
+            return app(\App\Services\PublicMediaUrl::class)->galleryPhoto($item->avatar);
         };
 
         $publicMedia = app(\App\Services\PublicMediaUrl::class);

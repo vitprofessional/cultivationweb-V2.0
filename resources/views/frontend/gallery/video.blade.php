@@ -160,13 +160,15 @@ Video Gallery
 
     $videoCards = $videoItems
         ->map(function ($item, $index) use ($pickFirst, $resolveUploadUrl, $normalizeVideoSource) {
-            $title = trim((string) $pickFirst($item, ['title', 'headline', 'headLine', 'name'], 'Campus Video Story'));
+            $title = trim((string) $pickFirst($item, ['galleryHeading', 'title', 'headline', 'headLine', 'name'], 'Campus Video Story'));
             $description = trim((string) $pickFirst($item, ['description', 'details', 'detail', 'caption'], 'A video highlight collected from campus activities and institutional events.'));
-            $rawSource = $pickFirst($item, ['video_url', 'videoUrl', 'youtube_url', 'youtube', 'embed_url', 'embed', 'link', 'url', 'video', 'iframe', 'avatar']);
+            $resolvedVideo = $item instanceof \App\Models\VideoGallery ? \App\Services\GalleryVideoSource::resolve($item->attachment, app(\App\Services\PublicMediaUrl::class)) : null;
+            $rawSource = $resolvedVideo ? $resolvedVideo['url'] : $pickFirst($item, ['video_url', 'videoUrl', 'youtube_url', 'youtube', 'embed_url', 'embed', 'link', 'url', 'video', 'iframe', 'avatar']);
             $media = $normalizeVideoSource($rawSource);
+            if ($resolvedVideo && $resolvedVideo['source'] === 'youtube') $media = ['type' => 'embed', 'source' => $resolvedVideo['url'], 'embed' => $resolvedVideo['embed'], 'platform' => 'YouTube', 'thumbnail' => 'https://img.youtube.com/vi/'.$resolvedVideo['id'].'/hqdefault.jpg'];
 
             $thumbSource = $pickFirst($item, ['thumbnail', 'thumb', 'cover', 'cover_image', 'image', 'avatar']);
-            $thumbnail = $resolveUploadUrl(
+            $thumbnail = $item instanceof \App\Models\VideoGallery ? null : $resolveUploadUrl(
                 $thumbSource,
                 ['upload/image/videoGallery', 'upload/image/VideoGallery', 'upload/image/photogallery', 'upload/image/PhotoGallery']
             );
@@ -807,6 +809,60 @@ Video Gallery
             padding: 20px 18px;
         }
     }
+    /* Scoped presentation only: keep gallery source selection and player URLs unchanged. */
+    .video-gallery-page, #videoPreviewModal {
+        --video-ink: #17395e; --video-soft: #4a6079; --video-surface: #fff;
+        --video-panel: #f8fbfd; --video-line: #d6e1ea; --video-action: #126354;
+        --video-action-hover: #0b4c40; --video-action-text: #fff;
+    }
+    .video-gallery-page { overflow-x: clip; }
+    .video-gallery-page .video-card { color: var(--video-ink); background: var(--video-surface); }
+    .video-gallery-page .video-card-body { display: grid; gap: 12px; padding: 22px; }
+    .video-gallery-page .video-card-body :is(h4,p) { margin: 0; overflow-wrap: anywhere; }
+    .video-gallery-page .video-card-body h4 { color: var(--video-ink); line-height: 1.4; }
+    .video-gallery-page .video-card-meta { flex-wrap: wrap; gap: 12px; margin-top: 6px; color: var(--video-soft); }
+    .video-gallery-page .video-card-meta .video-card-cta { display: inline-flex; align-items: center; gap: 8px; padding: 9px 13px; min-height: 42px; border-radius: 8px; background: var(--video-action); color: var(--video-action-text); font-size: 14px; line-height: 1.4; }
+    .video-gallery-page :is(.video-play-orb,.video-card-play) { background: #fff; color: #14375f; }
+    .video-gallery-page :is(.video-play-orb,.video-card-play) svg { width: 24px; height: 24px; fill: currentColor; }
+    .video-gallery-page :is(.video-card-badges,.video-hero-top) :is(span,strong) { color: #fff; background: #17304f; }
+    .video-gallery-page .video-card-footerline span { background: #17304f; color: #fff; padding: 5px 9px; border-radius: 5px; }
+    .video-gallery-page .video-hero-bottom h2 { color: #fff; }
+    .video-gallery-page .video-card-cta svg, #videoPreviewModal .video-action svg, #videoPreviewModal .video-close svg { width: 18px; height: 18px; flex: 0 0 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+    #videoPreviewModal .modal-dialog { max-width: 1120px; width: calc(100% - 32px); margin: 16px auto; }
+    #videoPreviewModal .modal-content { max-height: calc(100dvh - 32px); background: var(--video-panel); color: var(--video-ink); border-radius: 18px; }
+    #videoPreviewModal .modal-header { flex-shrink: 0; gap: 16px; padding: 16px 22px; }
+    #videoPreviewModal .modal-title { margin: 0; line-height: 1.4; overflow-wrap: anywhere; }
+    #videoPreviewModal .modal-body { min-height: 0; overflow: auto; grid-template-columns: minmax(0,1.2fr) minmax(280px,.8fr); }
+    #videoPreviewModal .video-modal-stage { min-height: 0; aspect-ratio: 16 / 9; align-self: start; background: #0b1524; }
+    #videoPreviewModal .video-modal-stage :is(iframe,video) { position: absolute; inset: 0; object-fit: contain; }
+    #videoPreviewModal .video-modal-stage:has(.video-modal-fallback[style*="flex"]) { aspect-ratio: auto; min-height: 320px; }
+    #videoPreviewModal .video-modal-copy { min-width: 0; padding: 24px; gap: 20px; background: var(--video-panel); }
+    #videoPreviewModal .video-modal-copy h4 { color: var(--video-ink); line-height: 1.4; overflow-wrap: anywhere; }
+    #videoPreviewModal .video-modal-copy p { color: var(--video-soft); line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+    #videoPreviewModal .video-modal-meta { gap: 8px; }
+    #videoPreviewModal .video-modal-meta span { color: var(--video-soft); background: var(--video-surface); border-color: var(--video-line); line-height: 1.4; }
+    #videoPreviewModal .video-modal-actions { border-top: 1px solid var(--video-line); padding-top: 18px; align-items: stretch; gap: 10px; }
+    #videoPreviewModal .video-action { display: inline-flex; justify-content: center; align-items: center; gap: 9px; min-height: 44px; padding: 11px 16px; border: 1px solid var(--video-action); border-radius: 8px; background: var(--video-action); color: var(--video-action-text); font: inherit; font-weight: 700; font-size: 14px; line-height: 1.4; text-decoration: none; opacity: 1; }
+    #videoPreviewModal .video-action:hover { background: var(--video-action-hover); border-color: var(--video-action-hover); color: var(--video-action-text); }
+    #videoPreviewModal .video-action-secondary { color: var(--video-ink); background: var(--video-surface); border-color: var(--video-line); }
+    #videoPreviewModal .video-action-secondary:hover { color: var(--video-ink); background: var(--video-panel); border-color: var(--video-ink); }
+    #videoPreviewModal .video-close { flex: 0 0 44px; width: 44px; height: 44px; display: inline-grid; place-content: center; border: 1px solid #9caec0; border-radius: 8px; background: #102f4e; color: #fff; }
+    #videoPreviewModal :is(.video-action,.video-close):focus-visible, .video-gallery-page .video-card:focus-visible { outline: 3px solid #388bd0 !important; outline-offset: 3px; }
+    #videoPreviewModal .video-modal-fallback { color: var(--video-ink); background: var(--video-panel); }
+    @media (max-width: 991px) { #videoPreviewModal .modal-body { grid-template-columns: minmax(0,1fr); } }
+    @media (max-width: 575px) {
+        #videoPreviewModal .modal-header { padding: 12px 16px; }
+        #videoPreviewModal .video-modal-copy { padding: 20px 16px; }
+        #videoPreviewModal .video-modal-actions .video-action { flex: 1 1 auto; }
+        .video-gallery-page .video-card-body { padding: 18px; }
+        .video-gallery-page .video-card-badges { align-items: flex-start; flex-wrap: wrap; }
+    }
+    @media (prefers-color-scheme: dark) {
+        .video-gallery-page, #videoPreviewModal { --video-ink: #eef4fb; --video-soft: #b7c9da; --video-surface: #1b2c40; --video-panel: #132236; --video-line: #43566c; --video-action: #94e4cb; --video-action-hover: #b6f2df; --video-action-text: #102a26; }
+        .video-gallery-page .video-hero { background: #132236; border-color: #43566c; }
+        .video-gallery-page :is(.video-copy h1,.video-stat strong,.video-section-head h3) { color: var(--video-ink); }
+        .video-gallery-page :is(.video-stat,.video-kicker,.video-note-row span,.video-section-tag) { color: var(--video-ink); background: var(--video-surface); border-color: var(--video-line); }
+    }
 </style>
 
 <section class="video-gallery-page">
@@ -857,7 +913,7 @@ Video Gallery
                                 <span><i class="fa fa-video-camera" aria-hidden="true"></i> Featured Story</span>
                                 <strong>{{ $leadVideo['platform'] ?? 'Archive' }}</strong>
                             </div>
-                            <span class="video-play-orb"><i class="fa fa-play" aria-hidden="true"></i></span>
+                            <span class="video-play-orb"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
                             <div class="video-hero-bottom">
                                 <h2>{{ $leadVideo['title'] ?? 'Campus video highlight' }}</h2>
                                 <p>{{ \Illuminate\Support\Str::limit($leadVideo['description'] ?? 'A featured campus video story.', 130) }}</p>
@@ -905,7 +961,7 @@ Video Gallery
                                     <span>{{ $video['platform'] }}</span>
                                     <strong>{{ $video['date'] }}</strong>
                                 </div>
-                                <span class="video-card-play"><i class="fa fa-play" aria-hidden="true"></i></span>
+                                <span class="video-card-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
                                 <div class="video-card-footerline">
                                     <span>{{ strtoupper($video['type']) }}</span>
                                     <span>Preview</span>
@@ -916,7 +972,7 @@ Video Gallery
                                 <p>{{ \Illuminate\Support\Str::limit($video['description'], 118) }}</p>
                                 <div class="video-card-meta">
                                     <span>{{ $video['year'] }}</span>
-                                    <span>Open media</span>
+                                    <span class="video-card-cta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7z"/></svg>Watch video</span>
                                 </div>
                             </div>
                         </button>
@@ -953,7 +1009,7 @@ Video Gallery
                                     <span>{{ $video['platform'] }}</span>
                                     <strong>{{ $video['date'] }}</strong>
                                 </div>
-                                <span class="video-card-play"><i class="fa fa-play" aria-hidden="true"></i></span>
+                                <span class="video-card-play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
                                 <div class="video-card-footerline">
                                     <span>{{ strtoupper($video['type']) }}</span>
                                     <span>Launch</span>
@@ -964,7 +1020,7 @@ Video Gallery
                                 <p>{{ \Illuminate\Support\Str::limit($video['description'], 96) }}</p>
                                 <div class="video-card-meta">
                                     <span>{{ $video['year'] }}</span>
-                                    <span>View video</span>
+                                    <span class="video-card-cta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7z"/></svg>Watch video</span>
                                 </div>
                             </div>
                         </button>
@@ -985,7 +1041,7 @@ Video Gallery
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="videoPreviewModalLabel">Video Preview</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="video-close" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close video preview"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
             </div>
             <div class="modal-body">
                 <div class="video-modal-stage">
@@ -995,7 +1051,7 @@ Video Gallery
                         <div class="video-modal-fallback-inner">
                             <h4>Preview not available here</h4>
                             <p>This media entry points to an external resource that cannot be embedded directly in the modal.</p>
-                            <a id="videoPreviewExternal" href="#" target="_blank" rel="noopener" class="btn btn-warning">Open original media</a>
+                            <a id="videoPreviewExternal" href="#" target="_blank" rel="noopener" class="video-action">Open original media</a>
                         </div>
                     </div>
                 </div>
@@ -1008,8 +1064,8 @@ Video Gallery
                     <h4 id="videoPreviewTitle">Campus video story</h4>
                     <p id="videoPreviewDescription">A larger preview and context note for the selected video entry.</p>
                     <div class="video-modal-actions media-modal-actions">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
-                        <a id="videoPreviewLink" class="btn btn-success" href="#" target="_blank" rel="noopener">Open source</a>
+                        <button type="button" class="video-action video-action-secondary" data-bs-dismiss="modal" data-dismiss="modal">Close</button>
+                        <a id="videoPreviewLink" class="video-action" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7M21 3 10 14M10 3H3v18h18v-7"/></svg>Open video</a>
                     </div>
                 </div>
             </div>

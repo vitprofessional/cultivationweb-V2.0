@@ -30,6 +30,37 @@ final class PublicMediaUrl
         return $this->url('upload/notice/'.$match[1]);
     }
 
+    public function galleryPhoto(?string $filename): ?string
+    {
+        $path = $this->galleryPhotoPath($filename);
+        return $path !== null ? $this->url($path) : null;
+    }
+
+    /** Distinguish an invalid record from a valid photo whose media origin is unconfigured. */
+    public function galleryPhotoPath(?string $filename): ?string
+    {
+        $filename = trim($filename ?? '');
+        if ($filename === '' || str_contains($filename, '/') || str_contains($filename, '\\')
+            || $this->segments($filename) === null
+            || !in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'], true)) return null;
+        return 'upload/image/PhotoGallery/'.$filename;
+    }
+
+    public function galleryVideo(?string $filename): ?string
+    {
+        // Known legacy relative paths only; arbitrary URLs and other folders remain rejected.
+        $filename = preg_replace('~\A(?:public/)?upload/image/VideoGallery/~', '', trim($filename ?? ''));
+        return $this->galleryFile($filename, 'VideoGallery', ['mp4', 'mov', 'mkv', 'avi', 'wmv', 'flv', 'webm', '3gp', 'ts', 'vob', 'mpeg']);
+    }
+
+    private function galleryFile(?string $filename, string $folder, array $extensions): ?string
+    {
+        $filename = trim($filename ?? '');
+        if ($filename === '' || str_contains($filename, '/') || str_contains($filename, '\\')
+            || !in_array(strtolower(pathinfo($filename, PATHINFO_EXTENSION)), $extensions, true)) return null;
+        return $this->url('upload/image/'.$folder.'/'.$filename);
+    }
+
     /** URL construction only: never reads local files or makes remote requests. */
     public function url(?string $relativePath): ?string
     {

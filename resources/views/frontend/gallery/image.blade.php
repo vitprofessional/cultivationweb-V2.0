@@ -102,21 +102,24 @@ Photo Gallery
         ->map(function ($item, $index) use ($pickFirst, $resolveUploadUrl) {
             $title = trim((string) $pickFirst($item, ['title', 'headline', 'headLine', 'name'], 'Campus Moment'));
             $description = trim((string) $pickFirst($item, ['description', 'details', 'detail', 'caption'], 'A preserved campus moment from student life, achievements, and institutional events.'));
-            $imageUrl = $resolveUploadUrl(
+            $imageUrl = $item instanceof \App\Models\PhotoGallery ? app(\App\Services\PublicMediaUrl::class)->galleryPhoto($item->avatar) : $resolveUploadUrl(
                 $pickFirst($item, ['avatar', 'image', 'photo', 'thumbnail']),
                 ['upload/image/PhotoGallery', 'upload/image/photogallery']
             );
+            $validPhoto = $item instanceof \App\Models\PhotoGallery
+                ? app(\App\Services\PublicMediaUrl::class)->galleryPhotoPath($item->avatar) !== null
+                : filled($imageUrl);
 
             return [
                 'id' => $item->id ?? ('photo-' . $index),
                 'title' => $title,
                 'description' => $description,
-                'image' => $imageUrl ?: asset('public/img/campus.jpeg'),
+                // Do not disguise a missing media origin as the same default photo on every record.
+                'image' => $imageUrl ?: ($validPhoto ? null : asset('public/img/campus.jpeg')),
                 'date' => optional($item->created_at)->format('d M Y') ?: 'Campus Archive',
                 'year' => optional($item->created_at)->format('Y') ?: 'Archive',
             ];
         })
-        ->filter(fn ($item) => !empty($item['image']))
         ->values();
 
     $featuredPhotos = $photoCards->take(3)->values();
@@ -603,8 +606,11 @@ Photo Gallery
     .gallery-modal-stage img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
     }
+
+    .gallery-image-unavailable { display: grid; place-content: center; min-height: 220px; height: 100%; padding: 24px; text-align: center; color: #334e68; background: #e7eef4; }
+    .gallery-showcase-page [hidden], .gallery-modal [hidden] { display: none !important; }
 
     .gallery-modal-copy {
         padding: 28px 24px;
@@ -748,7 +754,7 @@ Photo Gallery
 
                 <div class="gallery-hero-frame">
                     <div class="gallery-hero-card">
-                        <img src="{{ $heroPhoto['image'] ?? asset('public/img/campus.jpeg') }}" alt="{{ $heroPhoto['title'] ?? 'Campus photo highlight' }}">
+                        @if($heroPhoto['image'] ?? null)<img src="{{ $heroPhoto['image'] }}" alt="{{ $heroPhoto['title'] ?? 'Campus photo highlight' }}" data-gallery-image data-photo-fallback="{{ asset('public/img/campus.jpeg') }}">@else<div class="gallery-image-unavailable">Image preview unavailable</div>@endif
                         <div class="gallery-hero-badge">
                             <span><i class="fa fa-image" aria-hidden="true"></i> Featured Memory</span>
                             <strong>{{ $heroPhoto['date'] ?? 'Campus Archive' }}</strong>
@@ -791,7 +797,7 @@ Photo Gallery
                             data-date="{{ e($photo['date']) }}"
                             aria-label="Open {{ $photo['title'] }}">
                             <div class="gallery-feature-media">
-                                <img src="{{ $photo['image'] }}" alt="{{ $photo['title'] }}">
+                                @if($photo['image'])<img src="{{ $photo['image'] }}" alt="{{ $photo['title'] }}" data-gallery-image data-photo-fallback="{{ asset('public/img/campus.jpeg') }}">@else<div class="gallery-image-unavailable">Image preview unavailable</div>@endif
                                 <div class="gallery-feature-index">
                                     <span>0{{ $index + 1 }}</span>
                                     <strong>{{ $photo['date'] }}</strong>
@@ -831,7 +837,7 @@ Photo Gallery
                             data-date="{{ e($photo['date']) }}"
                             aria-label="Open {{ $photo['title'] }}">
                             <div class="gallery-archive-media">
-                                <img src="{{ $photo['image'] }}" alt="{{ $photo['title'] }}">
+                                @if($photo['image'])<img src="{{ $photo['image'] }}" alt="{{ $photo['title'] }}" data-gallery-image data-photo-fallback="{{ asset('public/img/campus.jpeg') }}">@else<div class="gallery-image-unavailable">Image preview unavailable</div>@endif
                                 <div class="gallery-archive-meta">
                                     <span>{{ $photo['date'] }}</span>
                                     <strong>Photo</strong>
@@ -867,7 +873,8 @@ Photo Gallery
             </div>
             <div class="modal-body">
                 <div class="gallery-modal-stage">
-                    <img id="galleryModalImage" src="" alt="Gallery preview image">
+                    <img id="galleryModalImage" hidden alt="Gallery preview image" data-photo-fallback="{{ asset('public/img/campus.jpeg') }}">
+                    <div class="gallery-image-unavailable" id="galleryModalUnavailable" hidden>Image preview unavailable</div>
                 </div>
                 <div class="gallery-modal-copy">
                     <div class="gallery-modal-meta">
@@ -896,6 +903,7 @@ Photo Gallery
         const modalDescription = document.getElementById('galleryModalDescription');
         const modalDate = document.getElementById('galleryModalDate');
         const modalDownload = document.getElementById('galleryModalDownload');
+        const modalUnavailable = document.getElementById('galleryModalUnavailable');
 
         if (!modalElement) {
             return;
@@ -925,6 +933,21 @@ Photo Gallery
         };
 
         const bindGalleryHandlers = function () {
+            document.querySelectorAll('[data-gallery-image]').forEach(function (image) {
+                if (image.dataset.fallbackBound) return;
+                image.dataset.fallbackBound = '1';
+                const fail = function () {
+                    if (image.dataset.fallbackUsed) return;
+                    image.dataset.fallbackUsed = '1';
+                    const fallback = image.dataset.photoFallback;
+                    if (!fallback || image.getAttribute('src') === fallback) return;
+                    image.src = fallback;
+                    const card = image.closest('.gallery-photo-trigger');
+                    if (card) card.setAttribute('data-image', fallback);
+                };
+                image.addEventListener('error', fail);
+                if (image.complete && !image.naturalWidth) fail();
+            });
             document.querySelectorAll('.gallery-photo-trigger').forEach(function (trigger) {
                 if (trigger.getAttribute('data-modal-bound') === '1') {
                     return;
@@ -937,7 +960,16 @@ Photo Gallery
                     const description = trigger.getAttribute('data-description') || 'A documented campus highlight.';
                     const date = trigger.getAttribute('data-date') || 'Campus Archive';
 
-                    modalImage.src = image;
+                    modalImage.hidden = !image;
+                    modalUnavailable.hidden = Boolean(image);
+                    modalDownload.hidden = !image;
+                    modalImage.onerror = function () {
+                        const fallback = modalImage.dataset.photoFallback;
+                        modalImage.onerror = null;
+                        modalImage.src = fallback;
+                        modalDownload.href = fallback;
+                    };
+                    if (image) modalImage.src = image; else modalImage.removeAttribute('src');
                     modalImage.alt = title;
                     document.getElementById('imageModalLabel').textContent = title;
                     modalTitle.textContent = title;
@@ -977,7 +1009,7 @@ Photo Gallery
         setTimeout(boot, 900);
 
         modalElement.addEventListener('hidden.bs.modal', function () {
-            modalImage.src = '';
+            modalImage.removeAttribute('src');
             modalDownload.href = '#';
         });
     })();
