@@ -448,12 +448,7 @@ class FrontController extends Controller
     }
     // Head of Institute message page
     public function headOfInstituteMessagePage(){
-        $pSpeech  =   PrincipalSpeech::orderBy('id','DESC')->first();
-
-        $principalData  = TeacherManagement::where(['designation'=>1])->orWhere(['designation'=>2])->first();
-        $cultivation    = ServerConfig::orderBy('id','DESC')->first();
-        // $cultivation->count();
-        return view('frontend.institute.principalSpeech',['pSpeech'=>$pSpeech,'cultivation'=>$cultivation,'principal'=>$principalData]);
+        return view('frontend.institute.principalSpeech');
     }
 
     // Backward compatible endpoint

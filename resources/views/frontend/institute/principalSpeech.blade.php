@@ -177,40 +177,12 @@ Head of Institute Message
         $insName = 'Jahanara-Ayub Academy';
     }
 
-    if(isset($configLocal) && !empty($configLocal->avatar)){
-        $avatarPath = config('app.url') . '/public/upload/image/cultivation/' . rawurlencode(basename($configLocal->avatar));
-    } elseif(isset($principal) && $principal && !empty($principal->avatar)) {
-        $avatarPath = config('app.url') . '/public/upload/image/teacher/' . rawurlencode(basename($principal->avatar));
-    } else {
-        $avatarPath = config('app.url') . '/public/avatar.png';
-    }
-
-    $displayName = isset($configLocal) && !empty($configLocal->principalName)
-        ? $configLocal->principalName
-        : (isset($principal) && $principal ? trim(($principal->firstName ?? '') . ' ' . ($principal->lastName ?? '')) : 'Engr. Abu Yousuf');
-
-    $displayDesignation = isset($configLocal) && !empty($configLocal->principalDesignation)
-        ? $configLocal->principalDesignation
-        : ((isset($principal) && $principal)
-            ? (($principal->designation == 1) ? 'Head of Institute' : (($principal->designation == 2) ? 'Head of Institute (In-charge)' : 'Head of Institute'))
-            : 'Head of Institute');
-
-    $importantSpeech = null;
-    $generalSpeech   = null;
-    if(isset($configLocal) && (!empty($configLocal->principalImportantSpeech) || !empty($configLocal->principalGeneralSpeech))){
-        $importantSpeech = $configLocal->principalImportantSpeech ?? null;
-        $generalSpeech   = $configLocal->principalGeneralSpeech   ?? null;
-    } elseif(isset($pSpeech) && $pSpeech) {
-        $importantSpeech = $pSpeech->importantSpeech ?? null;
-        $generalSpeech   = $pSpeech->generalSpeech   ?? null;
-    }
-
-    if(empty($importantSpeech)){
-        $importantSpeech = 'We want to make good students as well as good people.';
-    }
-    if(empty($generalSpeech)){
-        $generalSpeech = 'Excellence is not an accident — it is the result of consistent effort, strong values, and an unwavering commitment to growth. Our institution has always believed that true education goes beyond textbooks. It shapes character, builds confidence, and prepares students to serve their community with integrity. I encourage every student, teacher, and parent to remain committed to learning and to uphold the values that define our institution.';
-    }
+    $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
+    $avatarPath = $principalProfile['photoUrl'] ?: asset('public/avatar.png');
+    $displayName = $principalProfile['name'] ?: 'Principal profile not added';
+    $displayDesignation = $principalProfile['designation'] ?: 'Head of Institute';
+    $importantSpeech = $principalProfile['headline'] ?? '';
+    $generalSpeech = $principalProfile['message'] ?: 'A message has not been added yet.';
 @endphp
 
 <div id="hoi-print-area" class="col-12">

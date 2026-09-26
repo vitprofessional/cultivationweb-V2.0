@@ -1,9 +1,18 @@
 @php
     $config = \App\Models\ServerConfig::first();
-    $principalAvatar = !empty($config?->avatar)
-        ? config('app.url').'/public/upload/image/cultivation/'.rawurlencode(basename($config->avatar))
-        : config('app.url').'/public/avatar.png';
+    $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
+    $principalAvatar = $principalProfile['photoUrl'] ?: asset('public/avatar.png');
 @endphp
+
+<div class="sidebar-section mb-3">
+    <div class="section-heading">Head of Institute</div>
+    <div class="text-center p-3">
+        <img class="avatar-circle mb-2" src="{{ $principalAvatar }}" alt="Principal portrait" loading="lazy" onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
+        <p class="fw-semibold small mb-1">{{ $principalProfile['name'] ?: 'Principal profile not added' }}</p>
+        <p class="small text-muted">{{ $principalProfile['designation'] ?: 'Head of Institute' }}</p>
+        <a href="{{ route('headOfInstituteMessagePage') }}" class="btn btn-outline-success btn-sm">Read message</a>
+    </div>
+</div>
 
 @if(!empty($config->eduMinName))
 <div class="sidebar-section mb-3">

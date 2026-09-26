@@ -30,6 +30,11 @@ final class PublicMediaUrl
         return $this->url('upload/notice/'.$match[1]);
     }
 
+    public function principal(?string $filename): ?string
+    {
+        return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+    }
+
     public function galleryPhoto(?string $filename): ?string
     {
         $path = $this->galleryPhotoPath($filename);

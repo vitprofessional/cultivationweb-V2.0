@@ -57,26 +57,16 @@
         }
 
         $neutralAvatar = asset(config('cultivation_demo.branding.default_avatar'));
-        $principalIsReal = filled(trim((string) ($config?->principalName ?? '')));
+        $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
+        $principalIsReal = filled($principalProfile['name']);
         $chairmanIsReal = filled(trim((string) ($chairman->name ?? $chairman->fullName ?? '')));
         $demoLeadership = config('cultivation_demo.leadership', []);
-        $demoPrincipal = $demoLeadership['head'] ?? [];
         $demoChairman = $demoLeadership['chairman'] ?? [];
-        $principalName = !empty($config?->principalName) ? $config->principalName : ($demoPrincipal['name'] ?? null);
-        $principalRole = !empty($config?->principalDesignation) ? $config->principalDesignation : null;
-        $principalLead = !empty($config?->principalImportantSpeech)
-            ? $config->principalImportantSpeech
-            : ($principalSpeechModel?->importantSpeech ?? null);
-        $principalBody = !empty($config?->principalGeneralSpeech)
-            ? $config->principalGeneralSpeech
-            : ($principalSpeechModel?->generalSpeech ?? null);
-        $principalAvatarFile = !empty($config?->avatar) ? basename((string) $config->avatar) : null;
-        $principalAvatar = $principalAvatarFile && file_exists(public_path('upload/image/cultivation/' . $principalAvatarFile))
-            ? url('/public/upload/image/cultivation/' . rawurlencode($principalAvatarFile))
-            : $neutralAvatar;
-        $principalRole = $principalRole ?: ($demoPrincipal['designation'] ?? 'Principal / Head of Institution');
-        $principalMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($principalLead ?: $principalBody ?: ($demoPrincipal['message'] ?? '')))));
-        $hasLeadershipContent = filled($principalName);
+        $principalName = $principalProfile['name'] ?: 'Principal profile not added';
+        $principalRole = $principalProfile['designation'] ?: 'Head of Institution';
+        $principalAvatar = $principalProfile['photoUrl'] ?: $neutralAvatar;
+        $principalMessage = trim(preg_replace('/\s+/', ' ', (string) ($principalProfile['headline'] ?: $principalProfile['message'])));
+        $hasLeadershipContent = filled($principalProfile['name']);
          $chairmanName = trim((string) ($chairman->name ?? $chairman->fullName ?? ''));
          $chairmanRole = trim((string) ($chairman->boardChairmanDesignation ?? $chairman->designation ?? ''));
          $chairmanMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman->boardChairmanMessage ?? $chairman->message ?? ''))));
@@ -104,7 +94,7 @@
                 'avatar' => $principalAvatar,
                 'message' => $principalMessage,
                 'route' => route('headOfInstituteMessagePage'),
-                'is_demo' => !$principalIsReal,
+                'is_demo' => false,
             ],
         ])->values();
         $leadershipColumnClass = $leadershipCards->count() === 1 ? 'col-lg-8 mx-auto' : 'col-lg-6';
@@ -555,19 +545,20 @@
         .leadership-profile-body {
             display: flex;
             flex: 1;
-            padding: 24px;
+            padding: 20px;
         }
 
         .leadership-meta-horizontal {
             display: flex;
             align-items: flex-start;
-            gap: 20px;
+            gap: 18px;
             width: 100%;
         }
 
         .leadership-portrait {
-            width: 120px;
-            height: 150px;
+            aspect-ratio: 4 / 5;
+            height: auto;
+            width: 168px;
             object-fit: cover;
             object-position: center top;
             border: 3px solid #eaf3ff;
@@ -1625,12 +1616,10 @@
         #rs-at-a-glance .number { font-size:38px !important; margin-bottom:10px !important; }
         #rs-at-a-glance .stat-body .title { font-size:13px !important; line-height:1.5; min-height:39px; letter-spacing:.2px !important; }
         .leadership-portrait { background:#edf4f9; object-fit:cover; }
-        .leadership-copy { align-self:stretch; }
-        .leadership-copy h4 { min-height:55px; }
-        .leadership-copy .designation { min-height:42px; }
-        .leadership-profile-body .desc { height:101px; min-height:101px; line-height:1.8; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; margin:0; }
-        .leadership-cta { min-height:60px; display:flex; align-items:flex-end; }
-        .leadership-cta .leadership-read-more { display:inline-flex; align-items:center; min-height:50px; padding:12px 20px; border-radius:3px; background:#e8f5fa; }
+        .leadership-copy h4,.leadership-copy .designation { min-height:0; }
+        .leadership-profile-body .desc { min-height:0; line-height:1.65; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin:0; }
+        .leadership-cta { min-height:0; display:flex; align-items:flex-end; }
+        .leadership-cta .leadership-read-more { display:inline-flex; align-items:center; min-height:44px; padding:10px 18px; border-radius:3px; background:#e8f5fa; }
         .faculty-card { height:100%; border-radius:12px; }
         .faculty-photo-link { aspect-ratio: 5 / 4; }
         .faculty-photo-link img { object-position:center 25%; }
@@ -1655,7 +1644,7 @@
             .leadership-meta-horizontal { flex-wrap:wrap; }
             .leadership-copy { flex-basis:100%; }
             .leadership-copy h4,.leadership-copy .designation { min-height:0; }
-            .leadership-portrait { width:100px; height:125px; }
+            .leadership-portrait { width:104px; }
         }
     </style>
     <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/homepage-responsive.css') }}?v={{ filemtime(public_path('cultivation/assets/css/homepage-responsive.css')) }}">

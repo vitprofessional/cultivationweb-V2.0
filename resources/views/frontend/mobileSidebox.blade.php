@@ -1,8 +1,7 @@
     @php
         $config = \App\Models\ServerConfig::first();
-        $principalAvatar = !empty($config?->avatar)
-            ? config('app.url').'/public/upload/image/cultivation/'.rawurlencode(basename($config->avatar))
-            : config('app.url').'/public/avatar.png';
+        $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
+        $principalAvatar = $principalProfile['photoUrl'] ?: asset('public/avatar.png');
     @endphp
     <div class="row mb-3 sidebar-stack-mobile">
         <div class="col-10 mx-auto">
@@ -11,22 +10,17 @@
                 <div class="text-center">
                     <img class="principal-photo" src="{{ $principalAvatar }}" alt="Head of Institute portrait" loading="lazy">
                     <div class="principal-caption">
-                        <div class="fw-semibold" style="font-size:12px">{{ $config->principalName ?? 'Engr. Abu Yousuf' }}</div>
-                        <div class="text-muted small" style="font-size:11px">{{ $config->principalDesignation ?? 'Head of Institute' }}</div>
+                        <div class="fw-semibold" style="font-size:12px">{{ $principalProfile['name'] ?: 'Principal profile not added' }}</div>
+                        <div class="text-muted small" style="font-size:11px">{{ $principalProfile['designation'] ?: 'Head of Institute' }}</div>
                         <a class="btn btn-success btn-sm px-3" href="{{ route('headOfInstituteMessagePage') }}">Details</a>
                     </div>
                 </div>
             </div>
         </div>
         @php
-            $principalSpeech = \App\Models\PrincipalSpeech::first();
             $speechTitle = $frontendSpeechTitle ?? "Head of Institute Message";
-            $principalSpeechLead = !empty($config->principalImportantSpeech)
-                ? $config->principalImportantSpeech
-                : (!empty($principalSpeech?->importantSpeech) ? $principalSpeech->importantSpeech : 'We want to make good students as well as good people.');
-            $principalSpeechBody = !empty($config->principalGeneralSpeech)
-                ? $config->principalGeneralSpeech
-                : (!empty($principalSpeech?->generalSpeech) ? $principalSpeech->generalSpeech : '');
+            $principalSpeechLead = $principalProfile['headline'];
+            $principalSpeechBody = $principalProfile['message'] ?? '';
             $principalSpeechExcerpt = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($principalSpeechBody))), 130, '...');
         @endphp
         <div class="col-10 mx-auto">

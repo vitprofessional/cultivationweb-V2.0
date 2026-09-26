@@ -225,18 +225,12 @@ Enter to learn & Leave to serve
         @endif
     </div>
     @php
-        $principalSpeech = \App\Models\PrincipalSpeech::first();
+        $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
         $speechTitle = $frontendSpeechTitle ?? "Head of Institute Message";
-        $principalSpeechLead = !empty($config->principalImportantSpeech)
-            ? $config->principalImportantSpeech
-            : (!empty($principalSpeech?->importantSpeech) ? $principalSpeech->importantSpeech : 'We want to make good students as well as good people.');
-        $principalSpeechBody = !empty($config->principalGeneralSpeech)
-            ? $config->principalGeneralSpeech
-            : (!empty($principalSpeech?->generalSpeech) ? $principalSpeech->generalSpeech : '');
-        $principalSpeechExcerpt = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($principalSpeechBody))), 300, '...');
-        $principalSpeechAvatar = !empty($config->avatar)
-            ? config('app.url').'/public/upload/image/cultivation/'.rawurlencode(basename($config->avatar))
-            : config('app.url').'/public/avatar.png';
+        $principalSpeechLead = $principalProfile['headline'];
+        $principalSpeechBody = $principalProfile['message'] ?? '';
+        $principalSpeechExcerpt = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/', ' ', $principalSpeechBody)), 300, '...');
+        $principalSpeechAvatar = $principalProfile['photoUrl'] ?: asset('public/avatar.png');
     @endphp
     <div class="col-12 mx-auto mb-4 scale-on-scroll speech-feature p-0">
         <div class="feature-header">
@@ -247,8 +241,8 @@ Enter to learn & Leave to serve
             <div class="speech-meta">
                 <img class="speech-avatar" src="{{ $principalSpeechAvatar }}" alt="Head of Institute portrait">
                 <div>
-                    <p class="speech-name">{{ $config->principalName ?? 'Engr. Abu Yousuf' }}</p>
-                    <p class="speech-role">{{ $config->principalDesignation ?? 'Head of Institute' }}</p>
+                    <p class="speech-name">{{ $principalProfile['name'] ?: 'Principal profile not added' }}</p>
+                    <p class="speech-role">{{ $principalProfile['designation'] ?: 'Head of Institute' }}</p>
                 </div>
             </div>
             <div class="speech-quote">“{{ $principalSpeechLead }}”</div>

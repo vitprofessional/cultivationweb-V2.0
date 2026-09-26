@@ -117,7 +117,7 @@ body.v2-homepage.home-style2 .full-width-header.header-style2 #rs-header .menu-a
     .v2-homepage .leadership-profile-body { padding: 24px; }
     .v2-homepage .leadership-copy h4 { min-height: 0; overflow-wrap: anywhere; }
     .v2-homepage .leadership-copy .designation { min-height: 0; font-size: 15px; }
-    .v2-homepage .leadership-profile-body .desc { height: auto; min-height: 0; display: block; overflow: visible; font-size: 16px; line-height: 1.75; }
+    .v2-homepage .leadership-profile-body .desc { height: auto; min-height: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; font-size: 16px; line-height: 1.75; }
     .v2-homepage .leadership-cta { padding-top: 18px; min-height: 0; }
     .v2-homepage .leadership-role-label { font-size: 12px; }
     .v2-homepage .latest-notice-modern .notice-title { min-width: 0; font-size: 16px; line-height: 1.7; display: block; overflow: visible; white-space: normal; overflow-wrap: anywhere; }
