@@ -592,8 +592,6 @@
                         <li><a href="{{ route('supportPage') }}"><i class="fa fa-angle-right"></i> Admission Information</a></li>
                         <li class="footer-link-group-label">Student Corner</li>
                         <li><a href="{{ route('student') }}"><i class="fa fa-angle-right"></i> Student Database</a></li>
-                        <li><a href="{{ route('placementCellView') }}"><i class="fa fa-angle-right"></i> Placement Cell</a></li>
-                        <li><a href="{{ route('jobNeedyStudentView') }}"><i class="fa fa-angle-right"></i> Job Seekers</a></li>
                     </ul>
                 </div>
 

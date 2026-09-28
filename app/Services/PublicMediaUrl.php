@@ -32,6 +32,11 @@ final class PublicMediaUrl
 
     public function principal(?string $filename): ?string
     {
+        return $this->institutionLogo($filename);
+    }
+
+    public function institutionLogo(?string $filename): ?string
+    {
         return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 

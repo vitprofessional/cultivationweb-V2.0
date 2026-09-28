@@ -4,10 +4,8 @@
             ? App\Models\ServerConfig::first()
             : null;
     }
-    $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
-    $logoUrl = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
-        ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
-        : asset('public/logo.png');
+    $logoUrl = app(\App\Services\PublicMediaUrl::class)->institutionLogo($config?->logo);
+    $institutionName = trim((string) ($config?->instituteName ?? ''));
     $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
         ? $config->officeEmail
         : null;
@@ -60,6 +58,7 @@
         align-items: center;
         gap: 0;
         flex-wrap: nowrap;
+        height: 100%;
     }
 
     body.home-style2 .menu-area .logo-part.pr-90,
@@ -67,33 +66,39 @@
         padding-right: 0 !important;
     }
 
+    body.home-style2 .menu-area .logo-part {
+        align-items: center;
+        display: flex;
+        height: 100%;
+        padding-left: 0;
+    }
+
     body.home-style2 .menu-area .logo-part .light-logo {
         display: none !important;
     }
 
     body.home-style2 .menu-area .logo-part .dark-logo {
+        align-items: center;
         display: inline-flex !important;
-        vertical-align: middle;
+        height: 100%;
     }
 
     body.home-style2 .menu-area .logo-part img {
-        height: 48px;
+        display: block;
+        height: 64px;
         width: auto;
-        max-width: 52px;
+        max-width: 240px;
+        max-height: 64px !important;
         object-fit: contain;
     }
 
-    body.home-style2 .menu-area .header-institute-title {
+    body.home-style2 .menu-area .header-institute-fallback {
+        color: #0f2b5c;
         font-size: 20px;
         font-weight: 800;
-        color: #0f2b5c;
         line-height: 1.2;
-        letter-spacing: -0.3px;
-        transition: color 0.25s ease;
-    }
-
-    body.home-style2 .menu-area.menu-sticky.sticky .header-institute-title {
-        color: #ffffff !important;
+        max-width: 240px;
+        overflow-wrap: anywhere;
     }
 
     body.home-style2 .menu-area .rs-menu-area {
@@ -199,8 +204,9 @@
 
     @media (max-width: 1199px) {
         body.home-style2 .menu-area .logo-part img {
-            max-width: 200px;
-            height: 46px;
+            max-width: 220px;
+            height: 60px;
+            max-height: 60px !important;
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
@@ -226,8 +232,9 @@
         }
 
         body.home-style2 .menu-area .logo-part img {
-            height: 42px;
-            max-width: 150px;
+            height: 54px;
+            max-width: 190px;
+            max-height: 54px !important;
         }
 
         body.home-style2 .menu-area .mobile-menu {
@@ -334,10 +341,11 @@
                     <div class="col-lg-4 col-xl-4">
                         <div class="logo-cat-wrap">
                             <div class="logo-part pr-90">
-                                <a class="dark-logo" href="{{ route('homePage') }}" style="display: inline-flex; align-items: center; gap: 10px; text-decoration: none;">
-                                    <img src="{{ $logoUrl }}" alt="{{ !empty($config?->instituteName) ? $config->instituteName : 'Institution logo' }}">
-                                    @if(!empty($config?->instituteName))
-                                        <span class="header-institute-title">{{ $config->instituteName }}</span>
+                                <a class="dark-logo" href="{{ route('homePage') }}" aria-label="{{ $institutionName ?: 'Institution home' }}" style="display: inline-flex; align-items: center; text-decoration: none;">
+                                    @if($logoUrl)
+                                        <img src="{{ $logoUrl }}" alt="{{ $institutionName ?: 'Institution logo' }}">
+                                    @else
+                                        <span class="header-institute-fallback">{{ $institutionName ?: 'Institution name unavailable' }}</span>
                                     @endif
                                 </a>
                             </div>
@@ -379,14 +387,6 @@
                                             <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-result" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Result</button>
                                             <ul id="nav-submenu-result" class="sub-menu">
                                                 <li><a href="{{ route('internalResult') }}">Internal Result</a></li>
-                                            </ul>
-                                        </li>
-                                        <li class="menu-item-has-children">
-                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-placement" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Job Placement</button>
-                                            <ul id="nav-submenu-placement" class="sub-menu">
-                                                <li><a href="{{ route('placementCellView') }}">Placement Cell</a></li>
-                                                <li><a href="{{ route('jobNeedyStudentView') }}">Needy Student</a></li>
-                                                <li><a href="https://bdjobs.com/" target="_blank" rel="noopener">Job Circular</a></li>
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">

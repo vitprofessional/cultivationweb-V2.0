@@ -17,7 +17,7 @@
         $facultyPreview = $facultyPreview ?? collect();
         $teamCount = $teacherCount + $staffCount;
         $institutionName = trim((string) ($config?->instituteName ?? ''));
-        $foundedYear = !empty($config?->establishDate) ? $config->establishDate : null;
+        $overviewMetrics = $overviewMetrics ?? collect();
         $safeGallery = $gallery ?? collect();
         $firstImage = $safeGallery->get(0);
         $secondImage = $safeGallery->get(1);
@@ -128,24 +128,6 @@
         $aboutDetails = trim(strip_tags((string) ($insData?->insDetails ?? '')));
         $hasAboutContent = filled($aboutHeading) || filled($aboutDetails);
         $overviewImages = collect([$resolveGalleryImage($firstImage), $resolveGalleryImage($secondImage)])->filter()->values();
-        $demoStatistics = config('cultivation_demo.statistics', []);
-        $establishedYear = preg_match('/\b(18|19|20)\d{2}\b/', (string) $foundedYear, $yearMatch) && (int) $yearMatch[0] <= now()->year ? $yearMatch[0] : null;
-        $overviewMetrics = collect([
-            ['key' => 'established', 'value' => $establishedYear, 'real' => filled($establishedYear)],
-            ['key' => 'students', 'value' => $studentCount > 0 ? $studentCount : null, 'real' => $studentCount > 0],
-            ['key' => 'teachers', 'value' => $teacherCount > 0 ? $teacherCount : null, 'real' => $teacherCount > 0],
-            ['key' => 'staff', 'value' => $staffCount > 0 ? $staffCount : null, 'real' => $staffCount > 0],
-            ['key' => 'classes', 'value' => $classCount > 0 ? $classCount : null, 'real' => $classCount > 0],
-            ['key' => 'experience', 'value' => $establishedYear ? max(0, now()->year - (int) $establishedYear) . '+' : null, 'real' => filled($establishedYear)],
-        ])->map(function ($metric) use ($demoStatistics) {
-            $fallback = $demoStatistics[$metric['key']] ?? [];
-            return array_merge($fallback, [
-                'value' => $metric['real'] ? $metric['value'] : ($fallback['value'] ?? '—'),
-                'real' => $metric['real'],
-                'source' => $metric['real'] ? ($metric['key'] === 'experience' ? 'DERIVED' : 'REAL') : 'DEMO',
-            ]);
-        })->values();
-
         $demoFaculty = collect(config('cultivation_demo.faculty', []))->map(fn ($teacher) => (object) array_merge($teacher, ['is_demo' => true]));
         $facultyPreview = $facultyPreview->filter(fn ($teacher) => filled(trim(($teacher->firstName ?? '') . ' ' . ($teacher->lastName ?? ''))))->take(4)->map(function ($teacher) {
             $teacher->is_demo = false;
@@ -1632,8 +1614,7 @@
         .faculty-designation { font-size:14px; line-height:1.5; }
         .faculty-subject { font-size:13px; line-height:1.5; }
         @media(max-width:767px) {
-            body.home-style2 .menu-area .logo-part img { max-width:42px !important; }
-            body.home-style2 .menu-area .header-institute-title { font-size:16px; line-height:1.25; }
+            body.home-style2 .menu-area .logo-part img { max-width:150px !important; }
             .rs-slider.style1 .slider-content .sl-title { font-size:30px; max-height:none; }
             .rs-slider.style1 .slider-content .sl-sub-title { font-size:13px; }
             .rs-slider.style1 .slider-content .container { padding-left:40px; padding-right:40px; }
@@ -1756,14 +1737,13 @@
         </div>
 
         {{-- Section 6: At a Glance / Statistics --}}
-        @if($overviewMetrics->isNotEmpty())
         <div id="rs-at-a-glance" class="pt-50 pb-50" style="background: #f4f8fc; border-top: 1px solid #e1edf7; border-bottom: 1px solid #e1edf7;">
             <div class="container">
                 <div class="sec-title text-center mb-32">
                     <div class="sub-title primary">AT A GLANCE</div>
                     <h2 class="title mb-0">Institutional Key Statistics</h2>
                 </div>
-                <div class="row {{ $overviewMetrics->count() <= 2 ? 'justify-content-center' : '' }}">
+                <div class="row">
                     @foreach($overviewMetrics as $metric)
                         <div class="col-6 col-md-4 col-lg-2 mb-20">
                             <div class="stat-card" data-source="{{ $metric['source'] }}" style="background: #ffffff; border: 1px solid #d4e2f0; border-radius: 12px; padding: 22px 16px; box-shadow: 0 8px 24px rgba(16, 44, 99, 0.06); height: 100%; text-align: center;">
@@ -1773,7 +1753,7 @@
                                 <div class="stat-body">
                                     <h2 class="number" style="font-size: 32px; font-weight: 800; color: #102c63; line-height: 1.1; margin: 0 0 2px;">{{ $metric['value'] }}</h2>
                                     <h4 class="title mb-0" style="font-size: 14px; font-weight: 700; color: #4b6382; text-transform: uppercase; letter-spacing: 0.5px;">{{ $metric['label'] }}</h4>
-                                    <small style="display: block; color: #8aa1bb; font-size: 10px; margin-top: 8px;">{{ $metric['real'] ? ($metric['source'] === 'DERIVED' ? 'Since establishment' : 'Institution records') : 'Institutional profile' }}</small>
+                                    <small style="display: block; color: #8aa1bb; font-size: 10px; margin-top: 8px;">{{ $metric['source'] === 'current year minus establishment year' ? 'Calculated from establishment' : 'Institution records' }}</small>
                                 </div>
                             </div>
                         </div>
@@ -1781,18 +1761,13 @@
                 </div>
             </div>
         </div>
-        @endif
 
-        @php
-            $hasRealLeadershipMessage = filled($principalProfile['headline']) || filled($principalProfile['message']) || filled($chairmanMessage);
-            $leadershipHeadingText = $hasRealLeadershipMessage ? 'Leadership Messages' : 'Head of Institution';
-        @endphp
         @if($leadershipCards->isNotEmpty())
         <div class="principal-feature-section pt-50 pb-56 md-pt-36 md-pb-36" style="background: #ffffff;">
             <div class="container">
                 <div class="leadership-section-title sec-title text-center mb-32">
                     <div class="sub-title primary">INSTITUTION LEADERSHIP</div>
-                    <h2 class="title mb-0">{{ $leadershipHeadingText }}</h2>
+                    <h2 class="title mb-0">Guiding Our Institution</h2>
                 </div>
                 <div class="row justify-content-center">
                     @foreach($leadershipCards as $leader)
@@ -1919,8 +1894,6 @@
                                         <img src="{{ asset('public/img/studentCorner.png') }}" alt="Student corner" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/1.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('student') }}">Student Database</a></li>
-                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('placementCellView') }}">Placement Cell</a></li>
-                                            <li><i class="fa fa-angle-right"></i><a href="{{ route('jobNeedyStudentView') }}">Job Seekers</a></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -1970,17 +1943,6 @@
                                 <h4 class="title"><a href="{{ route('internalResult') }}">Result Archive</a></h4>
                                 <p class="desc">Internal result records and progress are available for students and guardians.</p>
                                 <div class="btn-part"><a href="{{ route('internalResult') }}">Read More</a></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 col-md-6 mb-30">
-                        <div class="degree-wrap">
-                            <img src="{{ asset('public/cultivation/assets/images/degrees/4.jpg') }}" alt="">
-                            <div class="title-part"><h4 class="title">Placement Cell</h4></div>
-                            <div class="content-part">
-                                <h4 class="title"><a href="{{ route('placementCellView') }}">Placement Cell</a></h4>
-                                <p class="desc">Career opportunities, announcements and placement support are available here.</p>
-                                <div class="btn-part"><a href="{{ route('placementCellView') }}">Read More</a></div>
                             </div>
                         </div>
                     </div>

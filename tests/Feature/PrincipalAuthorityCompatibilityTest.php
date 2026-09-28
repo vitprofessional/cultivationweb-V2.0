@@ -167,6 +167,44 @@ class PrincipalAuthorityCompatibilityTest extends TestCase
             ->assertSee('2026-2028');
     }
 
+    public function test_v2_homepage_brand_statistics_copy_and_placement_surface(): void
+    {
+        $this->identity();
+        ServerConfig::query()->forceCreate([
+            'instituteName' => 'Synthetic QA Academy',
+            'logo' => 'synthetic-school-logo.png',
+            'establishDate' => '01/01/1990',
+        ]);
+
+        $response = $this->get('/')->assertOk();
+        $response->assertSee('src="https://admin.example.test/tenant/public/upload/image/cultivation/synthetic-school-logo.png"', false)
+            ->assertDontSee('header-institute-title')
+            ->assertSee('Guiding Our Institution')
+            ->assertDontSee('Job Placement')
+            ->assertDontSee('Placement Cell')
+            ->assertDontSee('Job Seekers')
+            ->assertDontSee('Job Circular')
+            ->assertDontSee('data-source="DEMO"');
+
+        $response->assertViewHas('overviewMetrics', function ($metrics): bool {
+            $expected = [
+                'server_configs.establishDate' => 1990,
+                'new_admissions COUNT(*)' => DB::table('new_admissions')->count(),
+                'teacher_management COUNT(*)' => DB::table('teacher_management')->count(),
+                'staff_management COUNT(*)' => DB::table('staff_management')->count(),
+                'class_manages COUNT(*)' => DB::table('class_manages')->count(),
+                'current year minus establishment year' => now()->year - 1990,
+            ];
+            $actual = collect($metrics)->mapWithKeys(fn ($metric) => [$metric['source'] => $metric['value']]);
+
+            return $actual->all() === $expected;
+        });
+
+        ServerConfig::query()->first()->forceFill(['logo' => null])->save();
+        $this->get('/')->assertOk()
+            ->assertSee('<span class="header-institute-fallback">Synthetic QA Academy</span>', false);
+    }
+
     public function test_ambiguous_active_chairman_and_president_are_not_arbitrarily_published(): void
     {
         $this->identity();

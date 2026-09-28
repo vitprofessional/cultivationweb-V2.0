@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\ServerConfig;
 use App\Models\Syllabus;
 use App\Models\SemisterPlan;
-use App\Models\StudentManagement;
 use App\Models\StaffManagement;
 use App\Models\TeacherManagement;
 use Illuminate\Support\Facades\Log;
@@ -95,10 +94,23 @@ class FrontController extends Controller
             $slider = Schema::hasTable('home_sliders') ? HomeSlider::orderBy('ID','DESC')->limit(5)->get() : collect();
          $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::first() : null;
          $principalSpeech = Schema::hasTable((new PrincipalSpeech())->getTable()) ? PrincipalSpeech::first() : null;
-         $studentCount = Schema::hasTable((new StudentManagement())->getTable()) ? StudentManagement::count() : 0;
+         $studentCount = Schema::hasTable((new newAdmission())->getTable()) ? newAdmission::query()->count() : 0;
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
          $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
          $classCount = Schema::hasTable((new \App\Models\classManage())->getTable()) ? \App\Models\classManage::count() : 0;
+         $establishedYear = null;
+         if (preg_match('/\b(?:18|19|20)\d{2}\b/', (string) $config?->establishDate, $yearMatch)) {
+             $candidateYear = (int) $yearMatch[0];
+             $establishedYear = $candidateYear <= now()->year ? $candidateYear : null;
+         }
+         $overviewMetrics = collect([
+             ['value' => $establishedYear ?? '—', 'label' => 'Established Year', 'icon' => 'fa-university', 'source' => 'server_configs.establishDate'],
+             ['value' => $studentCount, 'label' => 'Students', 'icon' => 'fa-graduation-cap', 'source' => 'new_admissions COUNT(*)'],
+             ['value' => $teacherCount, 'label' => 'Teachers', 'icon' => 'fa-users', 'source' => 'teacher_management COUNT(*)'],
+             ['value' => $staffCount, 'label' => 'Staff Members', 'icon' => 'fa-user', 'source' => 'staff_management COUNT(*)'],
+             ['value' => $classCount, 'label' => 'Classes & Programs', 'icon' => 'fa-book', 'source' => 'class_manages COUNT(*)'],
+             ['value' => $establishedYear === null ? '—' : now()->year - $establishedYear, 'label' => 'Years of Service', 'icon' => 'fa-calendar', 'source' => 'current year minus establishment year'],
+         ])->values();
          $chairmanProfile = app(GoverningBodyChairmanProfile::class)->read();
          $chairman = $chairmanProfile['person'];
          $facultyPreview = Schema::hasTable((new TeacherManagement())->getTable())
@@ -116,6 +128,7 @@ class FrontController extends Controller
             'teacherCount' => $teacherCount,
             'staffCount' => $staffCount,
             'classCount' => $classCount,
+            'overviewMetrics' => $overviewMetrics,
             'chairman' => $chairman,
             'chairmanAmbiguous' => $chairmanProfile['ambiguous'],
             'facultyPreview' => $facultyPreview,
