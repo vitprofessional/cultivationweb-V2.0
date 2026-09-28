@@ -602,6 +602,50 @@
             .home-style2 .btn-lg {
                 line-height: 1.25;
             }
+
+            /* Keep complete public table data reachable on narrow screens. */
+            .edu-main-inner .table-responsive,
+            .edu-main-inner .academic-table-wrap {
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                overscroll-behavior-inline: contain;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .edu-main-inner .table-responsive::before,
+            .edu-main-inner .academic-table-wrap::before {
+                content: "Swipe or scroll horizontally to see all columns";
+                display: block;
+                margin: 0 0 8px;
+                color: #61758a;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .edu-main-inner .academic-table { min-width: 640px !important; }
+            .edu-main-inner .schedule-table,
+            .edu-main-inner .routine-table { min-width: 680px !important; }
+            .edu-main-inner .student-table { min-width: 680px !important; }
+            .edu-main-inner .result-table { min-width: 700px !important; }
+            .edu-main-inner .needy-table,
+            .edu-main-inner .placement-table { min-width: 700px !important; }
+
+            .edu-main-inner .academic-meta-value,
+            .edu-main-inner .student-meta-value,
+            .edu-main-inner .result-meta-value,
+            .edu-main-inner .needy-meta-value,
+            .edu-main-inner .placement-meta-value {
+                white-space: normal !important;
+                overflow: visible !important;
+                overflow-wrap: anywhere;
+                text-overflow: clip !important;
+            }
+
+            .edu-main-inner .academic-cell-title {
+                display: block;
+                overflow: visible;
+                -webkit-line-clamp: unset;
+            }
         }
 
         @media (min-width: 1200px) {

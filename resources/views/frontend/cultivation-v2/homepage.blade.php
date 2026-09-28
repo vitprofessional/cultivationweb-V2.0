@@ -1601,7 +1601,7 @@
         #rs-at-a-glance .stat-icon { width:56px !important; height:56px !important; font-size:25px !important; }
         #rs-at-a-glance .number { font-size:38px !important; margin-bottom:10px !important; }
         #rs-at-a-glance .stat-body .title { font-size:13px !important; line-height:1.5; min-height:39px; letter-spacing:.2px !important; }
-        .leadership-portrait { background:#edf4f9; object-fit:cover; }
+        .leadership-portrait { background:#edf4f9; object-fit:contain; }
         .leadership-copy h4,.leadership-copy .designation { min-height:0; }
         .leadership-profile-body .desc { min-height:0; line-height:1.65; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin:0; }
         .leadership-cta { min-height:0; display:flex; align-items:flex-end; }
