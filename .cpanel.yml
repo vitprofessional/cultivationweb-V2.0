@@ -4,7 +4,7 @@ deployment:
     - export APPPATH=/home/shsburichong/apps/cultivationweb-V2.0
     - export PUBLICPATH=/home/shsburichong/public_html
     - export PHP=/usr/local/bin/php
-    - export COMPOSER=/usr/local/bin/composer
+    - export COMPOSER_BIN=/usr/local/bin/composer
 
     # Preflight
     - /bin/mkdir -p "$APPPATH"
@@ -15,7 +15,7 @@ deployment:
     - test -f public/build/manifest.json
     - test -f deployment/public-index.php
     - test -x "$PHP"
-    - test -x "$COMPOSER"
+    - test -x "$COMPOSER_BIN"
 
     # Replace application source
     - /bin/rm -rf "$APPPATH/app"
@@ -46,7 +46,7 @@ deployment:
     - /bin/mkdir -p "$APPPATH/bootstrap/cache"
 
     # Production dependencies
-    - cd "$APPPATH" && "$COMPOSER" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+    - cd "$APPPATH" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
     # Laravel deployment
     - cd "$APPPATH" && "$PHP" artisan config:clear
