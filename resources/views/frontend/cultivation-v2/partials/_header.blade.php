@@ -223,6 +223,11 @@
     }
 
     @media (max-width: 1100px) {
+        body.home-style2 .full-width-header.header-style2 {
+            position: relative;
+            z-index: 1102;
+        }
+
         body.home-style2 .topbar-area {
             display: none;
         }
@@ -260,8 +265,12 @@
         }
 
         body.home-style2 .menu-area .rs-menu {
-            background: #273c66;
-            height: 0;
+            background: #ffffff;
+            border: 1px solid rgba(26, 54, 93, .12);
+            border-top: 3px solid #21a7d0;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 18px 38px rgba(14, 31, 57, .2);
+            height: auto;
             max-height: calc(100vh - 76px);
             overflow-y: auto;
             position: absolute;
@@ -272,25 +281,76 @@
         }
 
         body.home-style2 .menu-area .rs-menu.rs-menu-close {
+            display: none !important;
             height: 0 !important;
         }
 
+        body.home-style2 .menu-area .rs-menu:not(.rs-menu-close) {
+            display: block !important;
+            height: auto !important;
+        }
+
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > a {
-            padding: 10px 0;
+            display: block;
+            padding: 13px 18px;
             line-height: 1.5;
-            color: #ffffff;
+            color: #172b4d;
+            border-bottom: 1px solid #e8edf4;
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link {
-            width: calc(100% - 45px);
-            padding: 10px 0;
+            width: 100%;
+            padding: 13px 18px;
             line-height: 1.5;
-            color: #ffffff;
+            color: #172b4d;
             text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e8edf4 !important;
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link::after {
-            display: none;
+            display: inline-block;
+            content: "\f107";
+            font-family: FontAwesome;
+            transition: transform .18s ease;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-link[aria-expanded="true"]::after {
+            transform: rotate(180deg);
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu,
+        body.home-style2 .full-width-header.header-style2 .rs-header .menu-area .main-menu .rs-menu ul.nav-menu > li:hover > ul.sub-menu:not(.visible) {
+            display: none !important;
+            position: static !important;
+            width: 100% !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            transform: none !important;
+            padding: 4px 0 8px 14px !important;
+            background: #f3f6fa !important;
+            box-shadow: none !important;
+            border: 0 !important;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu.visible {
+            display: block !important;
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu > li > a {
+            display: block;
+            padding: 11px 18px;
+            color: #263b5b !important;
+            line-height: 1.4;
+            border-bottom: 1px solid rgba(23, 43, 77, .07);
+        }
+
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu > li > a:hover,
+        body.home-style2 .menu-area .rs-menu ul.nav-menu > li > ul.sub-menu > li > a:focus-visible {
+            color: #087fa4 !important;
+            background: #e8f4f8;
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu > li > .rs-menu-parent {
@@ -355,7 +415,7 @@
                         <div class="rs-menu-area">
                             <div class="main-menu pr-90">
                                 <div class="mobile-menu">
-                                    <button type="button" class="rs-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-navigation" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">
+                                    <button type="button" class="rs-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-navigation">
                                         <i class="fa fa-bars"></i>
                                     </button>
                                 </div>
@@ -363,7 +423,7 @@
                                     <ul class="nav-menu">
                                         <li><a href="{{ route('homePage') }}">Home</a></li>
                                         <li class="menu-item-has-children">
-                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-institute" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Institute</button>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-institute">Institute</button>
                                             <ul id="nav-submenu-institute" class="sub-menu">
                                                 <li><a href="{{ route('institutePage') }}">About Us</a></li>
                                                 <li><a href="{{ route('headOfInstituteMessagePage') }}">Head of Institute Message</a></li>
@@ -375,7 +435,7 @@
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-academic" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Academic</button>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-academic">Academic</button>
                                             <ul id="nav-submenu-academic" class="sub-menu">
                                                 <li><a href="{{ route('newSyllabus') }}">Syllabus</a></li>
                                                 <li><a href="{{ route('newClassSchedule') }}">Class Routine</a></li>
@@ -384,13 +444,13 @@
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-result" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Result</button>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-result">Result</button>
                                             <ul id="nav-submenu-result" class="sub-menu">
                                                 <li><a href="{{ route('internalResult') }}">Internal Result</a></li>
                                             </ul>
                                         </li>
                                         <li class="menu-item-has-children">
-                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-gallery" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); this.click(); }">Gallery</button>
+                                            <button type="button" class="rs-menu-link" aria-expanded="false" aria-controls="nav-submenu-gallery">Gallery</button>
                                             <ul id="nav-submenu-gallery" class="sub-menu">
                                                 <li><a href="{{ route('imagePage') }}">Photo Gallery</a></li>
                                                 <li><a href="{{ route('videoPage') }}">Video Gallery</a></li>
@@ -409,92 +469,99 @@
 </div>
 
 <script>
-    // The homepage uses its own responsive navigation controller; inner pages retain this one.
-    if (!document.body.classList.contains('v2-homepage')) {
-    document.addEventListener('keydown', function (event) {
-        if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.rs-menu-toggle, .rs-menu-link')) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            event.target.click();
-        }
-    }, true);
+    (function () {
+        const navigation = document.getElementById('primary-navigation');
+        const toggle = document.querySelector('.rs-menu-toggle[aria-controls="primary-navigation"]');
+        if (!navigation || !toggle) return;
 
-    function syncStickyNavigationState() {
-        const menu = document.querySelector('.menu-area.menu-sticky');
-        if (!menu) {
-            return;
-        }
-
-        const isSticky = menu.classList.contains('sticky');
-        menu.style.setProperty('background-color', isSticky ? '#273c66' : '', isSticky ? 'important' : '');
-        document.querySelectorAll('.nav-menu > li > a, .nav-menu > li > .rs-menu-link').forEach(function (control) {
-            control.style.setProperty('color', isSticky ? '#ffffff' : '', isSticky ? 'important' : '');
-        });
-    }
-
-    window.addEventListener('scroll', function () {
-        window.requestAnimationFrame(syncStickyNavigationState);
-    }, { passive: true });
-
-    window.addEventListener('load', syncStickyNavigationState);
-
-    document.addEventListener('click', function (event) {
-        const menuToggle = event.target.closest('.rs-menu-toggle');
-        if (menuToggle) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            const navigation = document.getElementById(menuToggle.getAttribute('aria-controls'));
-            const isOpen = menuToggle.getAttribute('aria-expanded') === 'true';
-            menuToggle.setAttribute('aria-expanded', String(!isOpen));
-            navigation.classList.toggle('rs-menu-close', isOpen);
-            navigation.style.height = isOpen ? '0px' : navigation.querySelector('.nav-menu').scrollHeight + 'px';
-            return;
-        }
-
-        const menuLink = event.target.closest('.rs-menu-link');
-        if (!menuLink) {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        const submenu = document.getElementById(menuLink.getAttribute('aria-controls'));
-        if (!submenu) {
-            return;
-        }
-        const isOpen = menuLink.getAttribute('aria-expanded') === 'true';
-        const desktopMode = window.matchMedia('(min-width: 1101px)').matches;
-        menuLink.parentElement.parentElement.querySelectorAll(':scope > li > .rs-menu-link').forEach(function (control) {
-            if (control !== menuLink) {
+        const closeSubmenus = function (except) {
+            navigation.querySelectorAll('.rs-menu-link').forEach(function (control) {
+                if (control === except) return;
                 control.setAttribute('aria-expanded', 'false');
-                const siblingMenu = document.getElementById(control.getAttribute('aria-controls'));
-                if (siblingMenu) {
-                    siblingMenu.classList.remove('visible');
-                    siblingMenu.style.removeProperty('display');
-                    siblingMenu.style.removeProperty('visibility');
-                    siblingMenu.style.removeProperty('opacity');
-                    siblingMenu.style.removeProperty('transform');
-                    siblingMenu.style.removeProperty('z-index');
-                }
+                const submenu = document.getElementById(control.getAttribute('aria-controls'));
+                if (submenu) submenu.classList.remove('visible');
+            });
+        };
+
+        const closeMenu = function () {
+            toggle.setAttribute('aria-expanded', 'false');
+            navigation.classList.add('rs-menu-close');
+            navigation.style.removeProperty('height');
+            closeSubmenus(null);
+        };
+
+        const syncLayout = function () {
+            navigation.style.removeProperty('height');
+            if (window.matchMedia('(min-width: 1101px)').matches) {
+                navigation.classList.remove('rs-menu-close');
+                toggle.setAttribute('aria-expanded', 'false');
+                closeSubmenus(null);
+            } else if (toggle.getAttribute('aria-expanded') !== 'true') {
+                navigation.classList.add('rs-menu-close');
+            }
+        };
+
+        const syncStickyNavigationState = function () {
+            const menu = document.querySelector('.menu-area.menu-sticky');
+            if (!menu) return;
+            const sticky = menu.classList.contains('sticky');
+            menu.style.setProperty('background-color', sticky ? '#273c66' : '', sticky ? 'important' : '');
+            document.querySelectorAll('.nav-menu > li > a, .nav-menu > li > .rs-menu-link').forEach(function (control) {
+                control.style.setProperty('color', sticky ? '#ffffff' : '', sticky ? 'important' : '');
+            });
+        };
+
+        document.addEventListener('click', function (event) {
+            const menuToggle = event.target.closest('.rs-menu-toggle[aria-controls="primary-navigation"]');
+            if (menuToggle) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const open = menuToggle.getAttribute('aria-expanded') !== 'true';
+                menuToggle.setAttribute('aria-expanded', String(open));
+                navigation.classList.toggle('rs-menu-close', !open);
+                navigation.style.removeProperty('height');
+                if (!open) closeSubmenus(null);
+                return;
+            }
+
+            const menuLink = event.target.closest('.rs-menu-link');
+            if (menuLink && navigation.contains(menuLink)) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                const submenu = document.getElementById(menuLink.getAttribute('aria-controls'));
+                if (!submenu) return;
+                const open = menuLink.getAttribute('aria-expanded') !== 'true';
+                closeSubmenus(menuLink);
+                menuLink.setAttribute('aria-expanded', String(open));
+                submenu.classList.toggle('visible', open);
+                return;
+            }
+
+            if (window.matchMedia('(max-width: 1100px)').matches && event.target.closest('#primary-navigation .nav-menu a')) {
+                closeMenu();
+                return;
+            }
+
+            if (window.matchMedia('(max-width: 1100px)').matches && !event.target.closest('.main-menu')) closeMenu();
+        }, true);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key !== 'Escape') return;
+            const expanded = navigation.querySelector('.rs-menu-link[aria-expanded="true"]');
+            if (expanded) {
+                const submenu = document.getElementById(expanded.getAttribute('aria-controls'));
+                expanded.setAttribute('aria-expanded', 'false');
+                if (submenu) submenu.classList.remove('visible');
+            } else if (toggle.getAttribute('aria-expanded') === 'true') {
+                closeMenu();
+                toggle.focus();
             }
         });
-        menuLink.setAttribute('aria-expanded', String(!isOpen));
-        submenu.classList.toggle('visible', !isOpen);
-        if (!isOpen) {
-            submenu.style.setProperty('display', 'block', 'important');
-            submenu.style.setProperty('visibility', 'visible', 'important');
-            submenu.style.setProperty('opacity', '1', 'important');
-            submenu.style.setProperty('transform', 'scaleY(1)', 'important');
-            submenu.style.setProperty('z-index', desktopMode ? '1100' : '1001', 'important');
-        } else {
-            submenu.style.removeProperty('display');
-            submenu.style.removeProperty('visibility');
-            submenu.style.removeProperty('opacity');
-            submenu.style.removeProperty('transform');
-            submenu.style.removeProperty('z-index');
-        }
 
-    }, true);
-    }
+        window.addEventListener('resize', syncLayout);
+        window.addEventListener('scroll', function () { window.requestAnimationFrame(syncStickyNavigationState); }, { passive: true });
+        window.addEventListener('load', syncStickyNavigationState);
+        syncLayout();
+    })();
 </script>
 
