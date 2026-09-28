@@ -1,0 +1,84 @@
+---
+deployment:
+  tasks:
+    - export APPPATH=/home/shsburichong/apps/cultivationweb-V2.0
+    - export PUBLICPATH=/home/shsburichong/public_html
+    - export PHP=/usr/local/bin/php
+    - export COMPOSER=/usr/local/bin/composer
+
+    # ------------------------------------------------------------
+    # 1. Preflight
+    # ------------------------------------------------------------
+    - /bin/mkdir -p "$APPPATH"
+    - /bin/mkdir -p "$PUBLICPATH"
+    - test -f "$APPPATH/.env" || { echo "ERROR: Production .env missing at $APPPATH/.env"; exit 1; }
+    - test -f composer.json || { echo "ERROR: composer.json missing from repository"; exit 1; }
+    - test -f composer.lock || { echo "ERROR: composer.lock missing from repository"; exit 1; }
+    - test -f public/build/manifest.json || { echo "ERROR: Vite production build missing"; exit 1; }
+    - test -x "$PHP" || { echo "ERROR: PHP binary unavailable"; exit 1; }
+    - test -x "$COMPOSER" || { echo "ERROR: Composer binary unavailable"; exit 1; }
+
+    # ------------------------------------------------------------
+    # 2. Replace application source
+    # Keep .env, vendor and runtime storage outside repository copy
+    # ------------------------------------------------------------
+    - /bin/rm -rf "$APPPATH/app"
+    - /bin/rm -rf "$APPPATH/bootstrap"
+    - /bin/rm -rf "$APPPATH/config"
+    - /bin/rm -rf "$APPPATH/database"
+    - /bin/rm -rf "$APPPATH/resources"
+    - /bin/rm -rf "$APPPATH/routes"
+
+    - /bin/cp -R app "$APPPATH/"
+    - /bin/cp -R bootstrap "$APPPATH/"
+    - /bin/cp -R config "$APPPATH/"
+    - /bin/cp -R database "$APPPATH/"
+    - /bin/cp -R resources "$APPPATH/"
+    - /bin/cp -R routes "$APPPATH/"
+
+    - /bin/cp artisan "$APPPATH/artisan"
+    - /bin/cp composer.json "$APPPATH/composer.json"
+    - /bin/cp composer.lock "$APPPATH/composer.lock"
+
+    # ------------------------------------------------------------
+    # 3. Laravel runtime directories
+    # ------------------------------------------------------------
+    - /bin/mkdir -p "$APPPATH/storage/app/public"
+    - /bin/mkdir -p "$APPPATH/storage/framework/cache/data"
+    - /bin/mkdir -p "$APPPATH/storage/framework/sessions"
+    - /bin/mkdir -p "$APPPATH/storage/framework/views"
+    - /bin/mkdir -p "$APPPATH/storage/logs"
+    - /bin/mkdir -p "$APPPATH/bootstrap/cache"
+
+    # ------------------------------------------------------------
+    # 4. Deploy public directory
+    # ------------------------------------------------------------
+    - /bin/rm -rf "$PUBLICPATH/build"
+    - /bin/cp -R public/build "$PUBLICPATH/build"
+
+    - test ! -f public/.htaccess || /bin/cp public/.htaccess "$PUBLICPATH/.htaccess"
+    - test ! -f public/robots.txt || /bin/cp public/robots.txt "$PUBLICPATH/robots.txt"
+    - test ! -f public/favicon.ico || /bin/cp public/favicon.ico "$PUBLICPATH/favicon.ico"
+
+    # ------------------------------------------------------------
+    # 5. Production index.php
+    # ------------------------------------------------------------
+    - test -f deployment/public-index.php || { echo "ERROR: deployment/public-index.php missing"; exit 1; }
+    - /bin/cp deployment/public-index.php "$PUBLICPATH/index.php"
+
+    # ------------------------------------------------------------
+    # 6. Composer production dependencies
+    # ------------------------------------------------------------
+    - cd "$APPPATH" && "$COMPOSER" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+    # ------------------------------------------------------------
+    # 7. Laravel caches / database
+    # ------------------------------------------------------------
+    - cd "$APPPATH" && "$PHP" artisan config:clear
+    - cd "$APPPATH" && "$PHP" artisan route:clear
+    - cd "$APPPATH" && "$PHP" artisan view:clear
+    - cd "$APPPATH" && "$PHP" artisan migrate --force
+    - cd "$APPPATH" && "$PHP" artisan cache:clear
+    - cd "$APPPATH" && "$PHP" artisan config:cache
+    - cd "$APPPATH" && "$PHP" artisan route:cache
+    - cd "$APPPATH" && "$PHP" artisan view:cache
