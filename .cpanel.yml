@@ -50,29 +50,13 @@ deployment:
     - /bin/mkdir -p "$APPPATH/storage/logs"
     - /bin/mkdir -p "$APPPATH/bootstrap/cache"
 
-    # ------------------------------------------------------------
-    # 4. Deploy public directory
-    # ------------------------------------------------------------
-    - /bin/rm -rf "$PUBLICPATH/build"
-    - /bin/cp -R public/build "$PUBLICPATH/build"
-
-    - test ! -f public/.htaccess || /bin/cp public/.htaccess "$PUBLICPATH/.htaccess"
-    - test ! -f public/robots.txt || /bin/cp public/robots.txt "$PUBLICPATH/robots.txt"
-    - test ! -f public/favicon.ico || /bin/cp public/favicon.ico "$PUBLICPATH/favicon.ico"
-
-    # ------------------------------------------------------------
-    # 5. Production index.php
-    # ------------------------------------------------------------
-    - test -f deployment/public-index.php || { echo "ERROR: deployment/public-index.php missing"; exit 1; }
-    - /bin/cp deployment/public-index.php "$PUBLICPATH/index.php"
-
-    # ------------------------------------------------------------
-    # 6. Composer production dependencies
+        # ------------------------------------------------------------
+    # 4. Composer production dependencies
     # ------------------------------------------------------------
     - cd "$APPPATH" && "$COMPOSER" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
     # ------------------------------------------------------------
-    # 7. Laravel caches / database
+    # 5. Laravel caches / database
     # ------------------------------------------------------------
     - cd "$APPPATH" && "$PHP" artisan config:clear
     - cd "$APPPATH" && "$PHP" artisan route:clear
@@ -82,3 +66,20 @@ deployment:
     - cd "$APPPATH" && "$PHP" artisan config:cache
     - cd "$APPPATH" && "$PHP" artisan route:cache
     - cd "$APPPATH" && "$PHP" artisan view:cache
+
+    # ------------------------------------------------------------
+    # 6. Deploy public assets
+    # Only expose the new release after Laravel setup succeeds
+    # ------------------------------------------------------------
+    - /bin/rm -rf "$PUBLICPATH/build"
+    - /bin/cp -R public/build "$PUBLICPATH/build"
+
+    - test ! -f public/.htaccess || /bin/cp public/.htaccess "$PUBLICPATH/.htaccess"
+    - test ! -f public/robots.txt || /bin/cp public/robots.txt "$PUBLICPATH/robots.txt"
+    - test ! -f public/favicon.ico || /bin/cp public/favicon.ico "$PUBLICPATH/favicon.ico"
+
+    # ------------------------------------------------------------
+    # 7. Production entry point
+    # ------------------------------------------------------------
+    - test -f deployment/public-index.php || { echo "ERROR: deployment/public-index.php missing"; exit 1; }
+    - /bin/cp deployment/public-index.php "$PUBLICPATH/index.php"
