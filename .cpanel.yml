@@ -20,18 +20,20 @@ deployment:
     - test -f "$REPOPATH/composer.json"
     - test -f "$REPOPATH/composer.lock"
     - test -f "$REPOPATH/public/build/manifest.json"
+    - test -f "$REPOPATH/public/cultivation/assets/css/homepage-responsive.css"
     - test -f "$REPOPATH/deployment/public-index.php"
     - test -x "$PHP"
     - test -x "$COMPOSER_BIN"
 
     # ------------------------------------------------------------
-    # 2. Replace Application Source
-    # Preserve .env, vendor and runtime storage
+    # 2. Replace Laravel Application Source
+    # Preserve .env, vendor and storage
     # ------------------------------------------------------------
     - /bin/rm -rf "$APPPATH/app"
     - /bin/rm -rf "$APPPATH/bootstrap"
     - /bin/rm -rf "$APPPATH/config"
     - /bin/rm -rf "$APPPATH/database"
+    - /bin/rm -rf "$APPPATH/public"
     - /bin/rm -rf "$APPPATH/resources"
     - /bin/rm -rf "$APPPATH/routes"
 
@@ -39,6 +41,7 @@ deployment:
     - /bin/cp -R "$REPOPATH/bootstrap" "$APPPATH/"
     - /bin/cp -R "$REPOPATH/config" "$APPPATH/"
     - /bin/cp -R "$REPOPATH/database" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/public" "$APPPATH/"
     - /bin/cp -R "$REPOPATH/resources" "$APPPATH/"
     - /bin/cp -R "$REPOPATH/routes" "$APPPATH/"
 
@@ -58,7 +61,7 @@ deployment:
     - /bin/mkdir -p "$APPPATH/bootstrap/cache"
 
     # ------------------------------------------------------------
-    # 4. Install Production Composer Dependencies
+    # 4. Composer Production Dependencies
     # ------------------------------------------------------------
     - cd "$APPPATH" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
@@ -68,26 +71,51 @@ deployment:
     - cd "$APPPATH" && "$PHP" artisan config:clear
     - cd "$APPPATH" && "$PHP" artisan route:clear
     - cd "$APPPATH" && "$PHP" artisan view:clear
-
     - cd "$APPPATH" && "$PHP" artisan migrate --force
-
     - cd "$APPPATH" && "$PHP" artisan cache:clear
     - cd "$APPPATH" && "$PHP" artisan config:cache
     - cd "$APPPATH" && "$PHP" artisan route:cache
     - cd "$APPPATH" && "$PHP" artisan view:cache
 
     # ------------------------------------------------------------
-    # 6. Deploy Production Public Assets
-    # Public deployment happens only after Laravel setup succeeds
+    # 6. Deploy Static Public Assets
+    # Replace code-controlled asset directories only
     # ------------------------------------------------------------
+    - /bin/rm -rf "$PUBLICPATH/assets"
+    - /bin/rm -rf "$PUBLICPATH/back-office"
     - /bin/rm -rf "$PUBLICPATH/build"
-    - /bin/cp -R "$REPOPATH/public/build" "$PUBLICPATH/build"
+    - /bin/rm -rf "$PUBLICPATH/cultivation"
+    - /bin/rm -rf "$PUBLICPATH/fonts"
+    - /bin/rm -rf "$PUBLICPATH/img"
+    - /bin/rm -rf "$PUBLICPATH/lightbox"
+    - /bin/rm -rf "$PUBLICPATH/music"
+    - /bin/rm -rf "$PUBLICPATH/owl-carousel"
 
+    - /bin/cp -R "$REPOPATH/public/assets" "$PUBLICPATH/assets"
+    - /bin/cp -R "$REPOPATH/public/back-office" "$PUBLICPATH/back-office"
+    - /bin/cp -R "$REPOPATH/public/build" "$PUBLICPATH/build"
+    - /bin/cp -R "$REPOPATH/public/cultivation" "$PUBLICPATH/cultivation"
+    - /bin/cp -R "$REPOPATH/public/fonts" "$PUBLICPATH/fonts"
+    - /bin/cp -R "$REPOPATH/public/img" "$PUBLICPATH/img"
+    - /bin/cp -R "$REPOPATH/public/lightbox" "$PUBLICPATH/lightbox"
+    - /bin/cp -R "$REPOPATH/public/music" "$PUBLICPATH/music"
+    - /bin/cp -R "$REPOPATH/public/owl-carousel" "$PUBLICPATH/owl-carousel"
+
+    # ------------------------------------------------------------
+    # 7. Seed / Preserve Public Uploads
+    # Never delete production upload directory
+    # ------------------------------------------------------------
+    - /bin/mkdir -p "$PUBLICPATH/upload"
+    - /bin/cp -R "$REPOPATH/public/upload/." "$PUBLICPATH/upload/"
+
+    # ------------------------------------------------------------
+    # 8. Root Public Files
+    # ------------------------------------------------------------
     - test ! -f "$REPOPATH/public/.htaccess" || /bin/cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
     - test ! -f "$REPOPATH/public/robots.txt" || /bin/cp "$REPOPATH/public/robots.txt" "$PUBLICPATH/robots.txt"
     - test ! -f "$REPOPATH/public/favicon.ico" || /bin/cp "$REPOPATH/public/favicon.ico" "$PUBLICPATH/favicon.ico"
 
     # ------------------------------------------------------------
-    # 7. Switch Production Entry Point Last
+    # 9. Switch Production Entry Point Last
     # ------------------------------------------------------------
     - /bin/cp "$REPOPATH/deployment/public-index.php" "$PUBLICPATH/index.php"
