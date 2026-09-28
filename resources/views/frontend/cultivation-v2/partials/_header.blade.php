@@ -233,38 +233,139 @@
         }
 
         body.home-style2 .menu-area.menu-sticky .row.y-middle {
-            min-height: 76px;
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+            height: 72px;
+            min-height: 72px;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        body.home-style2 .menu-area > .container {
+            position: relative !important;
+            width: 100%;
+            max-width: 100%;
+            padding-left: 16px;
+            padding-right: 16px;
+            box-sizing: border-box;
+        }
+
+        body.home-style2 .menu-area :is(.main-menu, .rs-menu-area) {
+            position: static !important;
+        }
+
+        body.home-style2 .menu-area .row.y-middle > [class*="col-"] {
+            float: none;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        body.home-style2 .menu-area .row.y-middle > [class*="col-"]:first-child {
+            display: flex;
+            flex: 1 1 auto;
+            align-items: center;
+            width: auto;
+            max-width: none;
+            min-width: 0;
+        }
+
+        body.home-style2 .menu-area .row.y-middle > [class*="col-"]:last-child {
+            position: static;
+            flex: 0 0 0;
+            width: 0;
+            max-width: 0;
+            min-width: 0;
+            padding: 0;
         }
 
         body.home-style2 .menu-area .logo-part img {
-            height: 54px;
-            max-width: 190px;
-            max-height: 54px !important;
+            width: auto;
+            height: 48px;
+            max-width: min(155px, 100%);
+            max-height: 48px !important;
+            object-fit: contain;
+        }
+
+        body.home-style2 .menu-area .logo-cat-wrap,
+        body.home-style2 .menu-area .logo-part {
+            width: auto;
+            height: auto;
+            min-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            line-height: normal;
+        }
+
+        body.home-style2 .full-width-header.header-style2 .rs-header .menu-area .logo-cat-wrap {
+            position: static;
+            width: auto;
+            height: auto;
+            min-height: 0;
+            line-height: normal;
         }
 
         body.home-style2 .menu-area .mobile-menu {
             position: absolute;
-            right: 15px;
+            right: 16px;
             top: 50%;
             transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1003;
         }
 
         body.home-style2 .menu-area .mobile-menu .rs-menu-toggle {
-            align-items: center;
             display: inline-flex;
-            height: 48px;
+            align-items: center;
             justify-content: center;
+            width: 44px;
+            min-width: 44px;
+            height: 44px;
+            min-height: 44px;
             line-height: 1;
             padding: 0;
             text-align: center;
-            width: 48px;
+            color: #17334f !important;
+            background: #ffffff !important;
+            border: 1px solid #cbd7e3 !important;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(18, 42, 71, .08);
+            cursor: pointer;
+        }
+
+        body.home-style2 .menu-area .mobile-menu .mobile-menu-icon {
+            display: flex;
+            width: 19px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        body.home-style2 .menu-area .mobile-menu .mobile-menu-icon span {
+            display: block;
+            width: 100%;
+            height: 2px;
+            border-radius: 2px;
+            background: currentColor;
         }
 
         body.home-style2 .menu-area .rs-menu ul.nav-menu {
             display: block;
         }
 
+        /* The theme inserts a second arrow button; our accessible menu buttons own toggling. */
+        body.home-style2 .menu-area .rs-menu .rs-menu-parent {
+            display: none !important;
+        }
+
         body.home-style2 .menu-area .rs-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            width: auto;
+            margin: 0;
             background: #ffffff;
             border: 1px solid rgba(26, 54, 93, .12);
             border-top: 3px solid #21a7d0;
@@ -273,10 +374,6 @@
             height: auto;
             max-height: calc(100vh - 76px);
             overflow-y: auto;
-            position: absolute;
-            top: 76px;
-            left: 0;
-            width: 100%;
             z-index: 1001;
         }
 
@@ -416,7 +513,7 @@
                             <div class="main-menu pr-90">
                                 <div class="mobile-menu">
                                     <button type="button" class="rs-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="primary-navigation">
-                                        <i class="fa fa-bars"></i>
+                                        <span class="mobile-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
                                     </button>
                                 </div>
                                 <nav id="primary-navigation" class="rs-menu rs-menu-close" aria-label="Primary navigation">
