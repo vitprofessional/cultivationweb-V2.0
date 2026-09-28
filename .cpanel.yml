@@ -6,22 +6,18 @@ deployment:
     - export PHP=/usr/local/bin/php
     - export COMPOSER=/usr/local/bin/composer
 
-    # ------------------------------------------------------------
-    # 1. Preflight
-    # ------------------------------------------------------------
+    # Preflight
     - /bin/mkdir -p "$APPPATH"
     - /bin/mkdir -p "$PUBLICPATH"
-    - test -f "$APPPATH/.env" || { echo "ERROR: Production .env missing at $APPPATH/.env"; exit 1; }
-    - test -f composer.json || { echo "ERROR: composer.json missing from repository"; exit 1; }
-    - test -f composer.lock || { echo "ERROR: composer.lock missing from repository"; exit 1; }
-    - test -f public/build/manifest.json || { echo "ERROR: Vite production build missing"; exit 1; }
-    - test -x "$PHP" || { echo "ERROR: PHP binary unavailable"; exit 1; }
-    - test -x "$COMPOSER" || { echo "ERROR: Composer binary unavailable"; exit 1; }
+    - test -f "$APPPATH/.env"
+    - test -f composer.json
+    - test -f composer.lock
+    - test -f public/build/manifest.json
+    - test -f deployment/public-index.php
+    - test -x "$PHP"
+    - test -x "$COMPOSER"
 
-    # ------------------------------------------------------------
-    # 2. Replace application source
-    # Keep .env, vendor and runtime storage outside repository copy
-    # ------------------------------------------------------------
+    # Replace application source
     - /bin/rm -rf "$APPPATH/app"
     - /bin/rm -rf "$APPPATH/bootstrap"
     - /bin/rm -rf "$APPPATH/config"
@@ -40,24 +36,19 @@ deployment:
     - /bin/cp composer.json "$APPPATH/composer.json"
     - /bin/cp composer.lock "$APPPATH/composer.lock"
 
-    # ------------------------------------------------------------
-    # 3. Laravel runtime directories
-    # ------------------------------------------------------------
+    # Laravel runtime directories
     - /bin/mkdir -p "$APPPATH/storage/app/public"
     - /bin/mkdir -p "$APPPATH/storage/framework/cache/data"
     - /bin/mkdir -p "$APPPATH/storage/framework/sessions"
+    - /bin/mkdir -p "$APPPATH/storage/framework/testing"
     - /bin/mkdir -p "$APPPATH/storage/framework/views"
     - /bin/mkdir -p "$APPPATH/storage/logs"
     - /bin/mkdir -p "$APPPATH/bootstrap/cache"
 
-        # ------------------------------------------------------------
-    # 4. Composer production dependencies
-    # ------------------------------------------------------------
+    # Production dependencies
     - cd "$APPPATH" && "$COMPOSER" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-    # ------------------------------------------------------------
-    # 5. Laravel caches / database
-    # ------------------------------------------------------------
+    # Laravel deployment
     - cd "$APPPATH" && "$PHP" artisan config:clear
     - cd "$APPPATH" && "$PHP" artisan route:clear
     - cd "$APPPATH" && "$PHP" artisan view:clear
@@ -67,19 +58,12 @@ deployment:
     - cd "$APPPATH" && "$PHP" artisan route:cache
     - cd "$APPPATH" && "$PHP" artisan view:cache
 
-    # ------------------------------------------------------------
-    # 6. Deploy public assets
-    # Only expose the new release after Laravel setup succeeds
-    # ------------------------------------------------------------
+    # Public assets
     - /bin/rm -rf "$PUBLICPATH/build"
     - /bin/cp -R public/build "$PUBLICPATH/build"
-
     - test ! -f public/.htaccess || /bin/cp public/.htaccess "$PUBLICPATH/.htaccess"
     - test ! -f public/robots.txt || /bin/cp public/robots.txt "$PUBLICPATH/robots.txt"
     - test ! -f public/favicon.ico || /bin/cp public/favicon.ico "$PUBLICPATH/favicon.ico"
 
-    # ------------------------------------------------------------
-    # 7. Production entry point
-    # ------------------------------------------------------------
-    - test -f deployment/public-index.php || { echo "ERROR: deployment/public-index.php missing"; exit 1; }
+    # Switch production entry point last
     - /bin/cp deployment/public-index.php "$PUBLICPATH/index.php"
