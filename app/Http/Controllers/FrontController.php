@@ -29,6 +29,7 @@ use App\Models\Notice;
 use App\Models\PlacementCell;
 use App\Models\NeedyStudent;
 use App\Models\needyStudentPanel;
+use App\Services\GoverningBodyChairmanProfile;
 use File;
 use Hash;
 use sessionData;
@@ -98,21 +99,8 @@ class FrontController extends Controller
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
          $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
          $classCount = Schema::hasTable((new \App\Models\classManage())->getTable()) ? \App\Models\classManage::count() : 0;
-         $chairman = null;
-         if ($config && (!empty($config->boardChairmanName) || !empty($config->boardChairmanImg))) {
-             $chairman = (object) [
-                 'name' => $config->boardChairmanName,
-                 'designation' => $config->boardChairmanDesignation ?: 'Board Chairman',
-                 'avatar' => $config->boardChairmanImg,
-                 'message' => $config->boardChairmanMessage,
-             ];
-         } elseif (Schema::hasTable((new ManagingComittee())->getTable())) {
-             $chairman = ManagingComittee::where('designation', 'like', '%Chair%')
-                 ->orWhere('designation', 'like', '%President%')
-                 ->orWhere('designation', 'like', '%সভাপতি%')
-                 ->orderBy('id')
-                 ->first();
-         }
+         $chairmanProfile = app(GoverningBodyChairmanProfile::class)->read();
+         $chairman = $chairmanProfile['person'];
          $facultyPreview = Schema::hasTable((new TeacherManagement())->getTable())
              ? TeacherManagement::orderByRaw('CAST(rank AS UNSIGNED) IS NULL, CAST(rank AS UNSIGNED), id')->limit(8)->get()
              : collect();
@@ -129,6 +117,7 @@ class FrontController extends Controller
             'staffCount' => $staffCount,
             'classCount' => $classCount,
             'chairman' => $chairman,
+            'chairmanAmbiguous' => $chairmanProfile['ambiguous'],
             'facultyPreview' => $facultyPreview,
         ]);
     }
@@ -157,27 +146,11 @@ class FrontController extends Controller
 
     public function chairmanMessagePage()
     {
-        $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::orderBy('id','DESC')->first() : null;
-        $chairman = null;
-
-        if ($config && (!empty($config->boardChairmanName) || !empty($config->boardChairmanImg) || !empty($config->boardChairmanMessage))) {
-            $chairman = (object) [
-                'name' => $config->boardChairmanName,
-                'designation' => $config->boardChairmanDesignation ?? null,
-                'avatar' => $config->boardChairmanImg,
-                'message' => $config->boardChairmanMessage ?? null,
-            ];
-        } elseif (Schema::hasTable((new ManagingComittee())->getTable())) {
-            $chairman = ManagingComittee::where('designation', 'like', '%Chair%')
-                ->orWhere('designation', 'like', '%President%')
-                ->orWhere('designation', 'like', '%সভাপতি%')
-                ->orderBy('id')
-                ->first();
-        }
+        $chairmanProfile = app(GoverningBodyChairmanProfile::class)->read();
 
         return view('frontend.institute.chairmanMessage', [
-            'config' => $config,
-            'chairman' => $chairman,
+            'chairman' => $chairmanProfile['person'],
+            'chairmanAmbiguous' => $chairmanProfile['ambiguous'],
         ]);
     }
 

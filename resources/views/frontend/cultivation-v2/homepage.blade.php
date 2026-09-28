@@ -59,24 +59,24 @@
         $neutralAvatar = asset(config('cultivation_demo.branding.default_avatar'));
         $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
         $principalIsReal = filled($principalProfile['name']);
-        $chairmanIsReal = filled(trim((string) ($chairman->name ?? $chairman->fullName ?? '')));
-        $demoLeadership = config('cultivation_demo.leadership', []);
-        $demoChairman = $demoLeadership['chairman'] ?? [];
+        $chairmanIsReal = filled(trim((string) ($chairman?->name ?? $chairman?->fullName ?? '')));
         $principalName = $principalProfile['name'] ?: 'Principal profile not added';
         $principalRole = $principalProfile['designation'] ?: 'Head of Institution';
         $principalAvatar = $principalProfile['photoUrl'] ?: $neutralAvatar;
         $principalMessage = trim(preg_replace('/\s+/', ' ', (string) ($principalProfile['headline'] ?: $principalProfile['message'])));
         $hasLeadershipContent = filled($principalProfile['name']);
-         $chairmanName = trim((string) ($chairman->name ?? $chairman->fullName ?? ''));
-         $chairmanRole = trim((string) ($chairman->boardChairmanDesignation ?? $chairman->designation ?? ''));
-         $chairmanMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman->boardChairmanMessage ?? $chairman->message ?? ''))));
-        $chairmanAvatarFile = !empty($chairman?->avatar) ? basename((string) $chairman->avatar) : null;
-        $chairmanAvatar = $chairmanAvatarFile && file_exists(public_path('upload/image/cultivation/' . $chairmanAvatarFile))
-            ? url('/public/upload/image/cultivation/' . rawurlencode($chairmanAvatarFile))
-            : $neutralAvatar;
-        $chairmanName = $chairmanName ?: ($demoChairman['name'] ?? 'Governing Body Chairman');
-        $chairmanRole = $chairmanRole ?: ($demoChairman['designation'] ?? 'Governing Body Chairman');
-        $chairmanMessage = $chairmanMessage ?: ($demoChairman['message'] ?? '');
+         $chairmanName = trim((string) ($chairman?->name ?? $chairman?->fullName ?? ''));
+         $chairmanRole = trim((string) ($chairman?->designation ?? ''));
+         $chairmanDetails = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman?->jobDetails ?? ''))));
+         $chairmanMessage = trim(preg_replace('/\s+/', ' ', strip_tags((string) ($chairman?->message ?? ''))));
+        if ($chairmanAmbiguous ?? false) {
+            $chairmanName = 'Chairman / President needs review';
+            $chairmanDetails = 'Multiple active Governing Body profiles have a Chairman or President designation.';
+        } elseif (!$chairmanIsReal) {
+            $chairmanName = 'Governing Body Chairman / President not added';
+        }
+        $chairmanRole = $chairmanRole ?: 'Governing Body';
+        $chairmanAvatar = $chairman?->photoUrl ?: $neutralAvatar;
         $leadershipCards = collect([
             [
                 'label' => 'Chairman / President',
@@ -84,6 +84,8 @@
                 'role' => $chairmanRole,
                 'avatar' => $chairmanAvatar,
                 'message' => $chairmanMessage,
+                'details' => $chairmanDetails,
+                'link_text' => 'View Full Profile',
                 'route' => route('chairmanMessagePage'),
                 'is_demo' => !$chairmanIsReal,
             ],
@@ -93,6 +95,8 @@
                 'role' => $principalRole,
                 'avatar' => $principalAvatar,
                 'message' => $principalMessage,
+                'details' => null,
+                'link_text' => 'Read Full Message',
                 'route' => route('headOfInstituteMessagePage'),
                 'is_demo' => false,
             ],
@@ -1780,7 +1784,7 @@
         @endif
 
         @php
-            $hasRealLeadershipMessage = collect($leadershipCards)->contains(fn ($l) => filled($l['message'] ?? null));
+            $hasRealLeadershipMessage = filled($principalProfile['headline']) || filled($principalProfile['message']) || filled($chairmanMessage);
             $leadershipHeadingText = $hasRealLeadershipMessage ? 'Leadership Messages' : 'Head of Institution';
         @endphp
         @if($leadershipCards->isNotEmpty())
@@ -1801,9 +1805,9 @@
                                             <span class="leadership-role-label">{{ $leader['label'] }}</span>
                                             <h4>{{ $leader['name'] }}</h4>
                                             @if($leader['role'])<p class="designation">{{ $leader['role'] }}</p>@endif
-                                            <p class="desc">{{ \Illuminate\Support\Str::limit($leader['message'], 220, '...') }}</p>
+                                            @if(filled($leader['message']))<p class="desc">{{ \Illuminate\Support\Str::limit($leader['message'], 220, '...') }}</p>@elseif(filled($leader['details']))<p class="desc"><strong>Profile details:</strong> {{ \Illuminate\Support\Str::limit($leader['details'], 220, '...') }}</p>@endif
                                             <div class="leadership-cta">
-                                                @if(!$leader['is_demo'])<a class="readon2" href="{{ $leader['route'] }}" aria-label="Read full message for {{ $leader['name'] }}">Read Full Message &rarr;</a>@else<span class="leadership-read-more">Leadership Profile</span>@endif
+                                                @if(!$leader['is_demo'])<a class="readon2" href="{{ $leader['route'] }}" aria-label="{{ $leader['link_text'] }} for {{ $leader['name'] }}">{{ $leader['link_text'] }} &rarr;</a>@else<span class="leadership-read-more">Leadership Profile</span>@endif
                                             </div>
                                         </div>
                                     </div>
