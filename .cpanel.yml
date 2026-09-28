@@ -1,23 +1,33 @@
 ---
 deployment:
   tasks:
+    # ------------------------------------------------------------
+    # Environment / Paths
+    # ------------------------------------------------------------
+    - export REPOPATH=/home/shsburichong/repositories/cultivationweb-V2.0
     - export APPPATH=/home/shsburichong/apps/cultivationweb-V2.0
     - export PUBLICPATH=/home/shsburichong/public_html
     - export PHP=/usr/local/bin/php
     - export COMPOSER_BIN=/usr/local/bin/composer
 
-    # Preflight
+    # ------------------------------------------------------------
+    # 1. Preflight
+    # ------------------------------------------------------------
     - /bin/mkdir -p "$APPPATH"
     - /bin/mkdir -p "$PUBLICPATH"
+
     - test -f "$APPPATH/.env"
-    - test -f composer.json
-    - test -f composer.lock
-    - test -f public/build/manifest.json
-    - test -f deployment/public-index.php
+    - test -f "$REPOPATH/composer.json"
+    - test -f "$REPOPATH/composer.lock"
+    - test -f "$REPOPATH/public/build/manifest.json"
+    - test -f "$REPOPATH/deployment/public-index.php"
     - test -x "$PHP"
     - test -x "$COMPOSER_BIN"
 
-    # Replace application source
+    # ------------------------------------------------------------
+    # 2. Replace Application Source
+    # Preserve .env, vendor and runtime storage
+    # ------------------------------------------------------------
     - /bin/rm -rf "$APPPATH/app"
     - /bin/rm -rf "$APPPATH/bootstrap"
     - /bin/rm -rf "$APPPATH/config"
@@ -25,18 +35,20 @@ deployment:
     - /bin/rm -rf "$APPPATH/resources"
     - /bin/rm -rf "$APPPATH/routes"
 
-    - /bin/cp -R app "$APPPATH/"
-    - /bin/cp -R bootstrap "$APPPATH/"
-    - /bin/cp -R config "$APPPATH/"
-    - /bin/cp -R database "$APPPATH/"
-    - /bin/cp -R resources "$APPPATH/"
-    - /bin/cp -R routes "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/app" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/bootstrap" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/config" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/database" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/resources" "$APPPATH/"
+    - /bin/cp -R "$REPOPATH/routes" "$APPPATH/"
 
-    - /bin/cp artisan "$APPPATH/artisan"
-    - /bin/cp composer.json "$APPPATH/composer.json"
-    - /bin/cp composer.lock "$APPPATH/composer.lock"
+    - /bin/cp "$REPOPATH/artisan" "$APPPATH/artisan"
+    - /bin/cp "$REPOPATH/composer.json" "$APPPATH/composer.json"
+    - /bin/cp "$REPOPATH/composer.lock" "$APPPATH/composer.lock"
 
-    # Laravel runtime directories
+    # ------------------------------------------------------------
+    # 3. Laravel Runtime Directories
+    # ------------------------------------------------------------
     - /bin/mkdir -p "$APPPATH/storage/app/public"
     - /bin/mkdir -p "$APPPATH/storage/framework/cache/data"
     - /bin/mkdir -p "$APPPATH/storage/framework/sessions"
@@ -45,25 +57,37 @@ deployment:
     - /bin/mkdir -p "$APPPATH/storage/logs"
     - /bin/mkdir -p "$APPPATH/bootstrap/cache"
 
-    # Production dependencies
+    # ------------------------------------------------------------
+    # 4. Install Production Composer Dependencies
+    # ------------------------------------------------------------
     - cd "$APPPATH" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
-    # Laravel deployment
+    # ------------------------------------------------------------
+    # 5. Laravel Deployment Tasks
+    # ------------------------------------------------------------
     - cd "$APPPATH" && "$PHP" artisan config:clear
     - cd "$APPPATH" && "$PHP" artisan route:clear
     - cd "$APPPATH" && "$PHP" artisan view:clear
+
     - cd "$APPPATH" && "$PHP" artisan migrate --force
+
     - cd "$APPPATH" && "$PHP" artisan cache:clear
     - cd "$APPPATH" && "$PHP" artisan config:cache
     - cd "$APPPATH" && "$PHP" artisan route:cache
     - cd "$APPPATH" && "$PHP" artisan view:cache
 
-    # Public assets
+    # ------------------------------------------------------------
+    # 6. Deploy Production Public Assets
+    # Public deployment happens only after Laravel setup succeeds
+    # ------------------------------------------------------------
     - /bin/rm -rf "$PUBLICPATH/build"
-    - /bin/cp -R public/build "$PUBLICPATH/build"
-    - test ! -f public/.htaccess || /bin/cp public/.htaccess "$PUBLICPATH/.htaccess"
-    - test ! -f public/robots.txt || /bin/cp public/robots.txt "$PUBLICPATH/robots.txt"
-    - test ! -f public/favicon.ico || /bin/cp public/favicon.ico "$PUBLICPATH/favicon.ico"
+    - /bin/cp -R "$REPOPATH/public/build" "$PUBLICPATH/build"
 
-    # Switch production entry point last
-    - /bin/cp deployment/public-index.php "$PUBLICPATH/index.php"
+    - test ! -f "$REPOPATH/public/.htaccess" || /bin/cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
+    - test ! -f "$REPOPATH/public/robots.txt" || /bin/cp "$REPOPATH/public/robots.txt" "$PUBLICPATH/robots.txt"
+    - test ! -f "$REPOPATH/public/favicon.ico" || /bin/cp "$REPOPATH/public/favicon.ico" "$PUBLICPATH/favicon.ico"
+
+    # ------------------------------------------------------------
+    # 7. Switch Production Entry Point Last
+    # ------------------------------------------------------------
+    - /bin/cp "$REPOPATH/deployment/public-index.php" "$PUBLICPATH/index.php"
