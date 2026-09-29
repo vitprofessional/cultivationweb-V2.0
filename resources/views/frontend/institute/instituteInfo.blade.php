@@ -429,9 +429,8 @@ $config = App\Models\ServerConfig::query()->latest('id')->first();
         'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
         'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
     ])->map(fn ($social) => array_merge($social, ['url' => $contactSocialUrl($social['url'])]))->filter(fn ($social) => $social['url']);
-    $heroImage = !empty($data?->heroImg)
-        ? config('app.url') . '/public/upload/image/cultivation/' . $data->heroImg
-        : asset('public/cultivation/assets/images/breadcrumbs/2.jpg');
+    $heroImage = app(\App\Services\PublicMediaUrl::class)->institutionAboutImage($data?->heroImg)
+        ?: asset('public/cultivation/assets/images/about/history.png');
 
     $aboutEstYear = '';
     if (!empty($data?->establishDate)) {

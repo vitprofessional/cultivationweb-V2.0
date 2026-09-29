@@ -40,6 +40,12 @@ final class PublicMediaUrl
         return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
+    /** Resolve the existing filename-only institute_details.heroImg About-image contract. */
+    public function institutionAboutImage(?string $filename): ?string
+    {
+        return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+    }
+
     public function teacherPortrait(?string $filename): ?string
     {
         return $this->galleryFile($filename, 'teacher', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);

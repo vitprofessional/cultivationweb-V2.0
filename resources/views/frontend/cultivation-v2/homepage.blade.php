@@ -141,7 +141,8 @@
         $welcomeTitle = $aboutHeading ?: ($institutionName ? 'Welcome to ' . $institutionName : $welcomeFallback['heading']);
         $welcomeSubHeading = $welcomeFallback['sub_heading'] ?? 'Knowledge, Discipline and Moral Values';
         $welcomeDetails = $aboutDetails ?: ($welcomeFallback['details'] ?? '');
-        $welcomeImage = $overviewImages->get(0) ?: asset($welcomeFallback['image'] ?? 'public/cultivation/assets/images/about/history.png');
+        $welcomeImage = $publicMedia->institutionAboutImage($insData?->heroImg)
+            ?: asset('public/cultivation/assets/images/about/history.png');
 
         $newsEventsList = config('cultivation_demo.news_events', []);
 

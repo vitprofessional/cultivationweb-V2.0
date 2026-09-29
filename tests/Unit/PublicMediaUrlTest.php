@@ -86,4 +86,15 @@ class PublicMediaUrlTest extends TestCase
         ]]));
         $this->assertNull($resolver->slider('image.jpg'));
     }
+
+    public function test_institution_about_image_uses_canonical_media_base_and_rejects_unsafe_filenames(): void
+    {
+        $resolver = new PublicMediaUrl(new Repository(['media' => [
+            'public_base_url' => 'https://cdn.example.test', 'public_path_prefix' => 'public',
+        ]]));
+
+        $this->assertSame('https://cdn.example.test/public/upload/image/cultivation/about.jpg', $resolver->institutionAboutImage('about.jpg'));
+        $this->assertNull($resolver->institutionAboutImage('../about.jpg'));
+        $this->assertNull($resolver->institutionAboutImage('https://foreign.example/about.jpg'));
+    }
 }

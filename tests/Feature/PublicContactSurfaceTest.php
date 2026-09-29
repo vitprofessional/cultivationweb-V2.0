@@ -91,4 +91,22 @@ class PublicContactSurfaceTest extends TestCase
             ->assertDontSee('N/A')->assertDontSee('cultivation.local')
             ->assertDontSee('facebook.example')->assertDontSee('javascript:alert');
     }
+
+    public function test_homepage_and_about_page_share_the_canonical_institution_about_image(): void
+    {
+        config(['media.public_base_url' => 'https://admin.example.test/tenant/public', 'media.public_path_prefix' => 'public']);
+        InstituteDetails::query()->forceCreate([
+            'insHeadline' => 'Canonical profile',
+            'insDetails' => 'Shared About content',
+            'mission' => 'Mission remains unchanged',
+            'vision' => 'Vision remains unchanged',
+            'heroImg' => 'about-handoff.jpg',
+        ]);
+
+        $expected = 'https://admin.example.test/tenant/public/upload/image/cultivation/about-handoff.jpg';
+        foreach (['/', '/about-us'] as $path) {
+            $response = $this->get($path)->assertOk()->assertSee($expected, false);
+            $this->assertStringNotContainsString('/public/public/', $response->getContent());
+        }
+    }
 }
