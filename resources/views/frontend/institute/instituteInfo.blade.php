@@ -5,7 +5,7 @@ About Us
 @endsection
 
 @php
-$config = App\Models\ServerConfig::first();
+$config = App\Models\ServerConfig::query()->latest('id')->first();
 @endphp
 
 @push('styles')
@@ -407,7 +407,28 @@ $config = App\Models\ServerConfig::first();
 
 @section('frontcontent')
 @php
-    $instituteName = !empty($config?->instituteName) ? $config->instituteName : 'Jahanara Ayub Academy';
+    $instituteName = trim((string) ($config?->instituteName ?? ''));
+    $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
+    $contactAddress = $contactValue($config?->address);
+    $contactPhone = $contactValue($config?->officeMobile);
+    $contactEmail = $contactValue($config?->officeEmail);
+    $contactEmail = filter_var($contactEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($contactEmail, '@') ?: '', 1)) ? $contactEmail : null;
+    $contactMap = $contactValue($config?->mapEmbed);
+    $contactMap = filter_var($contactMap, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($contactMap, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true) && !parse_url($contactMap, PHP_URL_USER) && !parse_url($contactMap, PHP_URL_PASS) ? $contactMap : null;
+    if (!$contactMap && ($storedMap = $contactValue($config?->mapEmbed)) && preg_match('/\A![A-Za-z0-9%._~!$&\x27()*+,;=:@\/?-]+\z/D', $storedMap)) $contactMap = 'https://www.google.com/maps/embed?pb='.rawurlencode($storedMap);
+    $contactSocialUrl = static function ($value) {
+        $value = trim((string) $value);
+        if (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($value, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) return null;
+        $host = strtolower(parse_url($value, PHP_URL_HOST) ?? '');
+        if ($host === '' || !str_contains($host, '.') || preg_match('/(^localhost$|\.(local|test|example|invalid)$)/', $host) || parse_url($value, PHP_URL_USER) || parse_url($value, PHP_URL_PASS)) return null;
+        return $value;
+    };
+    $contactSocialLinks = collect([
+        'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
+        'Twitter / X' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
+        'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
+        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
+    ])->map(fn ($social) => array_merge($social, ['url' => $contactSocialUrl($social['url'])]))->filter(fn ($social) => $social['url']);
     $heroImage = !empty($data?->heroImg)
         ? config('app.url') . '/public/upload/image/cultivation/' . $data->heroImg
         : asset('public/cultivation/assets/images/breadcrumbs/2.jpg');
@@ -433,7 +454,7 @@ $config = App\Models\ServerConfig::first();
 <div class="col-12">
     <section class="about-pro-breadcrumb" style="background-image: url('{{ asset('public/cultivation/assets/images/breadcrumbs/2.jpg') }}');">
         <div class="about-pro-kicker">Institute Profile</div>
-        <h1>{{ $instituteName }}</h1>
+        <h1>{{ $instituteName ?: 'Institution Profile' }}</h1>
         <p>{{ $headline }}</p>
         <ul class="about-pro-breadcrumb-list">
             <li><a href="{{ route('homePage') }}">Home</a></li>
@@ -519,32 +540,30 @@ $config = App\Models\ServerConfig::first();
         <ul>
             <li>
                 <i class="fa fa-map-marker"></i>
-                <div>{{ !empty($config?->address) ? $config->address : 'Address information will be updated soon.' }}</div>
+                <div>{{ $contactAddress ?: 'Address not provided' }}</div>
             </li>
             <li>
                 <i class="fa fa-phone"></i>
                 <div>
-                    @if(!empty($config?->officeMobile))
-                        <a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>
+                    @if($contactPhone)
+                        <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}">{{ $contactPhone }}</a>
                     @else
-                        Phone information will be updated soon.
+                        Phone not provided.
                     @endif
                 </div>
             </li>
             <li>
                 <i class="fa fa-envelope"></i>
                 <div>
-                    @if(!empty($config?->officeEmail))
-                        <a href="mailto:{{ $config->officeEmail }}">{{ $config->officeEmail }}</a>
+                    @if($contactEmail)
+                        <a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a>
                     @else
-                        Email information will be updated soon.
+                        Email not provided.
                     @endif
                 </div>
             </li>
-            <li>
-                <i class="fa fa-globe"></i>
-                <div><a href="{{ url('/') }}">{{ url('/') }}</a></div>
-            </li>
+            @if($contactMap)<li><i class="fa fa-map"></i><div><a href="{{ $contactMap }}" target="_blank" rel="noopener noreferrer">Open saved map link</a></div></li>@endif
+            @foreach($contactSocialLinks as $label => $social)<li><i class="fa {{ $social['icon'] }}"></i><div><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer">{{ $label }}</a></div></li>@endforeach
         </ul>
     </aside>
 </div>

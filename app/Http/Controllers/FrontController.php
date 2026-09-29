@@ -92,7 +92,7 @@ class FrontController extends Controller
             $insData = Schema::hasTable('institute_details') ? InstituteDetails::first() : null;
             $notice = Schema::hasTable('notices') ? Notice::orderBy('id','desc')->limit(5)->get() : collect();
             $slider = Schema::hasTable('home_sliders') ? HomeSlider::orderBy('ID','DESC')->limit(5)->get() : collect();
-         $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::first() : null;
+         $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->first() : null;
          $principalSpeech = Schema::hasTable((new PrincipalSpeech())->getTable()) ? PrincipalSpeech::first() : null;
          $studentCount = Schema::hasTable((new newAdmission())->getTable()) ? newAdmission::query()->count() : 0;
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;

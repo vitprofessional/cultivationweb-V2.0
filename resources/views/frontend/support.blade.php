@@ -4,12 +4,30 @@ Support
 @endsection
 @section('frontcontent')
 @php
-    $config = \App\Models\ServerConfig::first();
-    $officePhone = trim((string) ($config->officeMobile ?? '01700000000'));
-    $phoneForDial = preg_replace('/\s+/', '', $officePhone);
-    $officeEmail = trim((string) ($config->officeEmail ?? 'info@cultivation.local'));
-    $officeAddress = trim((string) ($config->officeAddress ?? 'Dhaka, Bangladesh'));
-    $officeHours = trim((string) ($config->officeHours ?? 'Saturday-Thursday, 9:00 AM - 4:00 PM'));
+    $config = \App\Models\ServerConfig::query()->latest('id')->first();
+    $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
+    $officePhone = $contactValue($config?->officeMobile);
+    $phoneForDial = $officePhone ? preg_replace('/\s+/', '', $officePhone) : '';
+    $officeEmail = $contactValue($config?->officeEmail);
+    $officeEmail = filter_var($officeEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($officeEmail, '@') ?: '', 1)) ? $officeEmail : null;
+    $officeAddress = $contactValue($config?->address);
+    $officeMap = $contactValue($config?->mapEmbed);
+    $officeMap = filter_var($officeMap, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($officeMap, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true) && !parse_url($officeMap, PHP_URL_USER) && !parse_url($officeMap, PHP_URL_PASS) ? $officeMap : null;
+    $storedMap = $contactValue($config?->mapEmbed);
+    if (!$officeMap && $storedMap && preg_match('/\A![A-Za-z0-9%._~!$&\x27()*+,;=:@\/?-]+\z/D', $storedMap)) $officeMap = 'https://www.google.com/maps/embed?pb='.rawurlencode($storedMap);
+    $publicSocialUrl = static function ($value) {
+        $value = trim((string) $value);
+        if (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($value, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) return null;
+        $host = strtolower(parse_url($value, PHP_URL_HOST) ?? '');
+        if ($host === '' || !str_contains($host, '.') || preg_match('/(^localhost$|\.(local|test|example|invalid)$)/', $host) || parse_url($value, PHP_URL_USER) || parse_url($value, PHP_URL_PASS)) return null;
+        return $value;
+    };
+    $contactSocialLinks = collect([
+        'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
+        'Twitter / X' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
+        'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
+        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
+    ])->map(fn ($social) => array_merge($social, ['url' => $publicSocialUrl($social['url'])]))->filter(fn ($social) => $social['url']);
 @endphp
 
 <style>
@@ -421,16 +439,8 @@ Support
 
                     <div class="support-stat-row">
                         <div class="support-stat">
-                            <strong>&lt; 24h</strong>
-                            <span>Typical response window for regular inquiries.</span>
-                        </div>
-                        <div class="support-stat">
-                            <strong>3 Channels</strong>
-                            <span>Phone, email, and office desk support available.</span>
-                        </div>
-                        <div class="support-stat">
                             <strong>Official</strong>
-                            <span>All responses provided via institute-approved contact points.</span>
+                            <span>Contact details below are drawn from the institution’s saved profile.</span>
                         </div>
                     </div>
                 </div>
@@ -456,40 +466,45 @@ Support
                 </div>
 
                 <div class="support-channel-list">
-                    <article class="support-channel-card">
+                    @if($officePhone)<article class="support-channel-card">
                         <span class="support-channel-icon"><i class="fa fa-phone"></i></span>
                         <div>
                             <h4>Office Phone</h4>
                             <p>Call during office hours for immediate guidance.</p>
                             <a href="tel:{{ $phoneForDial }}"><i class="fa fa-arrow-right"></i> {{ $officePhone }}</a>
                         </div>
-                    </article>
+                    </article>@endif
 
-                    <article class="support-channel-card">
+                    @if($officeEmail)<article class="support-channel-card">
                         <span class="support-channel-icon"><i class="fa fa-envelope"></i></span>
                         <div>
                             <h4>Email Support</h4>
                             <p>Send detailed inquiries and keep a written communication record.</p>
                             <a href="mailto:{{ $officeEmail }}"><i class="fa fa-arrow-right"></i> {{ $officeEmail }}</a>
                         </div>
-                    </article>
+                    </article>@endif
 
-                    <article class="support-channel-card">
+                    @if($officeAddress || $officeMap)<article class="support-channel-card">
                         <span class="support-channel-icon"><i class="fa fa-map-marker"></i></span>
                         <div>
                             <h4>Office Desk</h4>
-                            <p>{{ $officeAddress }}</p>
-                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($officeAddress) }}" target="_blank" rel="noopener"><i class="fa fa-arrow-right"></i> Open map</a>
+                            @if($officeAddress)<p>{{ $officeAddress }}</p>@endif
+                            @if($officeMap)<a href="{{ $officeMap }}" target="_blank" rel="noopener noreferrer"><i class="fa fa-arrow-right"></i> Open saved map link</a>@endif
                         </div>
-                    </article>
-
-                    <article class="support-channel-card">
-                        <span class="support-channel-icon"><i class="fa fa-clock-o"></i></span>
+                    </article>@endif
+                    @if($contactSocialLinks->isNotEmpty())<article class="support-channel-card">
+                        <span class="support-channel-icon"><i class="fa fa-share-alt"></i></span>
                         <div>
-                            <h4>Service Hours</h4>
-                            <p>{{ $officeHours }}</p>
+                            <h4>Official Social Channels</h4>
+                            <p>Follow the institute through its published channels.</p>
+                            @foreach($contactSocialLinks as $label => $social)
+                                <a class="d-block mb-1" href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer"><i class="fa {{ $social['icon'] }}"></i> {{ $label }}</a>
+                            @endforeach
                         </div>
-                    </article>
+                    </article>@endif
+                    @unless($officePhone || $officeEmail || $officeAddress || $officeMap || $contactSocialLinks->isNotEmpty())
+                        <p class="support-empty-state">Official contact details have not been added yet.</p>
+                    @endunless
                 </div>
             </aside>
 

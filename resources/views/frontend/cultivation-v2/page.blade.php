@@ -7,14 +7,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     @php
-        $config = App\Models\ServerConfig::first();
+        $config = App\Models\ServerConfig::query()->latest('id')->first();
     @endphp
 
     <title>
         @if(!empty($config->instituteName))
             {{ $config->instituteName }} | @yield('fronttitle')
         @else
-            Jahanara Ayub Academy | @yield('fronttitle')
+            @yield('fronttitle')
         @endif
     </title>
 

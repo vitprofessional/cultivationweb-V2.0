@@ -5,13 +5,33 @@
     @include('frontend.cultivation-v2.partials._original-language')
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         @php
-        $config =App\Models\ServerConfig::first();
+        $config = App\Models\ServerConfig::query()->latest('id')->first();
+        $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
+        $publicContactUrl = static function ($value) {
+            $value = trim((string) $value);
+            if (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($value, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) return null;
+            $host = strtolower(parse_url($value, PHP_URL_HOST) ?? '');
+            if ($host === '' || !str_contains($host, '.') || preg_match('/(^localhost$|\.(local|test|example|invalid)$)/', $host) || parse_url($value, PHP_URL_USER) || parse_url($value, PHP_URL_PASS)) return null;
+            return $value;
+        };
+        $contactName = $contactValue($config?->instituteName);
+        $contactAddress = $contactValue($config?->address);
+        $contactPhone = $contactValue($config?->officeMobile);
+        $contactEmail = $contactValue($config?->officeEmail);
+        $contactEmail = filter_var($contactEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($contactEmail, '@') ?: '', 1)) ? $contactEmail : null;
+        $contactMap = $publicContactUrl($config?->mapEmbed);
+        $storedMap = $contactValue($config?->mapEmbed);
+        if (!$contactMap && $storedMap && preg_match('/\A![A-Za-z0-9%._~!$&\x27()*+,;=:@\/?-]+\z/D', $storedMap)) $contactMap = 'https://www.google.com/maps/embed?pb='.rawurlencode($storedMap);
+        $contactFacebook = $publicContactUrl($config?->facebookPage);
+        $contactTwitter = $publicContactUrl($config?->twitterLink);
+        $contactYouTube = $publicContactUrl($config?->youtubeChanel);
+        $contactLinkedIn = $publicContactUrl($config?->linkedIn);
         @endphp
         <title>
         @if(!empty($config->instituteName))
         {{$config->instituteName}} | @yield('fronttitle')
-        @else 
-        Jahanara Ayiub Acadimic | @yield('fronttitle')
+        @else
+        @yield('fronttitle')
         @endif  </title>
         {{-- Load Vite assets only when available (hot or manifest) --}}
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
@@ -539,10 +559,10 @@
 
                             <!-- Logo on the left -->
                             <div class="header-logo">
-                                @if(!empty($config->logo))
+                                @if(!empty($config?->logo))
                                     <img src="{{ config('app.url') }}/public/upload/image/cultivation/{{$config->logo}}" alt="Logo" />
                                 @else
-                                    <img src="{{ asset('/public/') }}/logo.png" alt="Jahanara Ayub Academic" />
+                                    <span aria-label="Institution logo not configured"><i class="fa fa-university" aria-hidden="true"></i></span>
                                 @endif
                             </div>
                             
@@ -550,47 +570,25 @@
                             <div class="institute-info">
                                 <!-- Institute Name (Highlighted) -->
                                 <h1 class="institute-name">
-                                    @if(!empty($config->instituteName))
-                                        {{ $config->instituteName }}
-                                    @else
-                                        Jahanara Ayub Academy
-                                    @endif
+                                    {{ $contactName ?: 'Institution' }}
                                 </h1>
                                 
                                 <!-- Location under institute name -->
-                                <div class="institute-location">
+                                @if($contactAddress)<div class="institute-location">
                                     <i class="fa-solid fa-location-dot contact-icon"></i>
-                                    <span>
-                                        @if(!empty($config->address))
-                                            {{ $config->address }}
-                                        @else
-                                            North Shampur, Burichong, Cumilla
-                                        @endif
-                                    </span>
-                                </div>
+                                    <span>{{ $contactAddress }}</span>
+                                </div>@endif
                                 
                                 <!-- Mobile and Email in same line -->
                                 <div class="institute-mobile">
-                                    <div class="contact-item">
+                                    @if($contactPhone)<div class="contact-item">
                                         <i class="fa-solid fa-phone contact-icon"></i>
-                                        <span>
-                                            @if(!empty($config->officeMobile))
-                                                {{ $config->officeMobile }}
-                                            @else
-                                                +(012) 345 6789
-                                            @endif
-                                        </span>
-                                    </div>
-                                    <div class="contact-item">
+                                        <span>{{ $contactPhone }}</span>
+                                    </div>@endif
+                                    @if($contactEmail)<div class="contact-item">
                                         <i class="fa-solid fa-envelope contact-icon"></i>
-                                        <span>
-                                            @if(!empty($config->officeEmail))
-                                                {{ $config->officeEmail }}
-                                            @else
-                                                ja@gmail.com
-                                            @endif
-                                        </span>
-                                    </div>
+                                        <span>{{ $contactEmail }}</span>
+                                    </div>@endif
                                 </div>
                             </div>
                         </div>
@@ -810,29 +808,21 @@
             <div class="row g-0">
                 <div class="col-12 col-md-3 mx-auto">
                     <h3>Contact Details</h3>
-                    <p><i class="fa-solid fa-link"></i> {{  url('/') }}</p>
-                    <p><i class="fa-solid fa-phone-office"></i>@if(!empty($config->officeMobile)) {{$config->officeMobile}} @else 01836994770 @endif</p>
-                    <p><i class="fa-solid fa-buildings"></i> @if(!empty($config->address)) {{$config->address}} @else North Shampur, Burichong, Cumilla. @endif</p>
-                    <p><i class="fa-solid fa-envelopes"></i> <a class="text-muted" style="text-decoration:none" href="mailto:@if(!empty($config->officeEmail)) {{ $config->officeEmail }} @else cultivation@virtualitprofessional.com @endif">@if(!empty($config)) {{$config->officeEmail}} @else cultivation@virtualitprofessional.com @endif</a></p>
-                    <p>
-                        <i class="fa-brands fa-square-facebook"></i> <a class="text-muted" style="text-decoration:none" target="_blank" href="{{ $config->facebookPage }}">@if(!empty($config->facebookPage)){{$config->facebookPage}} @else <a class="text-muted" style="text-decoration:none" href="https://www.facebook.com/profile.php?id=61572769304729">Cultivation-The Education Manager</a> @endif</a>
-                    </p>
+                    @if($contactPhone)<p><i class="fa-solid fa-phone-office"></i> <a href="tel:{{ preg_replace('/[^+0-9]/', '', $contactPhone) }}">{{ $contactPhone }}</a></p>@endif
+                    @if($contactAddress)<p><i class="fa-solid fa-buildings"></i> {{ $contactAddress }}</p>@endif
+                    @if($contactEmail)<p><i class="fa-solid fa-envelopes"></i> <a class="text-muted" style="text-decoration:none" href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a></p>@endif
+                    @if($contactFacebook)<p><i class="fa-brands fa-square-facebook"></i> <a class="text-muted" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="{{ $contactFacebook }}">Facebook</a></p>@endif
+                    @if($contactTwitter)<p><i class="fa-brands fa-x-twitter"></i> <a class="text-muted" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="{{ $contactTwitter }}">Twitter / X</a></p>@endif
+                    @if($contactYouTube)<p><i class="fa-brands fa-youtube"></i> <a class="text-muted" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="{{ $contactYouTube }}">YouTube</a></p>@endif
+                    @if($contactLinkedIn)<p><i class="fa-brands fa-linkedin"></i> <a class="text-muted" style="text-decoration:none" target="_blank" rel="noopener noreferrer" href="{{ $contactLinkedIn }}">LinkedIn</a></p>@endif
+                    @if(!$contactPhone && !$contactAddress && !$contactEmail && !$contactFacebook && !$contactTwitter && !$contactYouTube && !$contactLinkedIn)<p>Contact information not configured.</p>@endif
                 </div>
                 <div class="col-12 col-md-3 mx-auto">
                     <h3>Visitor Counter</h3>
                     @include('visitorCounter')
                 </div>
                 <div class="col-12 col-md-4 mx-auto">
-                    <h3>Google Map</h3>
-                    <iframe
-                        src="https://www.google.com/maps/embed?pb=@if($config->mapEmbed){{$config->mapEmbed }} @else!1m18!1m12!1m3!1d3658.720943010397!2d91.14681007428437!3d23.50655879809593!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3754796e7c90d6e3%3A0x210c98d19ee0bc9c!2z4Ka44KeH4Ka-4Kao4Ka-4KawIOCmrOCmvuCmguCmsuCmviDgppXgprLgp4fgppw!5e0!3m2!1sen!2suk!4v1695524774546!5m2!1sen!2suk @endif"
-                        width="100%"
-                        height="300"
-                        class="rounded"
-                        allowfullscreen=""
-                        loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade"
-                    ></iframe>
+                    @if($contactMap)<h3>Google Map</h3><p><a href="{{ $contactMap }}" target="_blank" rel="noopener noreferrer">Open saved map link</a></p>@endif
                 </div>
                 <div class="col-12 mt-2">
                     <img class="w-100" src="{{ asset('/public/') }}/img/footer_top_bg.png" alt="" />
@@ -841,7 +831,7 @@
             <div class="p-2">
                 <div class="row">
                     <div class="col-md-6 col-12">
-                        <p><span class="fw-bold text-center text-md-start">Planning and Implementation:</span> Principal   ({{$config->instituteName}})</p>
+                        @if($contactName)<p><span class="fw-bold text-center text-md-start">Planning and Implementation:</span> Principal ({{ $contactName }})</p>@endif
                     </div>
                     <div class="col-md-6 col-12 text-center text-md-end">
                         <p><span class="fw-bold">Powered By:</span> Cultivation(Version 1.0.2) by Virtual IT Professional</p>
@@ -860,7 +850,7 @@
                                 }
                             }
                         @endphp
-                        <p class="fw-bold">Copyright &copy; {{ $estYear }}-@php echo date('Y'); @endphp | All Rights Reserved {{$config->instituteName}} </p>
+                        <p class="fw-bold">Copyright &copy; {{ $estYear }}-@php echo date('Y'); @endphp | All Rights Reserved @if($contactName){{ $contactName }}@endif</p>
                     </div>
                 </div>
             </div>
@@ -868,28 +858,14 @@
             <div class="row g-0">
                 <div class="col-12 col-md-3 mx-auto">
                     <h3>Contact Details</h3>
-                    <p><i class="fa-solid fa-link"></i> www.jahanaraayubacademy.edu.bd</p>
-                    <p><i class="fa-solid fa-phone-office"></i> 0123 4567 890</p>
-                    <p><i class="fa-solid fa-envelopes"></i> ja@gmail.com</p>
-                    <p><i class="fa-brands fa-square-whatsapp"></i> 0123 4567 890</p>
-                    <p><i class="fa-brands fa-square-facebook"></i> Jahanara Ayub Academy</p>
-                    <p><i class="fa-solid fa-buildings"></i> Northshampur, Pirjatrapur, Burichong, Cumilla</p>
+                    <p>Contact information not configured.</p>
                 </div>
                 <div class="col-12 col-md-3 mx-auto">
                     <h3>Visitor Counter</h3>
                     @include('visitorCounter')
                 </div>
                 <div class="col-12 col-md-4 mx-auto">
-                    <h3>Google Map</h3>
-                    <iframe
-                        src="https://www.google.com/maps/embed?pb=@if($config){{ $config->mapEmbed }}@else!1m18!1m12!1m3!1d3658.720943010397!2d91.14681007428437!3d23.50655879809593!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3754796e7c90d6e3%3A0x210c98d19ee0bc9c!2z4Ka44KeH4Ka-4Kao4Ka-4KawIOCmrOCmvuCmguCmsuCmviDgppXgprLgp4fgppw!5e0!3m2!1sen!2suk!4v1695524774546!5m2!1sen!2suk @endif"
-                        width="100%"
-                        height="300"
-                        class="rounded"
-                        allowfullscreen=""
-                        loading="lazy"
-                        referrerpolicy="no-referrer-when-downgrade"
-                    ></iframe>
+                    @if($contactMap)<h3>Google Map</h3><p><a href="{{ $contactMap }}" target="_blank" rel="noopener noreferrer">Open saved map link</a></p>@endif
                 </div>
                 <div class="col-12 mt-2">
                     <img class="w-100" src="{{ asset('/public/') }}/img/footer_top_bg.png" alt="" />

@@ -1,14 +1,15 @@
 @php
     if (!isset($config)) {
         $config = \Illuminate\Support\Facades\Schema::hasTable((new App\Models\ServerConfig())->getTable())
-            ? App\Models\ServerConfig::first()
+            ? App\Models\ServerConfig::query()->latest('id')->first()
             : null;
     }
     $logoUrl = app(\App\Services\PublicMediaUrl::class)->institutionLogo($config?->logo);
     $institutionName = trim((string) ($config?->instituteName ?? ''));
-    $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
-        ? $config->officeEmail
-        : null;
+    $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
+    $officeEmail = $contactValue($config?->officeEmail);
+    $officeEmail = filter_var($officeEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($officeEmail, '@') ?: '', 1)) ? $officeEmail : null;
+    $officePhone = $contactValue($config?->officeMobile);
 @endphp
 
 <style>
@@ -475,9 +476,9 @@
                                 <i class="flaticon-email"></i>
                                 <a href="mailto:{{ $officeEmail }}">{{ $officeEmail }}</a>
                             </li>@endif
-                            @if(!empty($config?->officeMobile))<li>
+                            @if($officePhone)<li>
                                 <i class="flaticon-call"></i>
-                                <a href="tel:{{ preg_replace('/\s+/', '', $config->officeMobile) }}">{{ $config->officeMobile }}</a>
+                                <a href="tel:{{ preg_replace('/\s+/', '', $officePhone) }}">{{ $officePhone }}</a>
                             </li>@endif
                         </ul>
                     </div>

@@ -1,7 +1,7 @@
 @php
     if (!isset($config)) {
         $config = \Illuminate\Support\Facades\Schema::hasTable((new App\Models\ServerConfig())->getTable())
-            ? App\Models\ServerConfig::first()
+            ? App\Models\ServerConfig::query()->latest('id')->first()
             : null;
     }
     $publicUrl = static function ($value) {
@@ -13,23 +13,25 @@
         return $value;
     };
     $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
-    $officeEmail = !empty($config?->officeEmail) && strtolower(trim($config->officeEmail)) !== 'info@cultivation.local'
-        ? $config->officeEmail
-        : null;
-    $demoContact = config('cultivation_demo.contact', []);
-    $footerAddress = $contactValue($config?->address) ?: ($demoContact['address'] ?? null);
-    $footerPhone = $contactValue($config?->officeMobile) ?: ($demoContact['phone'] ?? null);
-    $footerEmail = filter_var($officeEmail, FILTER_VALIDATE_EMAIL) ? $officeEmail : ($demoContact['email'] ?? null);
-    $footerWebsite = collect([$config?->website, $config?->webAddress, $config?->websiteUrl, $config?->siteUrl])->map($publicUrl)->filter()->first();
-    $footerName = $contactValue($config?->instituteName) ?: config('cultivation_demo.branding.institution_name');
-    $footerDescription = \Illuminate\Support\Str::limit(trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($config?->instituteDescription ?? ($insData->insDetails ?? ''))))), 125) ?: $demoContact['description'];
-    $footerMap = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($footerAddress);
+    $footerAddress = $contactValue($config?->address);
+    $footerPhone = $contactValue($config?->officeMobile);
+    $footerEmail = $contactValue($config?->officeEmail);
+    $footerEmail = filter_var($footerEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($footerEmail, '@') ?: '', 1)) ? $footerEmail : null;
+    $footerName = $contactValue($config?->instituteName) ?: 'Institution';
+    $footerDescription = trim(preg_replace('/\s+/u', ' ', strip_tags((string) ($config?->instituteDescription ?? ($insData->insDetails ?? '')))));
+    $footerDescription = $footerDescription !== '' ? \Illuminate\Support\Str::limit($footerDescription, 125) : null;
+    $footerMap = $publicUrl($config?->mapEmbed);
+    $storedMap = $contactValue($config?->mapEmbed);
+    if (!$footerMap && $storedMap && preg_match('/\A![A-Za-z0-9%._~!$&\x27()*+,;=:@\/?-]+\z/D', $storedMap)) {
+        $footerMap = 'https://www.google.com/maps/embed?pb='.rawurlencode($storedMap);
+    }
     $logoFile = !empty($config?->logo) ? basename((string) $config->logo) : null;
     $footerLogo = $logoFile && file_exists(public_path('upload/image/cultivation/' . $logoFile))
         ? url('/public/upload/image/cultivation/' . rawurlencode($logoFile))
         : null;
     $socialLinks = [
         'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
+        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
         'Twitter / X' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
         'Instagram' => ['url' => $config?->instagramLink ?? $config?->instagram, 'icon' => 'fa-instagram'],
         'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
@@ -532,9 +534,9 @@
 <footer id="rs-footer" class="rs-footer">
     <div class="footer-info-strip">
         <div class="container footer-contact-grid">
-            <div class="fi-card"><span class="fi-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><div class="fi-body"><h6>Address</h6><p>{{ $footerAddress }}</p></div></div>
-            <div class="fi-card"><span class="fi-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><div class="fi-body"><h6>Phone &amp; Email</h6><p><a href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></p><p><a href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></p></div></div>
-            <div class="fi-card"><span class="fi-icon"><i class="fa fa-globe" aria-hidden="true"></i></span><div class="fi-body"><h6>Find Us Online</h6><p>@if($footerWebsite)<a href="{{ $footerWebsite }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://#', '', rtrim($footerWebsite, '/')) }}</a>@else<span>Website information coming soon</span>@endif</p><a class="footer-map-link" href="{{ $footerMap }}" target="_blank" rel="noopener noreferrer">Open in Google Maps &rarr;</a></div></div>
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><div class="fi-body"><h6>Address</h6><p>{{ $footerAddress ?: 'Address not provided' }}</p></div></div>
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><div class="fi-body"><h6>Contact</h6>@if($footerPhone)<p><a href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></p>@endif @if($footerEmail)<p><a href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></p>@endif @unless($footerPhone || $footerEmail)<p>Contact details not provided</p>@endunless</div></div>
+            <div class="fi-card"><span class="fi-icon"><i class="fa fa-map" aria-hidden="true"></i></span><div class="fi-body"><h6>Location</h6>@if($footerMap)<a class="footer-map-link" href="{{ $footerMap }}" target="_blank" rel="noopener noreferrer">Open saved map link &rarr;</a>@else<p>Map link not provided</p>@endif</div></div>
         </div>
     </div>
 
@@ -551,7 +553,7 @@
                             @else<span class="footer-education-mark"><i class="fa fa-university" aria-hidden="true"></i></span>@endif
                         </a>
                         <h4 class="footer-institution-name">{{ $footerName }}</h4>
-                        <p class="footer-about-desc">{{ $footerDescription }}</p>
+                        @if($footerDescription)<p class="footer-about-desc">{{ $footerDescription }}</p>@endif
                         @if($socialLinks->isNotEmpty())
                             <ul class="footer-social-inline">
                                 @foreach($socialLinks as $label => $social)
@@ -562,10 +564,10 @@
                         <div class="footer-sub-section">
                             <h5 class="footer-sub-title">Contact Us</h5>
                             <ul class="footer-contact-list">
-                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><span class="footer-contact-value">{{ $footerAddress }}</span></li>
-                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><a class="footer-contact-value" href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></li>
-                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-envelope" aria-hidden="true"></i></span><a class="footer-contact-value" href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></li>
-                                <li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-globe" aria-hidden="true"></i></span>@if($footerWebsite)<a class="footer-contact-value" href="{{ $footerWebsite }}" target="_blank" rel="noopener noreferrer">{{ preg_replace('#^https?://#', '', rtrim($footerWebsite, '/')) }}</a>@else<span class="footer-contact-value">Website information coming soon</span>@endif</li>
+                                @if($footerAddress)<li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-map-marker" aria-hidden="true"></i></span><span class="footer-contact-value">{{ $footerAddress }}</span></li>@endif
+                                @if($footerPhone)<li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-phone" aria-hidden="true"></i></span><a class="footer-contact-value" href="tel:{{ preg_replace('/[^+0-9]/', '', $footerPhone) }}">{{ $footerPhone }}</a></li>@endif
+                                @if($footerEmail)<li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-envelope" aria-hidden="true"></i></span><a class="footer-contact-value" href="mailto:{{ $footerEmail }}">{{ $footerEmail }}</a></li>@endif
+                                @if($footerMap)<li class="footer-contact-row"><span class="footer-contact-icon"><i class="fa fa-map" aria-hidden="true"></i></span><a class="footer-contact-value" href="{{ $footerMap }}" target="_blank" rel="noopener noreferrer">Open saved map link</a></li>@endif
                             </ul>
                         </div>
                     </div>
