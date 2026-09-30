@@ -377,7 +377,7 @@ $config = App\Models\ServerConfig::first();
                     <tbody>
                         @forelse($Datakey as $std)
                             @php
-                                $fullName    = trim(($std->fullName ?? '') . ' ' . ($std->sureName ?? '')) ?: 'Unknown';
+                                $fullName    = $std->student_name ?: 'Unknown';
                                 $sessionName = optional($sessions[$std->sessName]    ?? null)->session             ?? 'N/A';
                                 $className   = optional($classes[$std->className]    ?? null)->className           ?? 'N/A';
                                 $sectionName = optional($sections[$std->sectionName] ?? null)->section             ?? 'N/A';

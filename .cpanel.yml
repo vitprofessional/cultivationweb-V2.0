@@ -4,9 +4,9 @@ deployment:
     # ------------------------------------------------------------
     # Environment / Paths
     # ------------------------------------------------------------
-    - export REPOPATH=/home/shsburichong/repositories/cultivationweb-V2.0
-    - export APPPATH=/home/shsburichong/apps/cultivationweb-V2.0
-    - export PUBLICPATH=/home/shsburichong/public_html
+    - export REPOPATH=/home/mphs1969/repositories/cultivationweb-V2.0
+    - export APPPATH=/home/mphs1969/apps/cultivationweb-V2.0
+    - export PUBLICPATH=/home/mphs1969/public_html
     - export WEBPUBLIC=$PUBLICPATH/public
     - export PHP=/usr/local/bin/php
     - export COMPOSER_BIN=/usr/local/bin/composer

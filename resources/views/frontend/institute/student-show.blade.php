@@ -247,7 +247,7 @@ Student Profile
   }
 </style>
 @php
-  $name = trim(($student->fullName ?? '') . ' ' . ($student->sureName ?? '')) ?: 'Unknown';
+  $name = $student->student_name ?: 'Unknown';
   $photo = !empty($student->avatar)
     ? config('app.url') . '/public/upload/image/student/' . rawurlencode(basename($student->avatar))
     : config('app.url') . '/public/avatar.png';
