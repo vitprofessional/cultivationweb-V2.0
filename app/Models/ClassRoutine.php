@@ -33,9 +33,19 @@ class ClassRoutine extends Model
         return $this->belongsTo(\App\Models\sessionManage::class, 'assignSession');
     }
 
+    public function section()
+    {
+        return $this->belongsTo(\App\Models\sectionManage::class, 'assignSection');
+    }
+
     // V2-style entries relation
     public function entries()
     {
         return $this->hasMany(\App\Models\ClassRoutineItem::class, 'class_routine_id')->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function defaultRoom()
+    {
+        return $this->belongsTo(Room::class, 'default_room_id');
     }
 }

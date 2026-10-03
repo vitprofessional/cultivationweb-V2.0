@@ -94,7 +94,7 @@ class FrontController extends Controller
             $slider = Schema::hasTable('home_sliders') ? HomeSlider::orderBy('ID','DESC')->limit(5)->get() : collect();
          $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->first() : null;
          $principalSpeech = Schema::hasTable((new PrincipalSpeech())->getTable()) ? PrincipalSpeech::first() : null;
-         $studentCount = Schema::hasTable((new newAdmission())->getTable()) ? newAdmission::query()->count() : 0;
+         $studentCount = Schema::hasTable((new newAdmission())->getTable()) ? newAdmission::query()->withValidClass()->count() : 0;
          $teacherCount = Schema::hasTable((new TeacherManagement())->getTable()) ? TeacherManagement::count() : 0;
          $staffCount = Schema::hasTable((new StaffManagement())->getTable()) ? StaffManagement::count() : 0;
          $classCount = Schema::hasTable((new \App\Models\classManage())->getTable()) ? \App\Models\classManage::count() : 0;
@@ -178,7 +178,7 @@ class FrontController extends Controller
     public function newClassSchedule(Request $request)
     {
         // Build query with eager-loaded relations
-        $query = ClassRoutine::with(['class','department','session','entries']);
+        $query = ClassRoutine::with(['class','section','department','session']);
 
         // Apply optional filters from query string for a professional UX
         if ($request->filled('class')) {
@@ -209,26 +209,29 @@ class FrontController extends Controller
     // Show single routine in schedule grid (V2 formula)
     public function viewClassRoutine($id)
     {
-        $routine = ClassRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = ClassRoutine::with(['class','section','department','session','defaultRoom','entries.teacher','entries.room'])->findOrFail($id);
         $entries = $routine->entries ?? collect();
-        return view('frontend.academic.classRoutineView', ['routine' => $routine, 'entries' => $entries]);
+        $institutionName = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->value('instituteName') : null;
+        return view('frontend.academic.classRoutineView', compact('routine', 'entries', 'institutionName'));
     }
 
     public function printClassRoutine($id)
     {
-        $routine = ClassRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = ClassRoutine::with(['class','section','department','session','defaultRoom','entries.teacher','entries.room'])->findOrFail($id);
         $entries = $routine->entries ?? collect();
+        $institutionName = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->value('instituteName') : null;
         // Use the PDF-optimized standalone view for printing to avoid layout/assets issues
-        return view('frontend.academic.classRoutinePdf', ['routine' => $routine, 'entries' => $entries, 'printMode' => true]);
+        return view('frontend.academic.classRoutinePdf', compact('routine', 'entries', 'institutionName') + ['printMode' => true]);
     }
 
     // Server-generated PDF download (requires barryvdh/laravel-dompdf)
     public function downloadClassRoutine($id)
     {
-        $routine = ClassRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = ClassRoutine::with(['class','section','department','session','defaultRoom','entries.teacher','entries.room'])->findOrFail($id);
         $entries = $routine->entries ?? collect();
+        $institutionName = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->value('instituteName') : null;
 
-        $data = ['routine' => $routine, 'entries' => $entries, 'printMode' => true];
+        $data = compact('routine', 'entries', 'institutionName') + ['printMode' => true];
         // Quick check: ensure the Dompdf PDF facade is available
         if (!class_exists(\Barryvdh\DomPDF\Facade::class) && !class_exists('PDF') && !app()->bound('dompdf')) {
             return redirect()->back()->with('error', 'PDF generation package not installed. Run `composer require barryvdh/laravel-dompdf` and ensure the service is configured.');
@@ -446,7 +449,7 @@ class FrontController extends Controller
     //X-principal
     public function student(){
         // Order students by class for display; eager load only needed columns
-        $students = newAdmission::orderBy('className','asc')->get();
+        $students = newAdmission::query()->withValidClass()->orderBy('className','asc')->get();
         return view('frontend.institute.student',[
             'Datakey' => $students,
         ]);
@@ -454,7 +457,7 @@ class FrontController extends Controller
 
     // single student profile view
     public function studentShow($id){
-        $student = newAdmission::findOrFail($id);
+        $student = newAdmission::query()->withValidClass()->findOrFail($id);
         // related lookups
         $session = \App\Models\sessionManage::find($student->sessName);
         $class   = \App\Models\classManage::find($student->className);

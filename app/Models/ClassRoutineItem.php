@@ -25,4 +25,14 @@ class ClassRoutineItem extends Model
     {
         return $this->belongsTo(ClassRoutine::class, 'class_routine_id');
     }
+
+    public function teacher(): BelongsTo
+    {
+        return $this->belongsTo(CultivationAdmin::class, 'teacher_id');
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'room_id');
+    }
 }
