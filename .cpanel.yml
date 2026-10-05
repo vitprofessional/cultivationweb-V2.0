@@ -1,157 +1,37 @@
 ---
 deployment:
   tasks:
-    # ------------------------------------------------------------
-    # Environment / Paths
-    # ------------------------------------------------------------
     - export REPOPATH=/home/mphs1969/repositories/cultivationweb-V2.0
     - export APPPATH=/home/mphs1969/apps/cultivationweb-V2.0
     - export PUBLICPATH=/home/mphs1969/public_html
-    - export WEBPUBLIC=$PUBLICPATH/public
     - export PHP=/usr/local/bin/php
     - export COMPOSER_BIN=/usr/local/bin/composer
-
-    # ------------------------------------------------------------
-    # 1. Preflight
-    # ------------------------------------------------------------
-    - /bin/mkdir -p "$APPPATH"
-    - /bin/mkdir -p "$PUBLICPATH"
-    - /bin/mkdir -p "$WEBPUBLIC"
-
-    - test -f "$APPPATH/.env"
-    - test -f "$REPOPATH/composer.json"
-    - test -f "$REPOPATH/composer.lock"
-    - test -f "$REPOPATH/artisan"
-    - test -f "$REPOPATH/public/build/manifest.json"
-    - test -f "$REPOPATH/public/cultivation/assets/css/homepage-responsive.css"
-    - test -f "$REPOPATH/deployment/public-index.php"
     - test -x "$PHP"
     - test -x "$COMPOSER_BIN"
-
-    # ------------------------------------------------------------
-    # 2. Replace Laravel Application Source
-    #
-    # Preserve:
-    #   .env
-    #   vendor
-    #   storage
-    #
-    # public is copied because Laravel code uses public_path().
-    # ------------------------------------------------------------
-    - /bin/rm -rf "$APPPATH/app"
-    - /bin/rm -rf "$APPPATH/bootstrap"
-    - /bin/rm -rf "$APPPATH/config"
-    - /bin/rm -rf "$APPPATH/database"
-    - /bin/rm -rf "$APPPATH/public"
-    - /bin/rm -rf "$APPPATH/resources"
-    - /bin/rm -rf "$APPPATH/routes"
-
-    - /bin/cp -R "$REPOPATH/app" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/bootstrap" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/config" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/database" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/public" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/resources" "$APPPATH/"
-    - /bin/cp -R "$REPOPATH/routes" "$APPPATH/"
-
+    - command -v rsync
+    - test -f "$APPPATH/.env"
+    - test -f "$REPOPATH/deployment/public-index.php"
+    - /bin/mkdir -p "$APPPATH" "$PUBLICPATH"
+    # Mapping conflicts stop here; existing public/upload directories are never replaced.
+    - /bin/bash "$REPOPATH/deployment/publish-public.sh" "$REPOPATH" "$APPPATH" "$PUBLICPATH"
+    # Only application source is synchronized. Public media is handled separately above.
+    - rsync -a --delete "$REPOPATH/app/" "$APPPATH/app/"
+    - rsync -a --delete --exclude='/cache/' "$REPOPATH/bootstrap/" "$APPPATH/bootstrap/"
+    - rsync -a --delete "$REPOPATH/config/" "$APPPATH/config/"
+    - rsync -a --delete "$REPOPATH/database/" "$APPPATH/database/"
+    - rsync -a --delete "$REPOPATH/resources/" "$APPPATH/resources/"
+    - rsync -a --delete "$REPOPATH/routes/" "$APPPATH/routes/"
     - /bin/cp "$REPOPATH/artisan" "$APPPATH/artisan"
     - /bin/cp "$REPOPATH/composer.json" "$APPPATH/composer.json"
     - /bin/cp "$REPOPATH/composer.lock" "$APPPATH/composer.lock"
-
-    # ------------------------------------------------------------
-    # 3. Laravel Runtime Directories
-    # ------------------------------------------------------------
-    - /bin/mkdir -p "$APPPATH/storage/app/public"
-    - /bin/mkdir -p "$APPPATH/storage/framework/cache/data"
-    - /bin/mkdir -p "$APPPATH/storage/framework/sessions"
-    - /bin/mkdir -p "$APPPATH/storage/framework/testing"
-    - /bin/mkdir -p "$APPPATH/storage/framework/views"
-    - /bin/mkdir -p "$APPPATH/storage/logs"
-    - /bin/mkdir -p "$APPPATH/bootstrap/cache"
-
-    # ------------------------------------------------------------
-    # 4. Install Production Composer Dependencies
-    # ------------------------------------------------------------
+    - /bin/mkdir -p "$APPPATH/storage/app/public" "$APPPATH/storage/framework/cache/data" "$APPPATH/storage/framework/sessions" "$APPPATH/storage/framework/views" "$APPPATH/storage/logs" "$APPPATH/bootstrap/cache"
     - cd "$APPPATH" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
-
-    # ------------------------------------------------------------
-    # 5. Laravel Deployment Tasks
-    # ------------------------------------------------------------
     - cd "$APPPATH" && "$PHP" artisan config:clear
     - cd "$APPPATH" && "$PHP" artisan route:clear
     - cd "$APPPATH" && "$PHP" artisan view:clear
-
-    - cd "$APPPATH" && "$PHP" artisan migrate --force
-
-    - cd "$APPPATH" && "$PHP" artisan cache:clear
+    # Production migrations require a separate explicit approval/preflight.
     - cd "$APPPATH" && "$PHP" artisan config:cache
     - cd "$APPPATH" && "$PHP" artisan route:cache
     - cd "$APPPATH" && "$PHP" artisan view:cache
-
-    # ------------------------------------------------------------
-    # 6. Deploy Browser-Facing Static Assets
-    #
-    # Existing application URLs use:
-    #   asset('public/...')
-    #
-    # Therefore files are served from:
-    #   public_html/public/...
-    #
-    # Only code-controlled directories are replaced.
-    # ------------------------------------------------------------
-    - /bin/rm -rf "$WEBPUBLIC/assets"
-    - /bin/rm -rf "$WEBPUBLIC/back-office"
-    - /bin/rm -rf "$WEBPUBLIC/build"
-    - /bin/rm -rf "$WEBPUBLIC/cultivation"
-    - /bin/rm -rf "$WEBPUBLIC/fonts"
-    - /bin/rm -rf "$WEBPUBLIC/img"
-    - /bin/rm -rf "$WEBPUBLIC/lightbox"
-    - /bin/rm -rf "$WEBPUBLIC/music"
-    - /bin/rm -rf "$WEBPUBLIC/owl-carousel"
-
-    - /bin/cp -R "$REPOPATH/public/assets" "$WEBPUBLIC/assets"
-    - /bin/cp -R "$REPOPATH/public/back-office" "$WEBPUBLIC/back-office"
-    - /bin/cp -R "$REPOPATH/public/build" "$WEBPUBLIC/build"
-    - /bin/cp -R "$REPOPATH/public/cultivation" "$WEBPUBLIC/cultivation"
-    - /bin/cp -R "$REPOPATH/public/fonts" "$WEBPUBLIC/fonts"
-    - /bin/cp -R "$REPOPATH/public/img" "$WEBPUBLIC/img"
-    - /bin/cp -R "$REPOPATH/public/lightbox" "$WEBPUBLIC/lightbox"
-    - /bin/cp -R "$REPOPATH/public/music" "$WEBPUBLIC/music"
-    - /bin/cp -R "$REPOPATH/public/owl-carousel" "$WEBPUBLIC/owl-carousel"
-
-    # ------------------------------------------------------------
-    # 7. Persistent Uploads
-    #
-    # IMPORTANT:
-    # Never rm -rf WEBPUBLIC/upload.
-    #
-    # Existing repository uploads are copied/seeded.
-    # Files uploaded later in production remain untouched.
-    # ------------------------------------------------------------
-    - /bin/mkdir -p "$WEBPUBLIC/upload"
-    - /bin/cp -R "$REPOPATH/public/upload/." "$WEBPUBLIC/upload/"
-
-    # ------------------------------------------------------------
-    # 8. Other Public Root Files
-    #
-    # These belong under /public because existing URLs expect
-    # /public/<filename>.
-    # ------------------------------------------------------------
-    - test ! -f "$REPOPATH/public/logo.png" || /bin/cp "$REPOPATH/public/logo.png" "$WEBPUBLIC/logo.png"
-    - test ! -f "$REPOPATH/public/favicon.ico" || /bin/cp "$REPOPATH/public/favicon.ico" "$WEBPUBLIC/favicon.ico"
-    - test ! -f "$REPOPATH/public/robots.txt" || /bin/cp "$REPOPATH/public/robots.txt" "$WEBPUBLIC/robots.txt"
-
-    # ------------------------------------------------------------
-    # 9. Domain Root Configuration
-    #
-    # Apache entry point remains directly in public_html.
-    # ------------------------------------------------------------
-    - test ! -f "$REPOPATH/public/.htaccess" || /bin/cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
-
-    # ------------------------------------------------------------
-    # 10. Switch Production Entry Point Last
-    #
-    # Do this only after Composer, migrations, caches and
-    # public assets have all completed successfully.
-    # ------------------------------------------------------------
+    - /bin/cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
     - /bin/cp "$REPOPATH/deployment/public-index.php" "$PUBLICPATH/index.php"
