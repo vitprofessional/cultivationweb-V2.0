@@ -73,7 +73,7 @@ class PublicMediaUrlTest extends TestCase
     {
         $resolver = new PublicMediaUrl(new Repository(['media' => ['public_base_url' => 'https://school-a.cultivationapp.test']]));
         $filename = '11111111-1111-4111-8111-111111111111.jpg';
-        $this->assertSame('https://school-a.cultivationapp.test/public/upload/image/webHomepage/'.$filename, $resolver->slider($filename));
+        $this->assertSame('https://school-a.cultivationapp.test/upload/image/webHomepage/'.$filename, $resolver->slider($filename));
         foreach ([null, '', '../photo.jpg', '/photo.jpg', 'folder/photo.jpg', 'folder\\photo.jpg', 'https://foreign.example.test/a.jpg'] as $unsafe) {
             $this->assertNull($resolver->slider($unsafe));
         }
@@ -94,6 +94,8 @@ class PublicMediaUrlTest extends TestCase
         ]]));
 
         $this->assertSame('https://cdn.example.test/public/upload/image/cultivation/about.jpg', $resolver->institutionAboutImage('about.jpg'));
+        $this->assertSame($resolver->institutionAboutImage('about.jpg'), $resolver->institutionAboutImage('public/upload/image/cultivation/about.jpg'));
+        $this->assertSame($resolver->institutionAboutImage('about.jpg'), $resolver->institutionAboutImage('upload/image/cultivation/about.jpg'));
         $this->assertNull($resolver->institutionAboutImage('../about.jpg'));
         $this->assertNull($resolver->institutionAboutImage('https://foreign.example/about.jpg'));
     }

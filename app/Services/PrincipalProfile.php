@@ -23,7 +23,13 @@ final class PrincipalProfile
         $identity = $candidates->count() === 1 ? $candidates->first() : null;
         $speech = $speeches->count() === 1 ? $speeches->first() : null;
         $designation = $identity ? TeacherManagement::getDesignationName($identity->designation_id ?: $identity->designation) : null;
-        $name = trim(($identity?->firstName ?? '').' '.($identity?->lastName ?? ''));
+        $name = trim((string) ($identity?->fullName ?? ''));
+        if ($name === '') {
+            $first = trim((string) ($identity?->firstName ?? ''));
+            $last = trim((string) ($identity?->lastName ?? ''));
+            $name = $last === '' || preg_match('/(?:^|\s)'.preg_quote($last, '/').'$/iu', $first)
+                ? $first : trim($first.' '.$last);
+        }
         $configIdentity = $configs->count() === 1 ? $configs->first() : null;
         $legacyConflict = $identity && $configIdentity && (
             (filled($configIdentity->principalName) && strtolower(trim($configIdentity->principalName)) !== strtolower($name))

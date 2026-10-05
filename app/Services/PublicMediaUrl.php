@@ -43,6 +43,7 @@ final class PublicMediaUrl
     /** Resolve the existing filename-only institute_details.heroImg About-image contract. */
     public function institutionAboutImage(?string $filename): ?string
     {
+        $filename = preg_replace('~\A(?:public/)?upload/image/cultivation/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
@@ -86,7 +87,7 @@ final class PublicMediaUrl
     public function url(?string $relativePath): ?string
     {
         $path = $this->segments($relativePath ?? '');
-        $prefix = $this->segments((string) $this->config->get('media.public_path_prefix', 'public'));
+        $prefix = $this->segments((string) $this->config->get('media.public_path_prefix', ''));
         $base = trim((string) $this->config->get('media.public_base_url', ''));
         if ($path === null || $path === [] || $prefix === null
             || ! filter_var($base, FILTER_VALIDATE_URL)) {

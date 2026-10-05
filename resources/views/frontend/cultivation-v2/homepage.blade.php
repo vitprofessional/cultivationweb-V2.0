@@ -121,7 +121,7 @@
         };
         $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
             ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
-            : asset('public/logo.png');
+            : app(\App\Services\PublicAssetUrl::class)->url('logo.png');
         $pageTitle = $institutionName ?: 'Institution Website';
         $pageDescription = $institutionName ? $institutionName . ' official website.' : 'Official institution website.';
         $aboutHeading = trim((string) ($insData?->insHeadline ?? ''));
@@ -142,7 +142,7 @@
         $welcomeSubHeading = $welcomeFallback['sub_heading'] ?? 'Knowledge, Discipline and Moral Values';
         $welcomeDetails = $aboutDetails ?: ($welcomeFallback['details'] ?? '');
         $welcomeImage = $publicMedia->institutionAboutImage($insData?->heroImg)
-            ?: asset('public/cultivation/assets/images/about/history.png');
+            ?: app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/about/history.png');
 
         $newsEventsList = config('cultivation_demo.news_events', []);
 
@@ -163,22 +163,22 @@
     <meta property="og:description" content="{{ $pageDescription }}">
     <meta property="og:image" content="{{ $ogImage }}">
 
-    <link rel="apple-touch-icon" href="{{ asset('public/cultivation/apple-touch-icon.html') }}">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('public/cultivation/assets/images/fav.png') }}">
+    <link rel="apple-touch-icon" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/apple-touch-icon.html') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/fav.png') }}">
 
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/font-awesome.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/animate.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/owl.carousel.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/slick.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/off-canvas.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/fonts/linea-fonts.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/fonts/flaticon.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/magnific-popup.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/rsmenu-main.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/rs-spacing.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/style.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('public/cultivation/assets/css/responsive.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/animate.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/owl.carousel.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/slick.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/off-canvas.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/fonts/linea-fonts.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/fonts/flaticon.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/magnific-popup.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/rsmenu-main.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/rs-spacing.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/responsive.css') }}">
 
     <style>
         .rs-slider.style1 .slider-content {
@@ -1633,7 +1633,7 @@
             .leadership-portrait { width:104px; }
         }
     </style>
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/homepage-responsive.css') }}?v={{ filemtime(public_path('cultivation/assets/css/homepage-responsive.css')) }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/homepage-responsive.css') }}?v={{ filemtime(public_path('cultivation/assets/css/homepage-responsive.css')) }}">
 </head>
 <body class="home-style2 v2-homepage">
 
@@ -1645,7 +1645,7 @@
             <div class="rs-carousel owl-carousel" data-loop="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-items="1" data-margin="0" data-autoplay="{{ $sliderItems->count() > 1 ? 'true' : 'false' }}" data-hoverpause="true" data-autoplay-timeout="5600" data-smart-speed="800" data-dots="true" data-nav="true" data-nav-speed="false" data-center-mode="false" data-mobile-device="1" data-mobile-device-nav="true" data-mobile-device-dots="true" data-ipad-device="1" data-ipad-device-nav="true" data-ipad-device-dots="true" data-ipad-device2="1" data-ipad-device-nav2="true" data-ipad-device-dots2="true" data-md-device="1" data-md-device-nav="true" data-md-device-dots="true">
                 @foreach($sliderItems as $slide)
                     @php
-                        $slideImage = isset($slide->fallback_image) ? $slide->fallback_image : ($resolveHeroImage($slide) ?: asset('public/cultivation/assets/images/slider/h2-1.jpg'));
+                        $slideImage = isset($slide->fallback_image) ? $slide->fallback_image : ($resolveHeroImage($slide) ?: app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/slider/h2-1.jpg'));
                         $slideInstName = trim((string) (($slide->eyebrow ?? null) ?: $institutionName ?: 'Institutional Learning Community'));
                         $slideHeading = trim((string) ($slide->headLine ?: config('cultivation_demo.hero.fallback_slides.0.title')));
                         $slideSupport = \Illuminate\Support\Str::limit(trim(strip_tags((string) ($slide->supporting_text ?? $slide->description ?? $slide->detail ?? ''))), 150);
@@ -1674,36 +1674,36 @@
             <div class="row no-gutter">
                 <div class="col-lg-3 col-md-6">
                     <div class="service-item overly1">
-                        <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
+                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
-                            <img src="{{ asset('public/cultivation/assets/images/services/icons/1.png') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/1.png') }}" alt="">
                             <h4 class="title"><a href="{{ route('allNotices') }}">Notice Board</a></h4>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="service-item overly2">
-                        <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
+                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
-                            <img src="{{ asset('public/cultivation/assets/images/services/icons/2.png') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/2.png') }}" alt="">
                             <h4 class="title"><a href="{{ route('internalResult') }}">Result</a></h4>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="service-item overly3">
-                        <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
+                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
-                            <img src="{{ asset('public/cultivation/assets/images/services/icons/3.png') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/3.png') }}" alt="">
                             <h4 class="title"><a href="{{ route('newExamSchedule') }}">Exam Routine</a></h4>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
                     <div class="service-item overly4">
-                        <img src="{{ asset('public/cultivation/assets/images/services/1.jpg') }}" alt="">
+                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/1.jpg') }}" alt="">
                         <div class="content-part">
-                            <img src="{{ asset('public/cultivation/assets/images/services/icons/1.png') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/1.png') }}" alt="">
                             <h4 class="title"><a href="{{ route('imagePage') }}">Gallery</a></h4>
                         </div>
                     </div>
@@ -1845,7 +1845,7 @@
                                 <div class="info-card-head">Admission Info</div>
                                 <div class="info-card-body">
                                     <div class="info-card-row">
-                                        <img src="{{ asset('public/img/forms.jpg') }}" alt="Admission" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/2.png') }}';">
+                                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('img/forms.jpg') }}" alt="Admission" onerror="this.onerror=null;this.src='{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/2.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('supportPage') }}">Admission Information</a></li>
                                         </ul>
@@ -1858,7 +1858,7 @@
                                 <div class="info-card-head">Institute Info</div>
                                 <div class="info-card-body">
                                     <div class="info-card-row">
-                                        <img src="{{ asset('public/img/institute.jpg') }}" alt="Institute" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/1.png') }}';">
+                                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('img/institute.jpg') }}" alt="Institute" onerror="this.onerror=null;this.src='{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/1.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('institutePage') }}">About Us</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('teacherPage') }}">Teacher Directory</a></li>
@@ -1876,7 +1876,7 @@
                                 <div class="info-card-head">Academic</div>
                                 <div class="info-card-body">
                                     <div class="info-card-row">
-                                        <img src="{{ asset('public/img/academic.png') }}" alt="Academic" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/3.png') }}';">
+                                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('img/academic.png') }}" alt="Academic" onerror="this.onerror=null;this.src='{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/3.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('newSemister') }}">Semester Plan</a></li>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('newSyllabus') }}">Syllabus</a></li>
@@ -1892,7 +1892,7 @@
                                 <div class="info-card-head">Student Corner</div>
                                 <div class="info-card-body">
                                     <div class="info-card-row">
-                                        <img src="{{ asset('public/img/studentCorner.png') }}" alt="Student corner" onerror="this.onerror=null;this.src='{{ asset('public/cultivation/assets/images/services/icons/1.png') }}';">
+                                        <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('img/studentCorner.png') }}" alt="Student corner" onerror="this.onerror=null;this.src='{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/services/icons/1.png') }}';">
                                         <ul>
                                             <li><i class="fa fa-angle-right"></i><a href="{{ route('student') }}">Student Database</a></li>
                                         </ul>
@@ -1916,7 +1916,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ $resolveGalleryImage($thirdImage) ?: asset('public/cultivation/assets/images/degrees/1.jpg') }}" alt="">
+                            <img src="{{ $resolveGalleryImage($thirdImage) ?: app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/degrees/1.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Syllabus</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('newSyllabus') }}">Academic Syllabus</a></h4>
@@ -1927,7 +1927,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ $resolveGalleryImage($fourthImage) ?: asset('public/cultivation/assets/images/degrees/2.jpg') }}" alt="">
+                            <img src="{{ $resolveGalleryImage($fourthImage) ?: app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/degrees/2.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Class Routine</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('newClassSchedule') }}">Class Routine</a></h4>
@@ -1938,7 +1938,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ asset('public/cultivation/assets/images/degrees/3.jpg') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/degrees/3.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Result Archive</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('internalResult') }}">Result Archive</a></h4>
@@ -1949,7 +1949,7 @@
                     </div>
                     <div class="col-lg-4 col-md-6 mb-30">
                         <div class="degree-wrap">
-                            <img src="{{ asset('public/cultivation/assets/images/degrees/5.jpg') }}" alt="">
+                            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/degrees/5.jpg') }}" alt="">
                             <div class="title-part"><h4 class="title">Student Corner</h4></div>
                             <div class="content-part">
                                 <h4 class="title"><a href="{{ route('student') }}">Student Corner</a></h4>
@@ -2119,24 +2119,24 @@
         </div>
     </div>
 
-    <script src="{{ asset('public/cultivation/assets/js/modernizr-2.8.3.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.nav.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/owl.carousel.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/slick.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/isotope.pkgd.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/imagesloaded.pkgd.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/wow.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/skill.bars.jquery.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.counterup.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/waypoints.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.mb.YTPlayer.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.magnific-popup.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/plugins.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/contact.form.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/main.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/homepage-responsive.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/modernizr-2.8.3.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/bootstrap.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.nav.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/owl.carousel.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/slick.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/isotope.pkgd.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/imagesloaded.pkgd.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/wow.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/skill.bars.jquery.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.counterup.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/waypoints.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.mb.YTPlayer.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.magnific-popup.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/plugins.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/contact.form.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/main.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/homepage-responsive.js') }}"></script>
     <script>
         (function () {
             var galleryGrid = document.querySelector('.ref-photo-gallery .gallery-grid');

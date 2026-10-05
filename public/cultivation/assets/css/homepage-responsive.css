@@ -224,3 +224,15 @@ body.v2-homepage.home-style2 .full-width-header.header-style2 #rs-header .menu-a
 @media (prefers-reduced-motion: reduce) {
     .v2-homepage *, .v2-homepage *::before, .v2-homepage *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* Final homepage hierarchy: hero leads, information links remain compact. */
+.v2-homepage .rs-slider.style1 .slider-content{height:auto;min-height:540px;max-height:none;padding:48px 0 60px!important}
+.v2-homepage .home-info-grid .info-card{height:auto;min-height:0}
+.v2-homepage .home-info-grid .info-card-head{padding:12px 18px}
+.v2-homepage .home-info-grid .info-card-body{padding:14px 18px}
+.v2-homepage .home-info-grid .info-card-row{grid-template-columns:64px minmax(0,1fr);gap:14px;min-height:0}
+.v2-homepage .home-info-grid .info-card-row img{width:64px;height:64px;object-fit:contain}
+.v2-homepage #rs-footer .bangla-links li{padding:3px 0}
+.v2-homepage #rs-footer .bangla-links li a{line-height:1.6;min-height:36px}
+@media(max-width:991px){.v2-homepage .rs-slider.style1 .slider-content{min-height:460px;padding:40px 0 56px!important}}
+@media(max-width:575px){.v2-homepage .rs-slider.style1 .slider-content{min-height:400px;padding:32px 0 52px!important}.v2-homepage .home-info-grid .info-card-body{padding:12px 14px}.v2-homepage .home-info-grid .info-card-row{grid-template-columns:48px minmax(0,1fr)}.v2-homepage .home-info-grid .info-card-row img{width:48px;height:48px}}

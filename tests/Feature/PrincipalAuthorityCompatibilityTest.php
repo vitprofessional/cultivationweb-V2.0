@@ -95,6 +95,23 @@ class PrincipalAuthorityCompatibilityTest extends TestCase
         $this->assertSame('Retired ServerConfig Principal',$config->fresh()->principalName);
         $this->assertDatabaseCount('server_configs',1); $this->assertDatabaseCount('home_infos',1); $this->assertDatabaseCount('principal_speeches',1);
     }
+    public function test_message_uses_canonical_full_name_and_latest_real_institution(): void
+    {
+        $identity = $this->identity(['fullName' => 'Approved Full Name', 'firstName' => 'Old', 'lastName' => 'Alias']);
+        ServerConfig::query()->forceCreate(['instituteName' => 'Old Institution']);
+        ServerConfig::query()->forceCreate(['instituteName' => 'Current Institution']);
+        $this->get(route('headOfInstituteMessagePage'))->assertOk()
+            ->assertSee('Approved Full Name')->assertSee('Current Institution')->assertDontSee('Old Institution');
+        $identity->forceFill(['fullName' => null, 'firstName' => 'Legacy Principal', 'lastName' => 'Principal'])->save();
+        $this->assertSame('Legacy Principal', app(PrincipalProfile::class)->read()['name']);
+    }
+
+    public function test_empty_message_page_has_no_demo_institution(): void
+    {
+        $this->get(route('headOfInstituteMessagePage'))->assertOk()
+            ->assertDontSee('Jahanara-Ayub Academy')->assertSee('Principal profile not added');
+    }
+
     public function test_legacy_homepage_uses_same_profile_without_legacy_identity_fallback(): void
     {
         $this->identity();

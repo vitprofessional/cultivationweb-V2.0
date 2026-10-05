@@ -437,7 +437,10 @@ class FrontController extends Controller
     }
     // Head of Institute message page
     public function headOfInstituteMessagePage(){
-        return view('frontend.institute.principalSpeech');
+        return view('frontend.institute.principalSpeech', [
+            'principalProfile' => app(\App\Services\PrincipalProfile::class)->read(),
+            'config' => ServerConfig::query()->latest('id')->first(),
+        ]);
     }
 
     // Backward compatible endpoint

@@ -22,26 +22,26 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('public/cultivation/assets/images/fav.png') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/fav.png') }}">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/font-awesome.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/fonts/flaticon.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/fonts/linea-fonts.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/animate.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/owl.carousel.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/slick.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/off-canvas.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/magnific-popup.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/rsmenu-main.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/rs-spacing.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/style.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/cultivation/assets/css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/font-awesome.min.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/fonts/flaticon.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/fonts/linea-fonts.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/animate.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/owl.carousel.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/slick.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/off-canvas.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/magnific-popup.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/rsmenu-main.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/rs-spacing.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/style.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/responsive.css') }}">
 
-    <link rel="stylesheet" href="{{ asset('public/assets/css/custom.css') }}">
-    <link rel="stylesheet" href="{{ asset('public/assets/css/style.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('assets/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('assets/css/style.css') }}">
     <link rel="stylesheet" href="//cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="{{ asset('public/lightbox/fancybox/jquery.fancybox.min.css') }}">
+    <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('lightbox/fancybox/jquery.fancybox.min.css') }}">
 
     <script src="https://kit.fontawesome.com/163dbb3d41.js" crossorigin="anonymous"></script>
 
@@ -674,10 +674,12 @@
 
     <section class="edu-content-wrap">
         <div class="container">
-            <div class="edu-main-card">
+            <div class="edu-main-card @hasSection('portal-layout') portal-page-shell @endif">
+                @unless(View::hasSection('portal-layout'))
                 @hasSection('fronttitle')
                     <div class="edu-page-title">@yield('fronttitle')</div>
                 @endif
+                @endunless
                 <div class="edu-main-inner">
                     <div class="row">
                         @yield('frontcontent')
@@ -689,23 +691,23 @@
 
     @include('frontend.cultivation-v2.partials._footer')
 
-    <script src="{{ asset('public/assets/js/jquery-1.9.1.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/modernizr-2.8.3.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/rsmenu-main.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.nav.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/owl.carousel.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/slick.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/isotope.pkgd.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/imagesloaded.pkgd.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/wow.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/jquery.magnific-popup.min.js') }}"></script>
-    <script src="{{ asset('public/cultivation/assets/js/main.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('assets/js/jquery-1.9.1.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/modernizr-2.8.3.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/bootstrap.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/rsmenu-main.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.nav.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/owl.carousel.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/slick.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/isotope.pkgd.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/imagesloaded.pkgd.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/wow.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/jquery.magnific-popup.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/js/main.js') }}"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="//cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
-    <script src="{{ asset('public/lightbox/fancybox/jquery.fancybox.min.js') }}"></script>
+    <script src="{{ app(\App\Services\PublicAssetUrl::class)->url('lightbox/fancybox/jquery.fancybox.min.js') }}"></script>
 
     <script>
 

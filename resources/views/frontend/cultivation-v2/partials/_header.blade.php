@@ -457,10 +457,24 @@
     }
 </style>
 
+<style>
+body.home-style2 .topbar-area .topbar-right{display:flex;justify-content:flex-end;align-items:stretch;gap:10px;margin:0;float:none}
+body.home-style2 .topbar-area .topbar-right .btn-part{margin:0;display:flex;align-items:stretch}
+body.home-style2 .topbar-area .topbar-right .header-portal-cta{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:36px;padding:8px 14px;border:0;border-radius:5px;background:#102c56;color:#fff;font-size:13px;font-weight:700;line-height:1.2;white-space:nowrap;text-decoration:none;transition:background-color .15s ease}
+body.home-style2 .topbar-area .topbar-right .header-portal-cta:hover{background:#244779;color:#fff}
+body.home-style2 .header-portal-cta svg{width:17px;height:17px;flex:none}
+body.home-style2 .topbar-area .topbar-right .header-portal-cta span{color:inherit!important}
+body.home-style2 .topbar-area .header-action-column{padding-left:12px;padding-right:12px}
+body.home-style2 #rs-header .header-portal-cta:focus-visible{outline:2px solid #fff!important;outline-offset:-4px;box-shadow:none}
+body.home-style2 .full-width-header.header-style2 #rs-header .topbar-area{display:block!important}
+body.home-style2.v2-homepage .full-width-header.header-style2 #rs-header div.topbar-area{display:block!important}
+.header-portal-cta .portal-mobile-label{display:none}
+@media(max-width:1100px){body.home-style2 .topbar-area{display:block!important;padding:6px 0}body.home-style2 .topbar-area .header-contact-column{display:none}body.home-style2 .topbar-area .header-action-column{width:100%;flex:0 0 100%}body.home-style2 .topbar-area .topbar-right{gap:8px}body.home-style2 .topbar-area .topbar-right .apply-btn{padding:10px 12px;font-size:12px;line-height:1.2;min-height:36px}body.home-style2 .topbar-area .topbar-right .header-portal-cta{min-height:36px;padding:8px 12px}.header-portal-cta .portal-desktop-label{display:none}.header-portal-cta .portal-mobile-label{display:inline}}
+</style>
 <div id="loader" class="loader">
     <div class="loader-container">
         <div class='loader-icon'>
-            <img src="{{ asset('public/logo.png') }}" alt="">
+            <img src="{{ app(\App\Services\PublicAssetUrl::class)->url('logo.png') }}" alt="">
         </div>
     </div>
 </div>
@@ -470,7 +484,7 @@
         <div class="topbar-area">
             <div class="container">
                 <div class="row y-middle">
-                    <div class="col-md-7">
+                    <div class="col-md-7 header-contact-column">
                         <ul class="topbar-contact">
                             @if($officeEmail)<li>
                                 <i class="flaticon-email"></i>
@@ -482,11 +496,12 @@
                             </li>@endif
                         </ul>
                     </div>
-                    <div class="col-md-5 text-right">
+                    <div class="col-md-5 text-right header-action-column">
                         <ul class="topbar-right">
                             <li class="btn-part">
                                 <a class="apply-btn" href="{{ route('supportPage') }}">Admission Information</a>
                             </li>
+                            <li class="btn-part"><a class="header-portal-cta" href="{{ route('loginHub') }}" aria-label="Portal Login" @if(request()->routeIs('loginHub')) aria-current="page" @endif><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg><span class="portal-desktop-label">Portal Login</span><span class="portal-mobile-label">Login</span></a></li>
                         </ul>
                     </div>
                 </div>

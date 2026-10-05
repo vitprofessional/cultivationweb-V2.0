@@ -21,6 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Support\Facades\Vite::createAssetPathsUsing(
+            fn (string $path) => app(\App\Services\PublicAssetUrl::class)->url($path)
+        );
         // Force HTTPS URLs when the configured app URL uses https
         $scheme = parse_url(config('app.url'), PHP_URL_SCHEME);
         if ($scheme === 'https') {

@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FrontController;
+use App\Http\Controllers\LoginHubController;
+
+Route::get('/login', LoginHubController::class)->name('loginHub');
 
 /*
 |--------------------------------------------------------------------------

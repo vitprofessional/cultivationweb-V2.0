@@ -167,18 +167,18 @@ Head of Institute Message
 </style>
 
 @php
-    $configLocal = isset($config) ? $config : \App\Models\ServerConfig::first();
+    $configLocal = $config ?? null;
 
     if(isset($configLocal) && !empty($configLocal->instituteName)){
         $insName = $configLocal->instituteName;
     } elseif(isset($cultivation) && $cultivation && !empty($cultivation->institueName)) {
         $insName = $cultivation->institueName;
     } else {
-        $insName = 'Jahanara-Ayub Academy';
+        $insName = '';
     }
 
-    $principalProfile = app(\App\Services\PrincipalProfile::class)->read();
-    $avatarPath = $principalProfile['photoUrl'] ?: asset('public/avatar.png');
+    $principalProfile = $principalProfile ?? app(\App\Services\PrincipalProfile::class)->read();
+    $avatarPath = $principalProfile['photoUrl'] ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
     $displayName = $principalProfile['name'] ?: 'Principal profile not added';
     $displayDesignation = $principalProfile['designation'] ?: 'Head of Institute';
     $importantSpeech = $principalProfile['headline'] ?? '';
@@ -195,19 +195,13 @@ Head of Institute Message
                     <img class="hoi-avatar"
                          src="{{ $avatarPath }}"
                          alt="Photo of {{ e($displayName) }}"
-                         onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
+                         onerror="this.onerror=null;this.src='{{ app(\App\Services\PublicAssetUrl::class)->url('avatar.png') }}';">
                 </div>
                 <div class="hoi-info text-center">
                     <div class="hoi-name">{{ $displayName }}</div>
                     <div class="hoi-role">{{ $displayDesignation }}</div>
                     <div class="hoi-inst">{{ $insName }}</div>
                     <hr class="hoi-divider">
-                    <ul class="hoi-attr-list text-start">
-                        <li><i class="fa fa-check-circle"></i> Student-centered leadership</li>
-                        <li><i class="fa fa-check-circle"></i> Academic discipline and values</li>
-                        <li><i class="fa fa-check-circle"></i> Future-ready institutional vision</li>
-                        <li><i class="fa fa-check-circle"></i> Community and service commitment</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -220,9 +214,9 @@ Head of Institute Message
                     <p>{{ $displayDesignation }}&ensp;&bull;&ensp;{{ $insName }}</p>
                 </div>
                 <div class="hoi-msg-body">
-                    <blockquote class="hoi-quote">
+                    @if(filled($importantSpeech))<blockquote class="hoi-quote">
                         <span class="hoi-q-icon">&ldquo;</span>{{ $importantSpeech }}
-                    </blockquote>
+                    </blockquote>@endif
                     <div class="hoi-body-text">{!! nl2br(e($generalSpeech)) !!}</div>
                     <div class="hoi-signature">
                         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
