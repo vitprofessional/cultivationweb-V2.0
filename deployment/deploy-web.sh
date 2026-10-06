@@ -235,8 +235,6 @@ cd "$APPPATH"
 "$PHP" artisan route:clear
 "$PHP" artisan view:clear
 
-"$PHP" artisan migrate --force
-
 "$PHP" artisan cache:clear
 "$PHP" artisan config:cache
 "$PHP" artisan route:cache

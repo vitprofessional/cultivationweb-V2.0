@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
+use Illuminate\Foundation\Vite;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,8 +20,10 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
+    
     public function boot(): void
     {
+        app(Vite::class)->useBuildDirectory('build');
         \Illuminate\Support\Facades\Vite::createAssetPathsUsing(
             fn (string $path) => app(\App\Services\PublicAssetUrl::class)->url($path)
         );
