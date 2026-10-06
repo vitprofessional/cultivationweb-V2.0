@@ -1,37 +1,5 @@
 ---
 deployment:
   tasks:
-    - export REPOPATH=/home/mphs1969/repositories/cultivationweb-V2.0
-    - export APPPATH=/home/mphs1969/apps/cultivationweb-V2.0
-    - export PUBLICPATH=/home/mphs1969/public_html
-    - export PHP=/usr/local/bin/php
-    - export COMPOSER_BIN=/usr/local/bin/composer
-    - test -x "$PHP"
-    - test -x "$COMPOSER_BIN"
-    - command -v rsync
-    - test -f "$APPPATH/.env"
-    - test -f "$REPOPATH/deployment/public-index.php"
-    - /bin/mkdir -p "$APPPATH" "$PUBLICPATH"
-    # Mapping conflicts stop here; existing public/upload directories are never replaced.
-    - /bin/bash "$REPOPATH/deployment/publish-public.sh" "$REPOPATH" "$APPPATH" "$PUBLICPATH"
-    # Only application source is synchronized. Public media is handled separately above.
-    - rsync -a --delete "$REPOPATH/app/" "$APPPATH/app/"
-    - rsync -a --delete --exclude='/cache/' "$REPOPATH/bootstrap/" "$APPPATH/bootstrap/"
-    - rsync -a --delete "$REPOPATH/config/" "$APPPATH/config/"
-    - rsync -a --delete "$REPOPATH/database/" "$APPPATH/database/"
-    - rsync -a --delete "$REPOPATH/resources/" "$APPPATH/resources/"
-    - rsync -a --delete "$REPOPATH/routes/" "$APPPATH/routes/"
-    - /bin/cp "$REPOPATH/artisan" "$APPPATH/artisan"
-    - /bin/cp "$REPOPATH/composer.json" "$APPPATH/composer.json"
-    - /bin/cp "$REPOPATH/composer.lock" "$APPPATH/composer.lock"
-    - /bin/mkdir -p "$APPPATH/storage/app/public" "$APPPATH/storage/framework/cache/data" "$APPPATH/storage/framework/sessions" "$APPPATH/storage/framework/views" "$APPPATH/storage/logs" "$APPPATH/bootstrap/cache"
-    - cd "$APPPATH" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader
-    - cd "$APPPATH" && "$PHP" artisan config:clear
-    - cd "$APPPATH" && "$PHP" artisan route:clear
-    - cd "$APPPATH" && "$PHP" artisan view:clear
-    # Production migrations require a separate explicit approval/preflight.
-    - cd "$APPPATH" && "$PHP" artisan config:cache
-    - cd "$APPPATH" && "$PHP" artisan route:cache
-    - cd "$APPPATH" && "$PHP" artisan view:cache
-    - /bin/cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
-    - /bin/cp "$REPOPATH/deployment/public-index.php" "$PUBLICPATH/index.php"
+    # Paths live in an operator-owned configuration outside the repository.
+    - /bin/bash deployment/deploy-web.sh
