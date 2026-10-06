@@ -159,21 +159,35 @@ cd "$APPPATH"
 "$PHP" artisan view:cache
 
 # ------------------------------------------------------------
-# 7. Publish complete public folder
+# 7. Deploy the COMPLETE public directory
 #
-# Preserve the existing URL convention:
-#   /public/cultivation/...
-#   /public/img/...
-#   /public/upload/...
+# IMPORTANT:
+# Never flatten files from repository/public into PUBLICPATH.
+#
+# Required production structure:
+#
+#   PUBLICPATH/
+#       index.php
+#       .htaccess
+#       public/
+#           assets/
+#           cultivation/
+#           build/
+#           img/
+#           upload/
+#           ...
+#
+# Runtime upload data is preserved.
 # ------------------------------------------------------------
 
-mkdir -p "$PUBLICPATH/public"
-mkdir -p "$PUBLICPATH/public/upload"
+WEBPUBLIC="$PUBLICPATH/public"
 
-# Preserve runtime uploads.
+mkdir -p "$WEBPUBLIC"
+mkdir -p "$WEBPUBLIC/upload"
+
 upload_digest() {
     (
-        cd "$PUBLICPATH/public/upload"
+        cd "$WEBPUBLIC/upload"
         find . -type f -print0 \
             | LC_ALL=C sort -z \
             | xargs -0 -r sha256sum
@@ -182,23 +196,32 @@ upload_digest() {
 
 before_uploads=$(upload_digest)
 
+# Synchronize the CONTENTS of repository/public only inside
+# PUBLICPATH/public. The public directory boundary is preserved.
 rsync -a \
     --exclude='/upload/' \
     --exclude='/storage/' \
     --exclude='/hot' \
     "$REPOPATH/public/" \
-    "$PUBLICPATH/public/"
-
+    "$WEBPUBLIC/"
 
 after_uploads=$(upload_digest)
 
-# Existing production uploads must not be changed by a normal deployment.
-# A fresh installation may legitimately receive repository seed uploads.
-if [[ "$before_uploads" != "$after_uploads" ]] \
-    && [[ -n "$before_uploads" ]]; then
-    echo "ERROR: Runtime upload state changed unexpectedly" >&2
+[[ "$before_uploads" = "$after_uploads" ]] || {
+    echo "ERROR: Runtime uploads changed during deployment" >&2
     exit 1
-fi
+}
+
+# Critical verification: files must exist below /public.
+[[ -f "$WEBPUBLIC/build/manifest.json" ]] || {
+    echo "ERROR: public/build/manifest.json was not deployed" >&2
+    exit 1
+}
+
+[[ -d "$WEBPUBLIC/cultivation" ]] || {
+    echo "ERROR: public/cultivation was not deployed" >&2
+    exit 1
+}
 
 # ------------------------------------------------------------
 # 8. Domain-root Apache files
@@ -208,17 +231,13 @@ if [[ -f "$REPOPATH/public/.htaccess" ]]; then
     cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
 fi
 
-if [[ -f "$REPOPATH/public/robots.txt" ]]; then
-    cp "$REPOPATH/public/robots.txt" "$PUBLICPATH/robots.txt"
-fi
-
-if [[ -f "$REPOPATH/public/favicon.ico" ]]; then
-    cp "$REPOPATH/public/favicon.ico" "$PUBLICPATH/favicon.ico"
-fi
-
 # ------------------------------------------------------------
-# 9. Generate production entry point last
+# 9. Generate and validate production entry point
 # ------------------------------------------------------------
+
+INDEX_TMP="$PUBLICPATH/.index.php.deploying"
+
+rm -f "$INDEX_TMP"
 
 "$PHP" -r '
 $appPath = $argv[1];
@@ -238,6 +257,14 @@ $content = "<?php\n\n"
     ."\$app->handleRequest(Request::capture());\n";
 
 file_put_contents($target, $content);
-' "$APPPATH" "$PUBLICPATH/index.php"
+' "$APPPATH" "$INDEX_TMP"
+
+"$PHP" -l "$INDEX_TMP" >/dev/null || {
+    echo "ERROR: Generated production index.php has invalid PHP syntax" >&2
+    rm -f "$INDEX_TMP"
+    exit 1
+}
+
+mv -f "$INDEX_TMP" "$PUBLICPATH/index.php"
 
 echo "Cultivation Web deployment completed successfully."
