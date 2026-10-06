@@ -2,6 +2,22 @@
 
 set -euo pipefail
 
+# ============================================================
+# Cultivation Web - Multi-client cPanel Deployment
+#
+# Production contract:
+#
+# APPPATH/
+#   public/...              Laravel public_path()
+#
+# PUBLICPATH/
+#   index.php
+#   .htaccess
+#   public/...              Browser /public/... URLs
+#
+# public/* is NEVER flattened into PUBLICPATH.
+# ============================================================
+
 # ------------------------------------------------------------
 # 1. Repository + operator-owned client configuration
 # ------------------------------------------------------------
@@ -28,9 +44,10 @@ APPPATH="$CULTIVATION_WEB_APP_PATH"
 PUBLICPATH="$CULTIVATION_WEB_PUBLIC_PATH"
 PHP="$CULTIVATION_WEB_PHP"
 COMPOSER_BIN="$CULTIVATION_WEB_COMPOSER"
+WEBPUBLIC="$PUBLICPATH/public"
 
 # ------------------------------------------------------------
-# 2. Required commands + path validation
+# 2. Required commands
 # ------------------------------------------------------------
 
 for command_name in realpath rsync find sort xargs sha256sum; do
@@ -40,6 +57,10 @@ for command_name in realpath rsync find sort xargs sha256sum; do
     }
 done
 
+# ------------------------------------------------------------
+# 3. Path validation
+# ------------------------------------------------------------
+
 for path in "$APPPATH" "$PUBLICPATH" "$PHP" "$COMPOSER_BIN"; do
     [[ "$path" = /* ]] || {
         echo "ERROR: Production paths must be absolute" >&2
@@ -47,8 +68,15 @@ for path in "$APPPATH" "$PUBLICPATH" "$PHP" "$COMPOSER_BIN"; do
     }
 done
 
+[[ "$APPPATH" != "/" && "$APPPATH" != "/home" ]] || exit 1
+[[ "$PUBLICPATH" != "/" && "$PUBLICPATH" != "/home" ]] || exit 1
+
 mkdir -p "$APPPATH"
 mkdir -p "$PUBLICPATH"
+
+# ------------------------------------------------------------
+# 4. Preflight
+# ------------------------------------------------------------
 
 [[ -f "$APPPATH/.env" ]] || {
     echo "ERROR: Production .env missing: $APPPATH/.env" >&2
@@ -56,17 +84,22 @@ mkdir -p "$PUBLICPATH"
 }
 
 [[ -f "$REPOPATH/artisan" ]] || {
-    echo "ERROR: artisan missing from repository" >&2
+    echo "ERROR: artisan missing" >&2
     exit 1
 }
 
 [[ -f "$REPOPATH/composer.json" ]] || {
-    echo "ERROR: composer.json missing from repository" >&2
+    echo "ERROR: composer.json missing" >&2
     exit 1
 }
 
 [[ -f "$REPOPATH/composer.lock" ]] || {
-    echo "ERROR: composer.lock missing from repository" >&2
+    echo "ERROR: composer.lock missing" >&2
+    exit 1
+}
+
+[[ -d "$REPOPATH/public" ]] || {
+    echo "ERROR: repository public directory missing" >&2
     exit 1
 }
 
@@ -91,37 +124,40 @@ mkdir -p "$PUBLICPATH"
 }
 
 # ------------------------------------------------------------
-# 3. Replace Laravel application source
+# 5. Replace application source
 #
-# Persistent:
+# Preserve:
 #   APPPATH/.env
 #   APPPATH/vendor
 #   APPPATH/storage
+#
+# public is synchronized separately so runtime uploads survive.
 # ------------------------------------------------------------
 
-rm -rf "$APPPATH/app"
-rm -rf "$APPPATH/bootstrap"
-rm -rf "$APPPATH/config"
-rm -rf "$APPPATH/database"
-rm -rf "$APPPATH/public"
-rm -rf "$APPPATH/resources"
-rm -rf "$APPPATH/routes"
+for directory in app config database resources routes; do
+    rm -rf "$APPPATH/$directory"
+    cp -R "$REPOPATH/$directory" "$APPPATH/"
+done
 
-cp -R "$REPOPATH/app" "$APPPATH/"
-cp -R "$REPOPATH/bootstrap" "$APPPATH/"
-cp -R "$REPOPATH/config" "$APPPATH/"
-cp -R "$REPOPATH/database" "$APPPATH/"
-cp -R "$REPOPATH/public" "$APPPATH/"
-cp -R "$REPOPATH/resources" "$APPPATH/"
-cp -R "$REPOPATH/routes" "$APPPATH/"
+# bootstrap/cache is runtime state, so copy bootstrap without
+# destroying the existing runtime cache directory first.
+mkdir -p "$APPPATH/bootstrap"
+
+rsync -a \
+    --exclude='/cache/' \
+    "$REPOPATH/bootstrap/" \
+    "$APPPATH/bootstrap/"
 
 cp "$REPOPATH/artisan" "$APPPATH/artisan"
 cp "$REPOPATH/composer.json" "$APPPATH/composer.json"
 cp "$REPOPATH/composer.lock" "$APPPATH/composer.lock"
 
 # ------------------------------------------------------------
-# 4. Laravel runtime directories
+# 6. Runtime directories
 # ------------------------------------------------------------
+
+mkdir -p "$APPPATH/public"
+mkdir -p "$APPPATH/public/upload"
 
 mkdir -p "$APPPATH/storage/app/public"
 mkdir -p "$APPPATH/storage/framework/cache/data"
@@ -132,7 +168,55 @@ mkdir -p "$APPPATH/storage/logs"
 mkdir -p "$APPPATH/bootstrap/cache"
 
 # ------------------------------------------------------------
-# 5. Composer
+# 7. Runtime upload digest helper
+# ------------------------------------------------------------
+
+upload_digest() {
+    local directory="$1"
+
+    (
+        cd "$directory"
+        find . -type f -print0 \
+            | LC_ALL=C sort -z \
+            | xargs -0 -r sha256sum
+    ) | sha256sum
+}
+
+APP_UPLOAD_BEFORE=$(upload_digest "$APPPATH/public/upload")
+
+# ------------------------------------------------------------
+# 8. Synchronize complete repository/public -> APPPATH/public
+#
+# This keeps Laravel public_path() correct.
+# Runtime uploads are NEVER replaced.
+# ------------------------------------------------------------
+
+rsync -a \
+    --exclude='/upload/' \
+    --exclude='/storage/' \
+    --exclude='/hot' \
+    "$REPOPATH/public/" \
+    "$APPPATH/public/"
+
+APP_UPLOAD_AFTER=$(upload_digest "$APPPATH/public/upload")
+
+[[ "$APP_UPLOAD_BEFORE" = "$APP_UPLOAD_AFTER" ]] || {
+    echo "ERROR: APPPATH runtime uploads changed unexpectedly" >&2
+    exit 1
+}
+
+[[ -f "$APPPATH/public/build/manifest.json" ]] || {
+    echo "ERROR: APPPATH public build manifest missing" >&2
+    exit 1
+}
+
+[[ -d "$APPPATH/public/cultivation" ]] || {
+    echo "ERROR: APPPATH public cultivation directory missing" >&2
+    exit 1
+}
+
+# ------------------------------------------------------------
+# 9. Composer dependencies
 # ------------------------------------------------------------
 
 cd "$APPPATH"
@@ -144,7 +228,7 @@ cd "$APPPATH"
     --optimize-autoloader
 
 # ------------------------------------------------------------
-# 6. Laravel
+# 10. Laravel deployment
 # ------------------------------------------------------------
 
 "$PHP" artisan config:clear
@@ -159,45 +243,25 @@ cd "$APPPATH"
 "$PHP" artisan view:cache
 
 # ------------------------------------------------------------
-# 7. Deploy the COMPLETE public directory
+# 11. Browser-facing COMPLETE public directory
 #
 # IMPORTANT:
-# Never flatten files from repository/public into PUBLICPATH.
 #
-# Required production structure:
+# Repository/public/*
+#        ↓
+# PUBLICPATH/public/*
 #
-#   PUBLICPATH/
-#       index.php
-#       .htaccess
-#       public/
-#           assets/
-#           cultivation/
-#           build/
-#           img/
-#           upload/
-#           ...
+# Never:
+# Never flatten child directories into the document root.
 #
-# Runtime upload data is preserved.
+# Runtime browser uploads are preserved.
 # ------------------------------------------------------------
-
-WEBPUBLIC="$PUBLICPATH/public"
 
 mkdir -p "$WEBPUBLIC"
 mkdir -p "$WEBPUBLIC/upload"
 
-upload_digest() {
-    (
-        cd "$WEBPUBLIC/upload"
-        find . -type f -print0 \
-            | LC_ALL=C sort -z \
-            | xargs -0 -r sha256sum
-    ) | sha256sum
-}
+WEB_UPLOAD_BEFORE=$(upload_digest "$WEBPUBLIC/upload")
 
-before_uploads=$(upload_digest)
-
-# Synchronize the CONTENTS of repository/public only inside
-# PUBLICPATH/public. The public directory boundary is preserved.
 rsync -a \
     --exclude='/upload/' \
     --exclude='/storage/' \
@@ -205,34 +269,41 @@ rsync -a \
     "$REPOPATH/public/" \
     "$WEBPUBLIC/"
 
-after_uploads=$(upload_digest)
+WEB_UPLOAD_AFTER=$(upload_digest "$WEBPUBLIC/upload")
 
-[[ "$before_uploads" = "$after_uploads" ]] || {
-    echo "ERROR: Runtime uploads changed during deployment" >&2
+[[ "$WEB_UPLOAD_BEFORE" = "$WEB_UPLOAD_AFTER" ]] || {
+    echo "ERROR: Browser runtime uploads changed unexpectedly" >&2
     exit 1
 }
 
-# Critical verification: files must exist below /public.
 [[ -f "$WEBPUBLIC/build/manifest.json" ]] || {
-    echo "ERROR: public/build/manifest.json was not deployed" >&2
+    echo "ERROR: PUBLICPATH/public/build/manifest.json missing" >&2
     exit 1
 }
 
 [[ -d "$WEBPUBLIC/cultivation" ]] || {
-    echo "ERROR: public/cultivation was not deployed" >&2
+    echo "ERROR: PUBLICPATH/public/cultivation missing" >&2
     exit 1
 }
 
 # ------------------------------------------------------------
-# 8. Domain-root Apache files
+# 12. Domain-root .htaccess
+#
+# index.php and .htaccess intentionally live at document root.
+# All other public files remain under PUBLICPATH/public.
 # ------------------------------------------------------------
 
-if [[ -f "$REPOPATH/public/.htaccess" ]]; then
-    cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
-fi
+[[ -f "$REPOPATH/public/.htaccess" ]] || {
+    echo "ERROR: repository public/.htaccess missing" >&2
+    exit 1
+}
+
+cp "$REPOPATH/public/.htaccess" "$PUBLICPATH/.htaccess"
 
 # ------------------------------------------------------------
-# 9. Generate and validate production entry point
+# 13. Generate production root index.php safely
+#
+# Do NOT write directly over the live index until PHP lint passes.
 # ------------------------------------------------------------
 
 INDEX_TMP="$PUBLICPATH/.index.php.deploying"
