@@ -225,8 +225,8 @@ $appPath = $argv[1];
 $target = $argv[2];
 
 $content = "<?php\n\n"
-    ."use Illuminate\\\\Foundation\\\\Application;\n"
-    ."use Illuminate\\\\Http\\\\Request;\n\n"
+    ."use Illuminate\\Foundation\\Application;\n"
+    ."use Illuminate\\Http\\Request;\n\n"
     ."define(\"LARAVEL_START\", microtime(true));\n\n"
     ."\$applicationPath = ".var_export($appPath, true).";\n\n"
     ."if (file_exists(\$maintenance = \$applicationPath.\"/storage/framework/maintenance.php\")) {\n"
