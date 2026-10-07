@@ -382,15 +382,13 @@ $config = App\Models\ServerConfig::first();
                                 $className   = optional($classes[$std->className]    ?? null)->className           ?? 'N/A';
                                 $sectionName = optional($sections[$std->sectionName] ?? null)->section             ?? 'N/A';
                                 $deptName    = optional($departments[$std->departmentName] ?? null)->departmentName ?? 'N/A';
-                                $photo = !empty($std->avatar)
-                                    ? config('app.url') . '/public/upload/image/student/' . rawurlencode(basename($std->avatar))
-                                    : config('app.url') . '/public/avatar.png';
+                                $photo = app(\App\Services\PublicMediaUrl::class)->studentPortrait($std->avatar)
+                                    ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
                             @endphp
                             <tr>
                                 <td>
                                     <div class="student-info-wrap">
-                                        <img class="student-avatar" src="{{ $photo }}" alt="{{ e($fullName) }}" loading="lazy"
-                                             onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
+                                        <x-people-portrait :src="$photo" :alt="$fullName" variant="compact" image-class="student-avatar" />
                                         <div class="student-name-id">
                                             <span class="student-name">{{ e($fullName) }}</span>
                                             <span class="student-id">ID: {{ e($std->stdId) }}</span>

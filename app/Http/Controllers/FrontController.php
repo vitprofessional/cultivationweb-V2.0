@@ -513,6 +513,14 @@ class FrontController extends Controller
     }
 
     //comittee list page
+    public function staffShow($id){
+        return view('frontend.institute.teacher-show', ['teacher' => StaffManagement::findOrFail($id), 'profileKind' => 'staff']);
+    }
+
+    public function committeeShow($id){
+        return view('frontend.institute.teacher-show', ['teacher' => ManagingComittee::findOrFail($id), 'profileKind' => 'committee']);
+    }
+
     public function comitteePage(){
         $syllabus  =   ManagingComittee::all();
         return view('frontend.institute.comittee',['Datakey'=>$syllabus]);

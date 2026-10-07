@@ -17,11 +17,6 @@
 
     win.on('scroll', function() {
        var scroll = win.scrollTop();
-       if (scroll < 1) {
-           header.removeClass("sticky");
-       } else {
-           header.addClass("sticky");
-       }
 
         $("section").each(function() {
         var elementTop = $(this).offset().top - $('#rs-header').outerHeight();
@@ -280,20 +275,7 @@
         });
     }
     
-    // scrollTop init	
-    var totop = $('#scrollUp');    
-    win.on('scroll', function() {
-        if (win.scrollTop() > 150) {
-            totop.fadeIn();
-        } else {
-            totop.fadeOut();
-        }
-    });
-    totop.on('click', function() {
-        $("html,body").animate({
-            scrollTop: 0
-        }, 500)
-    });
+    // Sticky header and Back to Top are owned by public-scroll.js.
 
     //canvas menu
     var navexpander = $('#nav-expander');

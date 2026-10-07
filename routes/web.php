@@ -173,11 +173,13 @@ Route::get('/our-staff',[
     FrontController::class,
     'staffPage'
     ])->name('staffPage');
+Route::get('/our-staff/{id}', [FrontController::class, 'staffShow'])->whereNumber('id')->name('staff.show');
 
 Route::get('/our-comittee',[
     FrontController::class,
     'comitteePage'
     ])->name('comitteePage');
+Route::get('/our-comittee/{id}', [FrontController::class, 'committeeShow'])->whereNumber('id')->name('committee.show');
     
 
 Route::get('/contact-us',[

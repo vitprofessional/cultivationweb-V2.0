@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
+for(const width of [390,768,1280]) test(`premium teacher profile ${width}px`,async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+ const page=await browser.newPage({viewport:{width,height:1000},reducedMotion:'reduce'});
+ try{
+  await page.goto('http://localhost/cultivationweb-V2.0/our-teacher',{waitUntil:'networkidle'});
+  const href=await page.locator('.teacher-action-btn').first().getAttribute('href');
+  assert.equal((await page.goto(href,{waitUntil:'networkidle'})).status(),200);
+  await page.addStyleTag({content:'#loader{display:none!important}'});
+  assert.equal(await page.locator('.tp-hero h1.ts-name').count(),1);
+  assert.equal(await page.locator('.tp-identity .ts-name,.tp-identity .tp-role,.tp-identity .tp-institution').count(),0);
+  const actionGap = await page.evaluate(()=>document.querySelector('.tp-actions').getBoundingClientRect().top-document.querySelector('.people-photo-frame--profile').getBoundingClientRect().bottom);
+  assert.ok(actionGap>=0 && actionGap<=24,'portrait and actions have compact spacing');
+  assert.equal(await page.locator('.tp-details').getByRole('heading',{name:'Professional Information',exact:true}).count(),1);
+  assert.equal(await page.locator('section[aria-labelledby="tp-overview"] .tp-field').count(),2);
+  assert.equal(await page.getByText('MPO Index',{exact:true}).count(),0);
+  assert.equal(await page.getByText('PDS ID',{exact:true}).count(),0);
+  assert.equal(await page.locator('.tp-details').getByRole('heading',{name:'Contact Information',exact:true}).count(),1);
+  assert.equal(await page.locator('.tp-personal').getAttribute('open'),null);
+  await page.locator('.tp-personal summary').click();assert.ok(await page.locator('.tp-personal dl').isVisible());
+  const frame=await page.locator('.people-photo-frame--profile').boundingBox();assert.ok(Math.abs(frame.width/frame.height-.8)<.01);
+  const image=page.locator('.people-portrait');await image.scrollIntoViewIfNeeded();await image.evaluate(img=>img.decode());
+  assert.ok(await image.evaluate(img=>img.naturalWidth>0));
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.locator('.tp-personal summary').click();
+  await page.addStyleTag({content:'html{scroll-behavior:auto!important}'});
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  const layout=await page.evaluate(()=>{const profile=document.querySelector('.teacher-profile').getBoundingClientRect();const footer=document.querySelector('#rs-footer').getBoundingClientRect();return {gap:footer.top-profile.bottom,bodyHeight:document.body.getBoundingClientRect().height,footerBottom:footer.bottom};});
+  assert.ok(layout.gap>=0 && layout.gap<80,'footer follows profile without forced blank gap');
+  assert.ok(layout.bodyHeight>=layout.footerBottom-1,'body includes footer in natural document flow');
+  await page.screenshot({path:process.env.TEMP+'/teacher-profile-'+width+'.png',fullPage:true});
+  await page.locator('.ts-name').evaluate(el=>el.textContent='Professor Muhammad Abdul Rahman Chowdhury — Senior Educator');
+  await page.locator('.tp-wide dd').evaluate(el=>el.textContent='Long address with multiple locality and district names '.repeat(8));
+  await image.evaluate(img=>img.dispatchEvent(new Event('error')));
+  assert.ok((await image.getAttribute('src')).startsWith('data:image/svg+xml'));
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+ }finally{await browser.close();}
+});

@@ -16,7 +16,7 @@
 <div class="portal-grid">
 @foreach($portals as $portal)
 <article class="portal-card" data-portal="{{ $portal['key'] }}"><span class="portal-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="{{ $portalIcons[$portal['key']] }}"/></svg></span><h2>{{ $portal['name'] }}</h2><p>{{ $portal['description'] }}</p>
-@if($portal['url'])<a class="portal-action" href="{{ $portal['url'] }}" aria-label="{{ $portal['name'] }} login">Login <span aria-hidden="true">&#8594;</span></a>@else<button class="portal-action portal-unavailable" type="button" disabled>Not configured</button>@endif
+@if($portal['url'])<a class="portal-action" href="{{ $portal['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $portal['name'] }} login">Login <span aria-hidden="true">&#8594;</span></a>@else<button class="portal-action portal-unavailable" type="button" disabled>Not configured</button>@endif
 </article>
 @endforeach
 </div></section></div>

@@ -29,6 +29,8 @@ class LoginHubTest extends TestCase
             $this->assertSame(4,substr_count($html,'data-portal='));
             $this->assertSame($state==='configured'?4:0,substr_count($html,'aria-label="'));
             $this->assertSame($state==='missing'?4:0,substr_count($html,'disabled>Not configured'));
+            $this->assertSame($state==='configured'?4:0,substr_count($html,'target="_blank"'));
+            $this->assertSame($state==='configured'?4:0,substr_count($html,'rel="noopener noreferrer"'));
             $this->assertStringNotContainsString('localhost',$html);
             if(getenv('LOGIN_HUB_QA_DIR')) file_put_contents($directory.'/'.$state.'.html','<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>'.$html.'</body></html>');
         }

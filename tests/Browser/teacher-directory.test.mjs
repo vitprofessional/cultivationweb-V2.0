@@ -1,0 +1,54 @@
+import test,{before,after} from 'node:test';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {mkdtemp} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const base=process.env.WEBSITE_QA_URL || 'http://localhost/cultivationweb-V2.0';
+let browser,directory;
+before(async()=>{directory=await mkdtemp(join(tmpdir(),'teacher-directory-'));browser=await chromium.launch({headless:true,executablePath:process.env.ASYNC_BROWSER_EXECUTABLE || 'C:/Program Files/Google/Chrome/Application/chrome.exe'});});
+after(async()=>{await browser?.close();console.log('Teacher directory screenshots: '+directory);});
+for(const width of [390,768,1280]) test(`professional Teacher Directory at ${width}px`,async()=>{
+ const page=await browser.newPage({viewport:{width,height:1000},reducedMotion:'reduce'});
+ try {
+  assert.equal((await page.goto(base+'/our-teacher',{waitUntil:'networkidle'})).status(),200);
+  // Existing CDN scripts are blocked in offline QA; do not let the unrelated loader obscure screenshots.
+  await page.addStyleTag({content:'#loader{display:none!important}'});
+  assert.equal(await page.getByRole('heading',{name:'Meet Our Teachers.',exact:true}).count(),1);
+  assert.equal(await page.getByText('OUR TEACHERS',{exact:true}).count(),1);
+  assert.equal(await page.locator('.teacher-directory-grid').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length),width===390?1:width===768?2:4);
+  const cards=page.locator('.teacher-card');
+  assert.ok(await cards.count()>1);
+  assert.equal(await cards.locator('.teacher-meta-chips,.teacher-contact-line,a[href^="tel:"],a[href^="mailto:"]').count(),0);
+  assert.equal(await cards.locator('a').count(),await cards.count());
+  assert.equal(await cards.getByText('View Profile',{exact:true}).count(),await cards.count());
+  const boxes=await cards.evaluateAll(es=>es.map(e=>e.getBoundingClientRect()));
+  assert.ok(boxes.every(b=>Math.abs(b.height-boxes[0].height)<1),'equal card heights');
+  const frames=await cards.locator('.people-photo-frame').evaluateAll(es=>es.map(e=>e.getBoundingClientRect()));
+  assert.ok(frames.every(b=>Math.abs(b.width/b.height-.8)<.01 && Math.abs(b.height-frames[0].height)<1));
+  assert.equal(await cards.first().locator('.teacher-name').evaluate(el=>getComputedStyle(el).fontSize),'18px');
+  const firstName = await cards.first().getAttribute('data-faculty-name');
+  await page.locator('#faculty-search').fill(firstName);
+  assert.ok(await page.locator('.teacher-card:visible').count()>=1);
+  await page.locator('#faculty-search').fill('NO_MATCH_987654');
+  assert.equal(await page.locator('.teacher-card:visible').count(),0);
+  assert.ok(await page.locator('#faculty-no-results').isVisible());
+  await page.getByRole('button',{name:'Reset',exact:true}).click();
+  const firstDesignation = await cards.first().getAttribute('data-faculty-designation');
+  await page.locator('#faculty-designation').selectOption(firstDesignation);
+  assert.ok((await page.locator('.teacher-card:visible').evaluateAll(es=>es.map(e=>e.dataset.facultyDesignation))).every(value=>value===firstDesignation));
+  await page.getByRole('button',{name:'Reset',exact:true}).click();
+  assert.equal(await page.locator('.teacher-card:visible').count(),await cards.count());
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+  await page.locator('#teachers-heading').scrollIntoViewIfNeeded();
+  await page.screenshot({path:join(directory,'directory-'+width+'.png')});
+  await cards.first().locator('.teacher-name').evaluate(el=>{el.textContent='Professor Muhammad Abdul Rahman Chowdhury — Senior Academic Educator';});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'long name wraps without overflow');
+  const longBoxes=await cards.evaluateAll(es=>es.map(e=>e.getBoundingClientRect().height));
+  assert.ok(longBoxes.every(h=>Math.abs(h-longBoxes[0])<1),'long name preserves equal card heights');
+  await page.keyboard.press('Tab');
+  await cards.first().getByRole('link',{name:/profile/i}).focus();
+  assert.equal(await cards.first().getByRole('link',{name:/profile/i}).evaluate(el=>getComputedStyle(el).outlineStyle),'solid');
+ } finally {await page.close();}
+});

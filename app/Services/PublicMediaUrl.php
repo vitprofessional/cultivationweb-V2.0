@@ -49,7 +49,20 @@ final class PublicMediaUrl
 
     public function teacherPortrait(?string $filename): ?string
     {
+        $filename = preg_replace('~\A(?:public/)?upload/image/teacher/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'teacher', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+    }
+
+    public function studentPortrait(?string $filename): ?string
+    {
+        $filename = preg_replace('~\A(?:public/)?upload/image/student/~', '', trim($filename ?? ''));
+        return $this->galleryFile($filename, 'student', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
+    }
+
+    public function staffPortrait(?string $filename): ?string
+    {
+        $filename = preg_replace('~\A(?:public/)?upload/image/staff/~', '', trim($filename ?? ''));
+        return $this->galleryFile($filename, 'staff', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
     public function galleryPhoto(?string $filename): ?string

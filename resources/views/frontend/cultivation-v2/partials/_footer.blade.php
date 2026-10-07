@@ -643,6 +643,5 @@
     </div>
 </footer>
 
-<div id="scrollUp">
-    <i class="fa fa-angle-up"></i>
-</div>
+<button id="scrollUp" type="button" aria-label="Back to top" hidden><span aria-hidden="true">↑</span></button>
+@include('frontend.cultivation-v2.partials._public-scroll')

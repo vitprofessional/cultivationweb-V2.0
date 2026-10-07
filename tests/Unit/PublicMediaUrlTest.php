@@ -9,6 +9,22 @@ use PHPUnit\Framework\TestCase;
 
 class PublicMediaUrlTest extends TestCase
 {
+    public function test_people_portraits_use_admin_authority_and_safe_legacy_paths(): void
+    {
+        $resolver = new PublicMediaUrl(new Repository(['media' => [
+            'public_base_url' => 'https://admin.example.test/public', 'public_path_prefix' => 'public',
+        ]]));
+        foreach (['studentPortrait' => 'student', 'teacherPortrait' => 'teacher'] as $method => $folder) {
+            $expected = 'https://admin.example.test/public/upload/image/'.$folder.'/person.jpg';
+            foreach (['person.jpg', 'upload/image/'.$folder.'/person.jpg', 'public/upload/image/'.$folder.'/person.jpg'] as $value) {
+                $this->assertSame($expected, $resolver->$method($value));
+            }
+            foreach ([null, '', '../person.jpg', 'https://other.example/person.jpg', 'upload/image/other/person.jpg', 'person.svg', 'person%2ejpg'] as $value) {
+                $this->assertNull($resolver->$method($value));
+            }
+        }
+    }
+
     #[DataProvider('validPaths')]
     public function test_portable_url_contract(string $base, string $prefix, string $path, string $expected): void
     {

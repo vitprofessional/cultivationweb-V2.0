@@ -108,16 +108,8 @@
             default => 'Faculty Members',
         };
         $resolveTeacherPhoto = function ($teacher) {
-            if (!$teacher || empty($teacher->avatar)) {
-                return asset(config('cultivation_demo.branding.default_avatar'));
-            }
-
-            $file = basename((string) $teacher->avatar);
-            if (file_exists(public_path('upload/image/teacher/' . $file))) {
-                return url('/public/upload/image/teacher/' . rawurlencode($file));
-            }
-
-            return asset(config('cultivation_demo.branding.default_avatar'));
+            return app(\App\Services\PublicMediaUrl::class)->teacherPortrait($teacher?->avatar)
+                ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
         };
         $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
             ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
@@ -1634,6 +1626,7 @@
         }
     </style>
     <link rel="stylesheet" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/css/homepage-responsive.css') }}?v={{ filemtime(public_path('cultivation/assets/css/homepage-responsive.css')) }}">
+    @include('frontend.cultivation-v2.partials._people-portraits')
 </head>
 <body class="home-style2 v2-homepage">
 
@@ -1985,8 +1978,8 @@
                         @if($teacherName)
                             <div class="{{ $facultyColClass }}">
                                 <article class="faculty-card" data-source="{{ $teacher->is_demo ? 'DEMO' : 'REAL' }}">
-                                    @if($teacherUrl)<a class="faculty-photo-link" href="{{ $teacherUrl }}" aria-label="View {{ $teacherName }} profile">@else<a class="faculty-photo-link" href="{{ route('teacherPage') }}" aria-label="View faculty directory">@endif
-                                        <img src="{{ $teacherPhoto }}" alt="Photo of {{ $teacherName }}" loading="lazy">
+                                    @if($teacherUrl)<a class="faculty-photo-link people-photo-link" href="{{ $teacherUrl }}" aria-label="View {{ $teacherName }} profile">@else<a class="faculty-photo-link people-photo-link" href="{{ route('teacherPage') }}" aria-label="View faculty directory">@endif
+                                        <x-people-portrait :src="$teacherPhoto" :alt="'Photo of '.$teacherName" />
                                     </a>
                                     <div class="faculty-card-body text-center">
                                         <h3>@if($teacherUrl)<a href="{{ $teacherUrl }}">{{ $teacherName }}</a>@else{{ $teacherName }}@endif</h3>

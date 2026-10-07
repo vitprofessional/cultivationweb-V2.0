@@ -248,9 +248,8 @@ Student Profile
 </style>
 @php
   $name = $student->student_name ?: 'Unknown';
-  $photo = !empty($student->avatar)
-    ? config('app.url') . '/public/upload/image/student/' . rawurlencode(basename($student->avatar))
-    : config('app.url') . '/public/avatar.png';
+  $photo = app(\App\Services\PublicMediaUrl::class)->studentPortrait($student->avatar)
+    ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
   $studentId = $student->stdId ?? '-';
   $className = optional($class)->className ?? '-';
   $departmentName = optional($dept)->departmentName ?? '-';
@@ -261,10 +260,7 @@ Student Profile
   <div class="student-profile-shell">
     <div class="student-profile-card">
       <div class="student-profile-media">
-        <div class="student-profile-photo-ring">
-          <img class="student-profile-photo" src="{{ $photo }}" alt="{{ e($name) }}" loading="lazy"
-             onerror="this.onerror=null;this.src='{{ asset('public/avatar.png') }}';">
-        </div>
+        <x-people-portrait :src="$photo" :alt="$name" variant="profile" image-class="student-profile-photo" />
         <div class="student-profile-tag"><i class="fa fa-user"></i> Student Record</div>
       </div>
       <div class="student-profile-body">

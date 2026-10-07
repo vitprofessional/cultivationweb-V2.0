@@ -664,6 +664,7 @@
     </style>
 
     @stack('styles')
+    @include('frontend.cultivation-v2.partials._people-portraits')
 </head>
 <body class="home-style2">
     @include('frontend.cultivation-v2.partials._header')

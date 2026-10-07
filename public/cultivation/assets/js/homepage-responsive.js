@@ -125,11 +125,4 @@
     if (reducedMotion.matches) carousel.trigger('stop.owl.autoplay');
     reducedMotion.addEventListener('change', event => carousel.trigger(event.matches ? 'stop.owl.autoplay' : 'play.owl.autoplay'));
     labelCarousel();
-    const scrollTop = document.getElementById('scrollUp');
-    scrollTop.setAttribute('role', 'button');
-    scrollTop.setAttribute('tabindex', '0');
-    scrollTop.setAttribute('aria-label', 'Scroll to top');
-    scrollTop.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); scrollTop.click(); }
-    });
 })();
