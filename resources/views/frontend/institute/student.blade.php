@@ -345,21 +345,92 @@ $config = App\Models\ServerConfig::first();
         }
     }
 </style>
+<style>
+body:has(#student-database-page) .edu-page-title{display:none}
+body:has(#student-database-page) .edu-main-card{border:0;box-shadow:none;background:transparent}
+body:has(#student-database-page) .edu-main-inner{padding:0}
+#student-database-page{width:100%;max-width:1180px;margin:0 auto;padding:12px;min-width:0}
+.student-database-hero{padding:30px 32px;border:1px solid #d9edf9;border-radius:17px;background:radial-gradient(ellipse at 90% 10%,#bce9fc,transparent 60%),linear-gradient(120deg,#f4fbff,#e0f2fc);margin-bottom:18px}
+.student-database-hero nav{font-size:13px;color:#56718c;margin-bottom:14px}
+.student-database-hero h1{font-size:36px;line-height:1.25;color:#123665;font-weight:800;margin:0 0 10px}
+.student-database-hero p{font-size:16px;color:#53708b;margin:0}
+.student-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.student-summary-item{display:flex;align-items:center;gap:14px;border:1px solid #deecf7;border-radius:13px;padding:18px;background:white;box-shadow:0 4px 16px #1c537008}
+.student-summary-item i{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#e8f6ff;color:#087bb8;flex-shrink:0;font-size:20px}
+.student-summary-item strong{display:block;color:#153965;font-size:24px;line-height:1.25}.student-summary-item span{font-size:13px;color:#637c92}
+.student-filter-panel{background:white;border:1px solid #daeaf5;border-radius:15px;padding:22px;box-shadow:0 5px 18px #23526c08;margin-bottom:20px}
+.student-filter-panel h2{font-size:19px;color:#173f67;margin:0 0 16px}
+.student-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:end}
+.student-filters label{display:flex;flex-direction:column;gap:7px;font-size:13px;font-weight:700;color:#3c5874;min-width:0;margin:0}
+.student-filters input,.student-filters select{width:100%;height:44px;border:1px solid #cedeeb;border-radius:8px;padding:0 12px;background:#fbfdff;color:#294f71;font-size:14px;min-width:0}
+.student-filters input:focus-visible,.student-filters select:focus-visible,.student-reset:focus-visible{outline:3px solid #49bed9;outline-offset:2px}
+.student-reset{height:44px;border-radius:8px;border:1px solid #c6deed;background:#edf7fd;color:#185f8a;font-weight:700}
+.student-reset:hover{background:#175882;color:white}
+#student-database-page .student-shell{background:white;border-radius:16px;padding:22px}
+#student-database-page .student-header h2{font-size:23px}
+#student-database-page .student-table-wrap{min-width:0;overflow-x:auto}
+#student-database-page .student-table{min-width:660px}
+#student-database-page .dataTables_paginate{display:flex;flex-wrap:wrap;gap:4px;justify-content:flex-end}
+#student-database-page .dataTables_paginate span{display:flex;flex-wrap:wrap;gap:4px}
+@media(max-width:991px){.student-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.student-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.student-database-hero{padding:26px}.student-database-hero h1{font-size:32px}}
+@media(max-width:575px){#student-database-page{padding:0}.student-filters{grid-template-columns:1fr}.student-filter-panel,#student-database-page .student-shell{padding:16px}.student-database-hero{padding:22px 18px}.student-database-hero h1{font-size:28px}.student-summary{gap:10px}.student-summary-item{padding:12px;gap:9px}.student-summary-item i{width:34px;height:34px;font-size:16px}.student-summary-item strong{font-size:21px}.student-summary-item span{font-size:12px}}
+</style>
 
 @php
     $sessions    = \App\Models\sessionManage::all()->keyBy('id');
     $classes     = \App\Models\classManage::all()->keyBy('id');
     $sections    = \App\Models\sectionManage::all()->keyBy('id');
     $departments = \App\Models\Department::all()->keyBy('id');
+    $studentFilters = [
+        ['class', 'Class', 'className', $classes, 'className'],
+        ['section', 'Section', 'sectionName', $sections, 'section'],
+        ['session', 'Session', 'sessName', $sessions, 'session'],
+        ['department', 'Department', 'departmentName', $departments, 'departmentName'],
+    ];
+    $studentMetrics = [
+        ['Total Students', $Datakey->count(), 'fa-users'],
+        ['Classes', $Datakey->pluck('className')->unique()->intersect($classes->keys())->count(), 'fa-book'],
+        ['Sessions', $Datakey->pluck('sessName')->unique()->intersect($sessions->keys())->count(), 'fa-calendar'],
+        ['Departments', $Datakey->pluck('departmentName')->unique()->intersect($departments->keys())->count(), 'fa-university'],
+    ];
 @endphp
 
-<section class="container mt-4">
+<section id="student-database-page">
+    <header class="student-database-hero">
+        <nav aria-label="Breadcrumb"><a href="{{ route('homePage') }}">Home</a> &rsaquo; Student Database</nav>
+        <h1>Student Database</h1>
+        <p>Browse student records by class, section, session and department.</p>
+    </header>
+    <div class="student-summary" aria-label="Student database summary">
+        @foreach($studentMetrics as $metric)
+            <div class="student-summary-item"><i class="fa {{ $metric[2] }}" aria-hidden="true"></i><div><strong>{{ $metric[1] }}</strong><span>{{ $metric[0] }}</span></div></div>
+        @endforeach
+    </div>
+    <section class="student-filter-panel" aria-labelledby="student-filter-title">
+        <h2 id="student-filter-title">Find a Student</h2>
+        <form class="student-filters" id="student-filters" role="search">
+            <label>Search Student<input id="student-search" type="search" placeholder="Name, student ID or details" autocomplete="off"></label>
+            @foreach($studentFilters as [$key, $label, $field, $lookup, $nameField])
+                <label>{{ $label }}
+                    <select data-student-filter="{{ $key }}" aria-label="{{ $label }}">
+                        <option value="">All {{ $label }}</option>
+                        @foreach($lookup->only($Datakey->pluck($field)->filter()->unique()->all()) as $option)
+                            @if(filled($option->{$nameField}))
+                                <option value="{{ $option->id }}">{{ $option->{$nameField} }}</option>
+                            @endif
+                        @endforeach
+                    </select>
+                </label>
+            @endforeach
+            <label>Per-page<select id="student-per-page"><option>10</option><option selected>25</option><option>50</option><option>100</option></select></label>
+            <button class="student-reset" type="reset">Reset</button>
+        </form>
+    </section>
     <div class="student-shell">
         <div class="student-header">
             <div>
-                <span class="kicker">Institute</span>
-                <h2>Student List</h2>
-                <p>Browse registered students by class, session, department, and section.</p>
+                <h2>Student Records</h2>
+                <p>Student information, details and profile access.</p>
             </div>
             <span class="student-count"><i class="fa fa-users"></i> {{ $Datakey->count() }} {{ $Datakey->count() === 1 ? 'Student' : 'Students' }}</span>
         </div>
@@ -385,7 +456,7 @@ $config = App\Models\ServerConfig::first();
                                 $photo = app(\App\Services\PublicMediaUrl::class)->studentPortrait($std->avatar)
                                     ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
                             @endphp
-                            <tr>
+                            <tr data-class="{{ $std->className }}" data-section="{{ $std->sectionName }}" data-session="{{ $std->sessName }}" data-department="{{ $std->departmentName }}">
                                 <td>
                                     <div class="student-info-wrap">
                                         <x-people-portrait :src="$photo" :alt="$fullName" variant="compact" image-class="student-avatar" />
@@ -446,7 +517,8 @@ $config = App\Models\ServerConfig::first();
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     if (window.jQuery && $('#studentTable').length) {
-        $('#studentTable').DataTable({
+        const table = $('#studentTable').DataTable({
+            dom: 'rtip',
             order: [[0, 'asc']],
             pageLength: 25,
             autoWidth: false,
@@ -461,6 +533,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 zeroRecords: 'No matching students found',
                 paginate: { previous: '‹', next: '›' }
             }
+        });
+        const filters = Array.from(document.querySelectorAll('[data-student-filter]'));
+        const filterRows = function (settings, data, index) {
+            if (settings.nTable.id !== 'studentTable') return true;
+            const row = settings.aoData[index].nTr;
+            return filters.every(control => !control.value || row.dataset[control.dataset.studentFilter] === control.value);
+        };
+        $.fn.dataTable.ext.search.push(filterRows);
+        filters.forEach(control => control.addEventListener('change', () => table.draw()));
+        document.getElementById('student-search').addEventListener('input', event => table.search(event.target.value).draw());
+        document.getElementById('student-per-page').addEventListener('change', event => table.page.len(Number(event.target.value)).draw());
+        const form = document.getElementById('student-filters');
+        form.addEventListener('submit', event => event.preventDefault());
+        form.addEventListener('reset', () => setTimeout(() => table.search('').page.len(25).draw(), 0));
+        $('#studentTable').on('destroy.dt', () => {
+            const index = $.fn.dataTable.ext.search.indexOf(filterRows);
+            if (index >= 0) $.fn.dataTable.ext.search.splice(index, 1);
         });
     }
 });

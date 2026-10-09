@@ -67,16 +67,37 @@ class PublicContactSurfaceTest extends TestCase
                 ->assertSee('+8801700000000')
                 ->assertSee('office@current-school.edu')
                 ->assertSee('https://facebook.com/current-school')
-                ->assertSee('https://x.com/current-school')
                 ->assertSee('https://youtube.com/@current-school')
-                ->assertSee('https://linkedin.com/company/current-school')
                 ->assertSee('https://maps.google.com/?q=current-school')
                 ->assertDontSee('Old address')
                 ->assertDontSee('01000000000')
                 ->assertDontSee('legacy-contact')
                 ->assertDontSee('class="fa fa-globe"', false);
         }
+        $this->get('/contact-us')->assertSee('https://x.com/current-school')->assertSee('https://linkedin.com/company/current-school');
         $this->get('/contact-us')->assertSee('Reach the support team')->assertSee('Submit an inquiry');
+    }
+
+    public function test_about_presentation_preserves_content_and_does_not_invent_core_values_or_statistics(): void
+    {
+        ServerConfig::query()->forceCreate(['instituteName' => 'About QA Institution']);
+        InstituteDetails::query()->forceCreate([
+            'insDetails' => 'AUTHORED_ABOUT_CONTENT',
+            'mission' => 'AUTHORED_MISSION_CONTENT',
+            'vision' => 'AUTHORED_VISION_CONTENT',
+            'establishDate' => '1990', 'landSize' => '1.81 Acres',
+        ]);
+        $html = $this->get('/about-us')->assertOk()
+            ->assertSee('About QA Institution')->assertSee('1990')->assertSee('1.81 Acres')
+            ->assertDontSee('Our Core Values')
+            ->assertSee('about-hero-visual')->assertSee('about-journey-visual')
+            ->assertDontSee('class="about-contact"', false)
+            ->assertSee(route('supportPage'), false)->assertSee(route('imagePage'), false)
+            ->assertDontSee('Academic Excellence')->assertDontSee('Moral and Ethical Development')
+            ->getContent();
+        foreach (['AUTHORED_ABOUT_CONTENT', 'AUTHORED_MISSION_CONTENT', 'AUTHORED_VISION_CONTENT'] as $content) {
+            $this->assertSame(1, substr_count($html, $content));
+        }
     }
 
     public function test_missing_contact_and_placeholder_social_values_are_not_rendered_as_fake_details(): void

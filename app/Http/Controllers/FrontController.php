@@ -171,6 +171,7 @@ class FrontController extends Controller
         return view('frontend.institute.chairmanMessage', [
             'chairman' => $chairmanProfile['person'],
             'chairmanAmbiguous' => $chairmanProfile['ambiguous'],
+            'config' => Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->first() : null,
         ]);
     }
 

@@ -31,6 +31,9 @@ class PrincipalAuthorityCompatibilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp(); $this->sandbox=sys_get_temp_dir().'/principal-web-'.bin2hex(random_bytes(12)); File::ensureDirectoryExists($this->sandbox);
+        // This suite creates its own canonical configuration; ignore shared test fixtures.
+        // DatabaseTransactions restores pre-existing test rows after each case.
+        DB::table('server_configs')->delete();
         config(['view.compiled'=>$this->sandbox,'logging.default'=>'stderr','app.url'=>'https://web.example.test','media.public_base_url'=>'https://admin.example.test/tenant/public','media.public_path_prefix'=>'public']);
         $this->app['url']->forceRootUrl('https://web.example.test'); $this->app['url']->forceScheme('https');
     }
@@ -62,6 +65,44 @@ class PrincipalAuthorityCompatibilityTest extends TestCase
             'status'=>$status,
         ]);
     }
+    public function test_editorial_message_uses_configured_signature_and_omits_invalid_signature_paths(): void
+    {
+        $this->identity();
+        $config = ServerConfig::query()->forceCreate(['instituteName' => 'Signature QA Academy', 'principalSign' => 'head-signature.png']);
+        PrincipalSpeech::query()->forceCreate(['importantSpeech' => 'প্রধান শিক্ষকের বাণী', 'generalSpeech' => "\"শিক্ষাই আলো\"\n\nপ্রথম অনুচ্ছেদ।\n\nদ্বিতীয় অনুচ্ছেদ।\n\nশুভেচ্ছান্তে,\n\nLegacy Closing Name\nপ্রধান শিক্ষক"]);
+        $this->get(route('headOfInstituteMessagePage'))->assertOk()
+            ->assertSee('https://admin.example.test/tenant/public/upload/image/cultivation/head-signature.png', false)
+            ->assertSee('hoi-hero', false)->assertSee('hoi-quote', false)->assertDontSee('Print this page')
+            ->assertSee('প্রতিষ্ঠান প্রধানের বাণী')->assertSee('Message from the Head of Institution')
+            ->assertDontSee('class="hoi-hero-name"', false)->assertDontSee('class="hoi-hero-role"', false)
+            ->assertSee('Legacy Closing Name')->assertSee('প্রধান শিক্ষক')->assertSee('শুভেচ্ছান্তে,')->assertSee('দ্বিতীয় অনুচ্ছেদ।')
+            ->assertDontSee('window.print()', false)->assertSee('Education values')
+            ->assertSee('Quality Education')->assertSee('Discipline, Character')->assertSee('Student-Centered')
+            ->assertDontSee('Visionary')->assertDontSee('Together for')
+            ->assertDontSee('class="edu-page-title"', false);
+        $config->principalSign = '../invalid.png';
+        $config->save();
+        $this->get(route('headOfInstituteMessagePage'))->assertOk()->assertDontSee('alt="Head of Institute signature"', false);
+    }
+
+    public function test_president_message_preserves_authored_quote_and_signoff_without_using_profile_details_or_principal_signature(): void
+    {
+        $this->identity();
+        ServerConfig::query()->forceCreate(['instituteName' => 'Committee QA Academy', 'principalSign' => 'principal-only.png']);
+        $message = "\"শিক্ষাই ভবিষ্যৎ\"\n\n".str_repeat("শিক্ষার্থীদের উন্নয়ন আমাদের অঙ্গীকার।\n\n", 18)
+            ."শুভেচ্ছান্তে,\n\nAuthored President Name\nPresident\nCommittee QA Academy\nDate: 2026-10-07";
+        $this->committeeMember('Canonical President', 'President', 'Active', $message);
+        $response = $this->get(route('chairmanMessagePage'))->assertOk();
+        $response->assertSee('সভাপতির বাণী')->assertSee('Canonical President')
+            ->assertSee('শিক্ষাই ভবিষ্যৎ')->assertSee('শুভেচ্ছান্তে,')
+            ->assertSee('Authored President Name')->assertSee('Date: 2026-10-07')
+            ->assertDontSee('Synthetic profile details for Canonical President')
+            ->assertDontSee('principal-only.png')->assertDontSee('window.print()', false)
+            ->assertSee('data:image/svg+xml', false);
+        $this->assertSame($message, ManagingComittee::query()->where('fullName', 'Canonical President')->value('message'));
+        $this->assertSame(18, substr_count($response->getContent(), 'শিক্ষার্থীদের উন্নয়ন আমাদের অঙ্গীকার।'));
+    }
+
     private function surfaces(): array
     {
         $this->get(route('principalSpeechPage'))->assertRedirect(route('headOfInstituteMessagePage'));
@@ -177,11 +218,14 @@ class PrincipalAuthorityCompatibilityTest extends TestCase
         $homepage->assertSee('Synthetic Chairman message teaser.')
             ->assertDontSee('Synthetic profile details for Synthetic Governing Chair')
             ->assertSee('View Full Profile');
-        $profile->assertSee('Governing Body profile details')
-            ->assertSee('Synthetic profile details for Synthetic Governing Chair')
-            ->assertSee('Message')
+        $profile->assertSee('সভাপতির বাণী')
+            ->assertSee('Visionary')->assertSee('Governance')->assertSee('Institutional')->assertSee('Development')
+            ->assertSee('Community')->assertSee('Partnership')->assertDontSee('Quality Education')->assertDontSee('Student-Centered')
+            ->assertSee('Message from the Governing Body President')
+            ->assertDontSee('Synthetic profile details for Synthetic Governing Chair')
             ->assertSee('Synthetic Chairman message teaser.')
-            ->assertSee('2026-2028');
+            ->assertDontSee('2026-2028')
+            ->assertDontSee('class="hoi-hero-name"', false);
     }
 
     public function test_v2_homepage_brand_statistics_copy_and_placement_surface(): void

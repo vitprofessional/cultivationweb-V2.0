@@ -44,6 +44,12 @@ class PublicStudentDraftExclusionTest extends TestCase
 
         $directory = $this->get('/student');
         $directory->assertOk()
+            ->assertSee('Student Database')->assertSee('Find a Student')
+            ->assertSee('student-per-page')->assertSee('data-student-filter="class"', false)
+            ->assertSee('data-student-filter="section"', false)->assertSee('data-student-filter="session"', false)
+            ->assertSee('data-student-filter="department"', false)
+            ->assertSee('Student Info')->assertSee('Student Details')->assertSee('View Student Profile')
+            ->assertSee(route('student.show', ['id' => $activeId]), false)
             ->assertSee('Public Active Student')
             ->assertDontSee('Public Missing Class Draft')
             ->assertDontSee('Public No Class Draft')

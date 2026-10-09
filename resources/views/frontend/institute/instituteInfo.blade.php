@@ -1,577 +1,139 @@
 @extends($frontendLayout ?? config('frontend.layout'))
-
-@section('fronttitle')
-About Us
-@endsection
-
+@section('fronttitle', 'About Us')
 @php
 $config = App\Models\ServerConfig::query()->latest('id')->first();
 @endphp
-
-@push('styles')
-<style>
-    .about-pro-breadcrumb {
-        position: relative;
-        overflow: hidden;
-        border-radius: 22px;
-        padding: 44px 38px;
-        margin-bottom: 28px;
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        box-shadow: 0 24px 50px rgba(17, 41, 88, 0.16);
-    }
-
-    .about-pro-breadcrumb::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(17, 41, 88, 0.9), rgba(33, 167, 208, 0.72));
-    }
-
-    .about-pro-breadcrumb > * {
-        position: relative;
-        z-index: 1;
-    }
-
-    .about-pro-kicker {
-        display: inline-flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.14);
-        color: #fff;
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 18px;
-    }
-
-    .about-pro-breadcrumb h1,
-    .about-pro-breadcrumb p,
-    .about-pro-breadcrumb li,
-    .about-pro-breadcrumb a {
-        color: #fff;
-    }
-
-    .about-pro-breadcrumb h1 {
-        font-size: 42px;
-        line-height: 1.12;
-        margin-bottom: 12px;
-    }
-
-    .about-pro-breadcrumb p {
-        max-width: 720px;
-        margin-bottom: 18px;
-        font-size: 16px;
-        opacity: 0.96;
-    }
-
-    .about-pro-breadcrumb-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px 20px;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        font-weight: 600;
-    }
-
-    .about-pro-breadcrumb-list li {
-        position: relative;
-    }
-
-    .about-pro-breadcrumb-list li + li::before {
-        content: "/";
-        position: absolute;
-        left: -13px;
-        top: 0;
-        opacity: 0.7;
-    }
-
-    .about-pro-panel {
-        background: #fff;
-        border: 1px solid rgba(17, 41, 88, 0.08);
-        border-radius: 22px;
-        box-shadow: 0 18px 40px rgba(17, 41, 88, 0.08);
-        overflow: hidden;
-    }
-
-    body.home-style2 .edu-content-wrap {
-        display: flex;
-        align-items: center;
-    }
-
-    body.home-style2 .edu-content-wrap .container {
-        width: 100%;
-    }
-
-    body.home-style2 .edu-main-card {
-        width: 100%;
-    }
-
-    body.home-style2 .edu-main-inner > .row {
-        align-items: center;
-    }
-
-    .about-pro-media {
-        position: relative;
-        min-height: 100%;
-        background: linear-gradient(180deg, #f1f8fb 0%, #e4f4f9 100%);
-        padding: 26px;
-    }
-
-    .about-pro-media img {
-        width: 100%;
-        min-height: 360px;
-        object-fit: cover;
-        border-radius: 18px;
-        display: block;
-    }
-
-    .about-pro-media-card {
-        position: absolute;
-        right: 42px;
-        bottom: 42px;
-        max-width: 240px;
-        background: #fff;
-        border-radius: 18px;
-        padding: 18px 20px;
-        box-shadow: 0 20px 40px rgba(17, 41, 88, 0.16);
-    }
-
-    .about-pro-media-card .label {
-        display: block;
-        color: #21a7d0;
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 8px;
-    }
-
-    .about-pro-media-card strong {
-        display: block;
-        color: #112958;
-        font-size: 22px;
-        line-height: 1.2;
-        margin-bottom: 8px;
-    }
-
-    .about-pro-content {
-        padding: 34px;
-    }
-
-    .about-pro-sec-title {
-        margin-bottom: 18px;
-    }
-
-    .about-pro-sec-title .sub {
-        display: inline-block;
-        color: #ff6f1a;
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin-bottom: 10px;
-    }
-
-    .about-pro-sec-title h2 {
-        margin-bottom: 12px;
-        font-size: 34px;
-        line-height: 1.2;
-    }
-
-    .about-pro-lead {
-        font-size: 17px;
-        line-height: 1.85;
-        color: #41566f;
-        margin-bottom: 0;
-    }
-
-    .about-pro-meta {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-        margin: 26px 0;
-    }
-
-    .about-pro-meta-item {
-        padding: 20px 18px;
-        border-radius: 18px;
-        background: #f7fbfd;
-        border: 1px solid rgba(33, 167, 208, 0.12);
-        min-height: 100%;
-    }
-
-    .about-pro-meta-item span {
-        display: block;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: #6f8199;
-        font-weight: 800;
-        margin-bottom: 8px;
-    }
-
-    .about-pro-meta-item strong {
-        display: block;
-        font-size: 20px;
-        line-height: 1.3;
-        color: #112958;
-        margin-bottom: 6px;
-    }
-
-    .about-pro-meta-item p {
-        margin: 0;
-        color: #5b6d84;
-        line-height: 1.7;
-    }
-
-    .about-pro-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
-        margin-top: 28px;
-    }
-
-    .about-pro-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        min-height: 50px;
-        padding: 12px 22px;
-        border-radius: 999px;
-        font-weight: 700;
-        transition: all 0.25s ease;
-    }
-
-    .about-pro-btn-primary {
-        background: linear-gradient(135deg, #21a7d0, #112958);
-        color: #fff;
-        box-shadow: 0 12px 26px rgba(33, 167, 208, 0.22);
-    }
-
-    .about-pro-btn-primary:hover,
-    .about-pro-btn-primary:focus {
-        color: #fff;
-        transform: translateY(-1px);
-    }
-
-    .about-pro-btn-light {
-        background: #fff;
-        color: #112958;
-        border: 1px solid rgba(17, 41, 88, 0.15);
-    }
-
-    .about-pro-btn-light:hover,
-    .about-pro-btn-light:focus {
-        color: #112958;
-        border-color: rgba(17, 41, 88, 0.28);
-    }
-
-    .about-pro-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 22px;
-        margin-top: 28px;
-    }
-
-    .about-pro-card {
-        height: 100%;
-        padding: 28px;
-        border-radius: 22px;
-        background: #fff;
-        border: 1px solid rgba(17, 41, 88, 0.08);
-        box-shadow: 0 18px 36px rgba(17, 41, 88, 0.07);
-    }
-
-    .about-pro-card-icon {
-        width: 58px;
-        height: 58px;
-        border-radius: 18px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        color: #fff;
-        margin-bottom: 18px;
-        background: linear-gradient(135deg, #ff8a34, #ff6f1a);
-        box-shadow: 0 14px 26px rgba(255, 111, 26, 0.2);
-    }
-
-    .about-pro-card p {
-        margin: 0;
-        line-height: 1.85;
-        color: #53677f;
-    }
-
-    .about-pro-contact {
-        padding: 28px;
-        border-radius: 22px;
-        background: linear-gradient(135deg, #112958, #1b4b86);
-        color: #fff;
-        box-shadow: 0 24px 44px rgba(17, 41, 88, 0.18);
-    }
-
-    .about-pro-contact h3,
-    .about-pro-contact p,
-    .about-pro-contact li,
-    .about-pro-contact a {
-        color: #fff;
-    }
-
-    .about-pro-contact ul {
-        list-style: none;
-        padding: 0;
-        margin: 18px 0 0;
-    }
-
-    .about-pro-contact li {
-        display: flex;
-        gap: 14px;
-        align-items: flex-start;
-        padding: 14px 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.14);
-    }
-
-    .about-pro-contact li:first-child {
-        border-top: 0;
-        padding-top: 0;
-    }
-
-    .about-pro-contact i {
-        width: 22px;
-        text-align: center;
-        margin-top: 4px;
-        color: #8fe6ff;
-    }
-
-    .about-pro-empty {
-        padding: 40px;
-        text-align: center;
-        border-radius: 22px;
-        background: #fff8ef;
-        border: 1px solid rgba(255, 111, 26, 0.16);
-        color: #8a5b26;
-    }
-
-    @media (max-width: 991.98px) {
-        .about-pro-breadcrumb {
-            padding: 34px 24px;
-        }
-
-        .about-pro-breadcrumb h1 {
-            font-size: 34px;
-        }
-
-        .about-pro-media-card {
-            position: static;
-            margin-top: 18px;
-            max-width: none;
-        }
-
-        .about-pro-meta {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        .about-pro-content,
-        .about-pro-card,
-        .about-pro-contact {
-            padding: 22px;
-        }
-
-        .about-pro-breadcrumb h1 {
-            font-size: 28px;
-        }
-
-        .about-pro-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .about-pro-media {
-            padding: 18px;
-        }
-
-        .about-pro-media img {
-            min-height: 260px;
-        }
-    }
-</style>
-@endpush
-
 @section('frontcontent')
+<style>
+body:has(#about-page) .edu-content-wrap{background:linear-gradient(#edf9ff,#f7fcff);padding:0 0 22px;min-height:0}
+body:has(#about-page) .edu-content-wrap>.container{max-width:none;padding:0}
+body:has(#about-page) .edu-main-card{border:0;background:transparent;box-shadow:none;border-radius:0;overflow:visible}
+body:has(#about-page) .edu-main-inner{padding:0}
+body:has(#about-page) .edu-page-title,body:has(#about-page) .homepage-slider-wrap{display:none}
+body:has(#about-page) .edu-main-inner>.row{margin:0}
+#about-page{padding:0;color:#17375e}
+.about-hero{position:relative;isolation:isolate;padding:38px max(7vw,calc((100vw - 1120px)/2)) 88px;min-height:300px;overflow:hidden;background:linear-gradient(115deg,#e9f8ff,#c9ebfc)}
+.about-hero-visual{position:absolute;right:0;bottom:0;width:70%;height:100%;z-index:-2;opacity:.85}
+.about-hero:after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#edf9fff7 0%,#e4f6fff0 30%,#d5f0ff7a 68%,#c1e8ff38)}
+.about-breadcrumb{font-size:13px;margin-bottom:22px}.about-breadcrumb a{color:#087eae}
+.about-hero h1{font-size:44px;line-height:1.2;color:#10315c;margin:0 0 12px;font-weight:800}
+.about-hero h1:after{content:"";display:block;width:42px;height:3px;background:#08b4d9;margin-top:16px}
+.about-hero p{max-width:52ch;font-size:18px;line-height:1.6;margin:0}
+.about-shell{position:relative;max-width:1160px;width:91%;margin:-42px auto 0;display:grid;gap:20px}
+.about-overview{display:grid;grid-template-columns:minmax(0,41%) minmax(0,1fr);gap:28px;padding:14px;background:white;border:1px solid #def0f9;border-radius:15px;box-shadow:0 7px 24px #24516c08}
+.about-campus{position:relative;min-width:0;border-radius:12px;overflow:hidden;background:linear-gradient(145deg,#e2f4fd,#c5e4ef);min-height:340px}
+.about-campus img{width:100%;height:100%;position:absolute;inset:0;object-fit:cover;object-position:center}
+.about-campus-caption{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,#102f47e8);color:white;padding:48px 20px 20px}
+.about-campus-caption strong{display:block;font-size:18px}.about-campus-caption span{font-size:13px;line-height:1.5}
+.about-overview-copy{padding:8px 0;min-width:0}#about-page .about-eyebrow{font-size:12px;letter-spacing:1.8px;color:#049bc7;font-weight:800;margin:0 0 10px}
+.about-overview h2{font-size:29px;line-height:1.3;margin:0 0 18px;font-weight:800;color:#143665}
+.about-text{font-size:18px;line-height:1.85;color:#4a5c70;overflow-wrap:anywhere}.about-text p{margin:0 0 14px}
+.about-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;margin-top:16px}
+.about-fact{text-align:center;border:1px solid #dceef9;background:#f8fcff;border-radius:12px;padding:18px 12px}
+.about-fact i{display:block;color:#087ded;font-size:25px;margin-bottom:10px}.about-fact strong{display:block;font-size:19px;color:#123b75}.about-fact span{font-size:13px;color:#526885}
+.about-purpose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;align-items:stretch}
+.about-purpose-card{position:relative;overflow:hidden;border:1px solid #d2eefb;border-top:4px solid #0ab0da;border-radius:16px;padding:30px;background:linear-gradient(145deg,#fff,#edf9ff);box-shadow:0 8px 24px #23608009;min-width:0}
+.about-purpose-card--vision{background:linear-gradient(145deg,#f7fff9,#effaf3);border-color:#d7efdd}
+.about-purpose-card--vision{border-top-color:#369652}
+.about-purpose-icon{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00a5e0,#00c6e3);color:white;border:3px solid white;box-shadow:0 3px 9px #1492a315;font-size:27px;margin-bottom:16px}
+.about-purpose-card--vision .about-purpose-icon{background:linear-gradient(135deg,#268831,#50ba44)}
+.about-number{position:absolute;right:22px;top:16px;font-size:58px;line-height:1;font-weight:800;color:#00a3e02b}
+.about-purpose-card--vision .about-number{color:#37a54425}
+.about-purpose-card h3{font-size:29px;color:#123763;font-weight:800;margin:0 0 20px}
+.about-purpose-card .about-text{font-size:18px;line-height:1.9}
+.about-journey{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;border-radius:13px;padding:28px 34px;background:radial-gradient(ellipse at 10% 50%,#c1e7f6,#ebf8ff 65%);border:1px solid #daedf7}
+.about-journey h2{font-size:27px;line-height:1.3;color:#123565;margin:0;font-weight:800;max-width:22ch}
+.about-journey-right{padding-left:32px;border-left:1px solid #8bbbd3;min-width:0}.about-journey h3{font-size:21px;margin:0 0 14px;color:#133864}
+.about-actions{display:flex;flex-wrap:wrap;gap:12px}.about-action{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:24px;padding:10px 20px;background:linear-gradient(110deg,#156cbd,#123858);color:white!important;font-weight:700;font-size:14px;border:1px solid #16699d}
+.about-action--outline{background:white;color:#0787bf!important;border-color:#08a6db}
+.about-action:hover{background:#1b5481;color:white!important}.about-action:focus-visible{outline:3px solid #00b7dc;outline-offset:3px}
+.about-journey-left{display:grid;grid-template-columns:115px minmax(0,1fr);gap:20px;align-items:center;min-width:0}
+.about-journey-visual{width:100%;height:auto;filter:drop-shadow(0 7px 10px #37789420)}
+@media(max-width:991px){.about-hero{padding:30px 5vw 80px;min-height:270px}.about-hero h1{font-size:38px}.about-overview{grid-template-columns:1fr;padding:16px;gap:20px}.about-campus{min-height:360px}.about-overview-copy{padding:0 6px}.about-purpose{grid-template-columns:1fr}.about-journey{gap:24px;padding:24px}.about-journey-right{padding-left:24px}}
+@media(max-width:575px){.about-hero{padding:26px 6vw 72px;min-height:250px}.about-hero h1{font-size:33px}.about-hero p{font-size:16px}.about-shell{width:92%;gap:16px}.about-campus{min-height:290px}.about-overview h2{font-size:25px}.about-text{font-size:17px}.about-purpose-card{padding:22px}.about-journey{grid-template-columns:1fr;gap:20px}.about-journey-right{padding:20px 0 0;border-left:0;border-top:1px solid #8bbbd3}.about-actions{flex-direction:column}.about-action{width:100%}}
+@media(max-width:991px){.about-journey-left{grid-template-columns:1fr;gap:12px}.about-journey-visual{width:105px}.about-hero-visual{width:100%;opacity:.6}}
+@media(max-width:575px){.about-purpose-card .about-text{font-size:17px}.about-journey-left{grid-template-columns:90px minmax(0,1fr)}.about-journey-visual{width:90px}.about-journey h2{font-size:24px}.about-hero-visual{opacity:.45}}
+</style>
 @php
     $instituteName = trim((string) ($config?->instituteName ?? ''));
     $contactValue = static fn ($value) => in_array(strtolower(trim((string) $value)), ['', 'n/a', 'na', 'none', '-']) ? null : trim((string) $value);
     $contactAddress = $contactValue($config?->address);
-    $contactPhone = $contactValue($config?->officeMobile);
-    $contactEmail = $contactValue($config?->officeEmail);
-    $contactEmail = filter_var($contactEmail, FILTER_VALIDATE_EMAIL) && !preg_match('/\.(local|test|example|invalid)$/i', substr(strrchr($contactEmail, '@') ?: '', 1)) ? $contactEmail : null;
-    $contactMap = $contactValue($config?->mapEmbed);
-    $contactMap = filter_var($contactMap, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($contactMap, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true) && !parse_url($contactMap, PHP_URL_USER) && !parse_url($contactMap, PHP_URL_PASS) ? $contactMap : null;
-    if (!$contactMap && ($storedMap = $contactValue($config?->mapEmbed)) && preg_match('/\A![A-Za-z0-9%._~!$&\x27()*+,;=:@\/?-]+\z/D', $storedMap)) $contactMap = 'https://www.google.com/maps/embed?pb='.rawurlencode($storedMap);
-    $contactSocialUrl = static function ($value) {
-        $value = trim((string) $value);
-        if (!filter_var($value, FILTER_VALIDATE_URL) || !in_array(strtolower(parse_url($value, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) return null;
-        $host = strtolower(parse_url($value, PHP_URL_HOST) ?? '');
-        if ($host === '' || !str_contains($host, '.') || preg_match('/(^localhost$|\.(local|test|example|invalid)$)/', $host) || parse_url($value, PHP_URL_USER) || parse_url($value, PHP_URL_PASS)) return null;
-        return $value;
-    };
-    $contactSocialLinks = collect([
-        'Facebook' => ['url' => $config?->facebookPage, 'icon' => 'fa-facebook'],
-        'Twitter / X' => ['url' => $config?->twitterLink, 'icon' => 'fa-twitter'],
-        'YouTube' => ['url' => $config?->youtubeChanel, 'icon' => 'fa-youtube-play'],
-        'LinkedIn' => ['url' => $config?->linkedIn, 'icon' => 'fa-linkedin'],
-    ])->map(fn ($social) => array_merge($social, ['url' => $contactSocialUrl($social['url'])]))->filter(fn ($social) => $social['url']);
-    $heroImage = app(\App\Services\PublicMediaUrl::class)->institutionAboutImage($data?->heroImg)
-        ?: asset('public/cultivation/assets/images/about/history.png');
 
+    $heroImage = app(\App\Services\PublicMediaUrl::class)->institutionAboutImage($data?->heroImg);
+    $aboutText = (string) ($data?->insDetails ?? '');
+    $missionText = (string) ($data?->mission ?? '');
+    $visionText = (string) ($data?->vision ?? '');
+    $campusArea = trim((string) ($data?->landSize ?? ''));
     $aboutEstYear = '';
-    if (!empty($data?->establishDate)) {
-        try {
-            $aboutEstYear = \Carbon\Carbon::parse($data->establishDate)->format('Y');
-        } catch (\Exception $e) {
-            if (preg_match('/(19|20)\d{2}/', $data->establishDate, $match)) {
-                $aboutEstYear = $match[0];
-            }
-        }
-    }
-
-    $headline = !empty($data?->insHeadline) ? $data->insHeadline : 'A learning community committed to growth, values, and academic excellence.';
-    $aboutText = trim((string) ($data->insDetails ?? ''));
-    $missionText = trim((string) ($data->mission ?? ''));
-    $visionText = trim((string) ($data->vision ?? ''));
-    $campusArea = trim((string) ($data->landSize ?? ''));
+    if (preg_match('/(?:19|20)\d{2}/', (string) ($data?->establishDate ?? ''), $year)) $aboutEstYear = $year[0];
+    $heroSubtitle = trim((string) ($data?->insHeadline ?? ''));
+    if ($heroSubtitle === $instituteName) $heroSubtitle = '';
 @endphp
-
-<div class="col-12">
-    <section class="about-pro-breadcrumb" style="background-image: url('{{ asset('public/cultivation/assets/images/breadcrumbs/2.jpg') }}');">
-        <div class="about-pro-kicker">Institute Profile</div>
-        <h1>{{ $instituteName ?: 'Institution Profile' }}</h1>
-        <p>{{ $headline }}</p>
-        <ul class="about-pro-breadcrumb-list">
-            <li><a href="{{ route('homePage') }}">Home</a></li>
-            <li>About Us</li>
-        </ul>
-    </section>
-</div>
-
-@if($data)
-<div class="col-12 mb-4">
-    <section class="about-pro-panel">
-        <div class="row g-0 align-items-stretch">
-            <div class="col-lg-5">
-                <div class="about-pro-media h-100">
-                    <img src="{{ $heroImage }}" alt="{{ $instituteName }}">
-                    <div class="about-pro-media-card">
-                        <span class="label">Our Identity</span>
-                        <strong>{{ $aboutEstYear ? 'Established ' . $aboutEstYear : 'Institution Overview' }}</strong>
-                        <p class="mb-0">{{ $campusArea ? $campusArea : 'A focused academic environment dedicated to student development and institutional progress.' }}</p>
+<div id="about-page" class="col-12">
+    <header class="about-hero">
+        @include('frontend.institute.partials.about-education-visual', ['variant' => 'campus'])
+        <nav class="about-breadcrumb" aria-label="Breadcrumb"><a href="{{ route('homePage') }}">Home</a> &rsaquo; About Us</nav>
+        <h1>About Us</h1>
+        <p>{{ $heroSubtitle ?: 'Our Institution • Our Purpose • Our Journey' }}</p>
+    </header>
+    <div class="about-shell">
+        <section class="about-overview" aria-labelledby="about-overview-title">
+            <div class="about-campus">
+                @if($heroImage)<img src="{{ $heroImage }}" alt="{{ $instituteName }}" onerror="this.hidden=true">@endif
+                @if($instituteName || $contactAddress)
+                    <div class="about-campus-caption">
+                        @if($instituteName)<strong>{{ $instituteName }}</strong>@endif
+                        @if($contactAddress)<span>{{ $contactAddress }}</span>@endif
                     </div>
+                @endif
+            </div>
+            <div class="about-overview-copy">
+                <p class="about-eyebrow">ABOUT OUR INSTITUTION</p>
+                <h2 id="about-overview-title">{{ $instituteName ?: 'Institution Overview' }}</h2>
+                <div class="about-text" data-about-content>
+                    @forelse(preg_split('/\R\s*\R/u', trim($aboutText), -1, PREG_SPLIT_NO_EMPTY) as $paragraph)
+                        <p>{!! nl2br(e($paragraph)) !!}</p>
+                    @empty
+                        <p>About information has not been published yet.</p>
+                    @endforelse
+                </div>
+                @if($aboutEstYear || $campusArea)
+                    <div class="about-facts">
+                        @if($aboutEstYear)<div class="about-fact"><i class="fa fa-graduation-cap" aria-hidden="true"></i><strong>{{ $aboutEstYear }}</strong><span>Established</span></div>@endif
+                        @if($campusArea)<div class="about-fact"><i class="fa fa-map" aria-hidden="true"></i><strong>{{ $campusArea }}</strong><span>Campus Area</span></div>@endif
+                    </div>
+                @endif
+            </div>
+        </section>
+        <section class="about-purpose" aria-label="Mission and vision">
+            @foreach([['mission', 'Our Mission', '01', 'fa-bullseye', $missionText], ['vision', 'Our Vision', '02', 'fa-eye', $visionText]] as $purpose)
+                <article class="about-purpose-card about-purpose-card--{{ $purpose[0] }}">
+                    <span class="about-number" aria-hidden="true">{{ $purpose[2] }}</span>
+                    <span class="about-purpose-icon" aria-hidden="true"><i class="fa {{ $purpose[3] }}"></i></span>
+                    <h3>{{ $purpose[1] }}</h3>
+                    <div class="about-text" data-purpose="{{ $purpose[0] }}">
+                        @forelse(preg_split('/\R\s*\R/u', trim($purpose[4]), -1, PREG_SPLIT_NO_EMPTY) as $paragraph)
+                            <p>{!! nl2br(e($paragraph)) !!}</p>
+                        @empty
+                            <p>{{ $purpose[1] }} have not been published yet.</p>
+                        @endforelse
+                    </div>
+                </article>
+            @endforeach
+        </section>
+        <section class="about-journey">
+            <div class="about-journey-left">
+                @include('frontend.institute.partials.about-education-visual', ['variant' => 'book'])
+                <h2>Together Towards a Brighter Tomorrow</h2>
+            </div>
+            <div class="about-journey-right">
+                <h3>Be a Part of Our Journey</h3>
+                <div class="about-actions">
+                    <a class="about-action" href="{{ route('supportPage') }}">Contact the Institute <span aria-hidden="true">→</span></a>
+                    <a class="about-action about-action--outline" href="{{ route('imagePage') }}">Explore Gallery</a>
                 </div>
             </div>
-            <div class="col-lg-7">
-                <div class="about-pro-content">
-                    <div class="about-pro-sec-title">
-                        <span class="sub">About Us</span>
-                        <h2>{{ $headline }}</h2>
-                    </div>
-                    <p class="about-pro-lead">
-                        {{ $aboutText ? $aboutText : 'Our institution is dedicated to building strong academic foundations, a disciplined learning culture, and meaningful opportunities for every learner.' }}
-                    </p>
-
-                    <div class="about-pro-meta">
-                        <div class="about-pro-meta-item">
-                            <span>Established</span>
-                            <strong>{{ $aboutEstYear ? $aboutEstYear : 'Not Available' }}</strong>
-                            <p>Institutional foundation and academic legacy.</p>
-                        </div>
-                        <div class="about-pro-meta-item">
-                            <span>Campus Area</span>
-                            <strong>{{ $campusArea ? $campusArea : 'To Be Updated' }}</strong>
-                            <p>Learning spaces designed to support education and community life.</p>
-                        </div>
-                        <div class="about-pro-meta-item">
-                            <span>Focus</span>
-                            <strong>Academic Excellence</strong>
-                            <p>Student-centered teaching, values, and continuous development.</p>
-                        </div>
-                    </div>
-
-                    <div class="about-pro-actions">
-                        <a class="about-pro-btn about-pro-btn-primary" href="{{ route('supportPage') }}">Contact the Institute</a>
-                        <a class="about-pro-btn about-pro-btn-light" href="{{ route('imagePage') }}">Explore Gallery</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-</div>
-
-<div class="col-lg-8 mb-4">
-    <div class="about-pro-grid mt-0">
-        <div class="about-pro-card">
-            <div class="about-pro-card-icon"><i class="fa fa-bullseye"></i></div>
-            <h3>Our Mission</h3>
-            <p>{{ $missionText ? $missionText : 'We aim to provide meaningful education that strengthens knowledge, discipline, and character while preparing learners for responsible citizenship.' }}</p>
-        </div>
-        <div class="about-pro-card">
-            <div class="about-pro-card-icon"><i class="fa fa-eye"></i></div>
-            <h3>Our Vision</h3>
-            <p>{{ $visionText ? $visionText : 'We envision an inclusive academic environment where learners grow with confidence, integrity, and readiness for future challenges.' }}</p>
-        </div>
+        </section>
     </div>
 </div>
-
-<div class="col-lg-4 mb-4">
-    <aside class="about-pro-contact">
-        <div class="about-pro-sec-title mb-0">
-            <span class="sub" style="color:#8fe6ff;">Connect With Us</span>
-            <h3 class="mb-2">Institution Information</h3>
-        </div>
-        <p class="mb-0">For admissions, academic support, or general enquiries, connect with the institute through the official channels below.</p>
-        <ul>
-            <li>
-                <i class="fa fa-map-marker"></i>
-                <div>{{ $contactAddress ?: 'Address not provided' }}</div>
-            </li>
-            <li>
-                <i class="fa fa-phone"></i>
-                <div>
-                    @if($contactPhone)
-                        <a href="tel:{{ preg_replace('/\s+/', '', $contactPhone) }}">{{ $contactPhone }}</a>
-                    @else
-                        Phone not provided.
-                    @endif
-                </div>
-            </li>
-            <li>
-                <i class="fa fa-envelope"></i>
-                <div>
-                    @if($contactEmail)
-                        <a href="mailto:{{ $contactEmail }}">{{ $contactEmail }}</a>
-                    @else
-                        Email not provided.
-                    @endif
-                </div>
-            </li>
-            @if($contactMap)<li><i class="fa fa-map"></i><div><a href="{{ $contactMap }}" target="_blank" rel="noopener noreferrer">Open saved map link</a></div></li>@endif
-            @foreach($contactSocialLinks as $label => $social)<li><i class="fa {{ $social['icon'] }}"></i><div><a href="{{ $social['url'] }}" target="_blank" rel="noopener noreferrer">{{ $label }}</a></div></li>@endforeach
-        </ul>
-    </aside>
-</div>
-@else
-<div class="col-12">
-    <div class="about-pro-empty">
-        <h3 class="mb-2">About information is not available yet</h3>
-        <p class="mb-0">Please update the institute profile from the admin panel to show the full About Us content on this page.</p>
-    </div>
-</div>
-@endif
 @endsection
