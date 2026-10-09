@@ -1,0 +1,151 @@
+        .latest-notice-modern {
+            background: #f7fbfe;
+            border: 1px solid #d8e8f5;
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        .latest-notice-wrap {
+            padding-top: 0;
+            padding-bottom: 56px;
+        }
+
+        .latest-notice-modern .notice-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .latest-notice-modern .notice-head h3 {
+            margin: 0;
+            font-size: 26px;
+            line-height: 1.1;
+            color: #102c63;
+            letter-spacing: 0.2px;
+        }
+
+        .latest-notice-modern .notice-shell {
+            background: #ffffff;
+            border: 1px solid #dce9f4;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .latest-notice-modern .notice-item {
+            display: grid;
+            grid-template-columns: 76px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid #e2edf6;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fdfefe;
+        }
+
+        .latest-notice-modern .date-box {
+            width: 78px;
+            min-height: 64px;
+            border-radius: 10px;
+            background: #d7edf8;
+            border: 1px solid #b7d7ea;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #103d6f;
+        }
+
+        .latest-notice-modern .date-box .day {
+            font-size: 24px;
+            line-height: 1;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .latest-notice-modern .date-box .mon {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .latest-notice-modern .notice-title {
+            font-size: 19px;
+            line-height: 1.35;
+            color: #132e63;
+            font-weight: 700;
+            margin: 0;
+            white-space: normal;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .latest-notice-modern .notice-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .latest-notice-modern .notice-btn {
+            border: 1px solid #a8c4dc;
+            color: #12396e;
+            background: #fff;
+            border-radius: 10px;
+            padding: 7px 14px;
+            font-size: 20px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.1;
+        }
+
+        .latest-notice-modern .notice-file-pill {
+            border: 1px solid #b9d8e7;
+            border-radius: 999px;
+            color: #1c6d8c;
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1;
+            padding: 6px 9px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .latest-notice-modern .notice-empty-state {
+            border: 1px dashed #c7dceb;
+            border-radius: 10px;
+            color: #4a6484;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 18px;
+            text-align: center;
+        }
+
+        .latest-notice-modern .notice-btn:hover {
+            border-color: #21a7d0;
+            color: #0f6d8b;
+        }
+
+        .latest-notice-modern .all-notice-btn {
+            border: 1px solid #21a7d0;
+            color: #21a7d0;
+            background: #fff;
+            border-radius: 12px;
+            padding: 7px 14px;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .latest-notice-modern .all-notice-btn:hover {
+            background: #21a7d0;
+            color: #fff;
+        }

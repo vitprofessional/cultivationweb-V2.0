@@ -117,6 +117,13 @@ class FrontController extends Controller
              ? TeacherManagement::orderByRaw('CAST(rank AS UNSIGNED) IS NULL, CAST(rank AS UNSIGNED), id')->limit(8)->get()
              : collect();
 
+        $homepageLayout = $config?->homepage_layout === 'modern' ? 'modern' : 'classic';
+        if ($homepageLayout === 'modern') {
+            return view('frontend.cultivation-v2.homepage-modern', app(\App\Services\ModernHomepagePresentation::class)->build(
+                $config, $insData, $slider, $notice, $photo, $overviewMetrics, $facultyPreview, $chairmanProfile
+            ));
+        }
+
         return view('frontend.cultivation-v2.homepage', [
             'insData' => $insData,
             'noticeBoard' => $notice,

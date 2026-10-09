@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     @php
-        $config = App\Models\ServerConfig::query()->latest('id')->first();
+        $config = $config ?? App\Models\ServerConfig::query()->latest('id')->first();
     @endphp
 
     <title>
