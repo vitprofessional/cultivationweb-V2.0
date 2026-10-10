@@ -16,13 +16,23 @@ for(const width of [390,768,1280]) test(`Global public scroll ${width}px`,async(
    await page.waitForFunction(()=>document.getElementById('scrollUp').hidden);
    assert.equal(await page.locator('#scrollUp').count(),1);
    const before=await page.locator('.full-width-header').evaluate(el=>el.offsetHeight);
+   const navColors=await page.locator('.nav-menu > li > a, .nav-menu > li > .rs-menu-link').evaluateAll(els=>els.map(el=>getComputedStyle(el).color));
+   const background=await page.locator('.menu-sticky').evaluate(el=>getComputedStyle(el).backgroundColor);
+   assert.equal(background,'rgb(255, 255, 255)');
    await page.evaluate(()=>window.scrollTo({top:500,behavior:'instant'}));
    await page.waitForFunction(()=>!document.getElementById('scrollUp').hidden);
    const menu=await page.locator('.menu-sticky').boundingBox();assert.ok(Math.abs(menu.y)<2,`${url}: menu top ${menu.y}`);
+   assert.equal(await page.locator('.menu-sticky').evaluate(el=>getComputedStyle(el).backgroundColor),background,`${url}: scroll background unchanged`);
+   assert.deepEqual(await page.locator('.nav-menu > li > a, .nav-menu > li > .rs-menu-link').evaluateAll(els=>els.map(el=>getComputedStyle(el).color)),navColors,`${url}: top-level colors unchanged`);
+   // Exercise legacy sticky selectors even when the shared sticky wrapper owns scrolling.
+   await page.locator('.menu-sticky').evaluate(el=>el.classList.add('sticky'));
+   assert.deepEqual(await page.locator('.nav-menu > li > a, .nav-menu > li > .rs-menu-link').evaluateAll(els=>els.map(el=>getComputedStyle(el).color)),navColors,`${url}: legacy sticky colors unchanged`);
+   await page.locator('.menu-sticky').evaluate(el=>el.classList.remove('sticky'));
    assert.equal(await page.locator('.full-width-header').evaluate(el=>el.offsetHeight),before);
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),url);
    if(width<1101){
     const toggle=page.locator('.rs-menu-toggle');await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('.nav-menu > li > a').first().evaluate(el=>getComputedStyle(el).color),'rgb(26, 54, 93)',`${url}: readable mobile navigation`);
     await page.keyboard.press('Escape');assert.equal(await toggle.getAttribute('aria-expanded'),'false');
     await page.waitForFunction(()=>scrollY>300);
    }
