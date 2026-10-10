@@ -5,6 +5,8 @@ use App\Http\Controllers\FrontController;
 use App\Http\Controllers\LoginHubController;
 
 Route::get('/login', LoginHubController::class)->name('loginHub');
+Route::get('/social-preview.png', \App\Http\Controllers\SocialPreviewController::class)
+    ->withoutMiddleware(\App\Http\Middleware\TrackVisitors::class)->name('socialPreview');
 
 /*
 |--------------------------------------------------------------------------

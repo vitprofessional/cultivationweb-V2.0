@@ -111,9 +111,6 @@
             return app(\App\Services\PublicMediaUrl::class)->teacherPortrait($teacher?->avatar)
                 ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
         };
-        $ogImage = !empty($config?->logo) && file_exists(public_path('upload/image/cultivation/' . basename((string) $config->logo)))
-            ? url('/public/upload/image/cultivation/' . rawurlencode(basename((string) $config->logo)))
-            : app(\App\Services\PublicAssetUrl::class)->url('logo.png');
         $pageTitle = $institutionName ?: 'Institution Website';
         $pageDescription = $institutionName ? $institutionName . ' official website.' : 'Official institution website.';
         $aboutHeading = trim((string) ($insData?->insHeadline ?? ''));
@@ -151,9 +148,7 @@
     <title>{{ $pageTitle }}</title>
     <meta name="description" content="{{ $pageDescription }}">
     <link rel="canonical" href="{{ url('/') }}">
-    <meta property="og:title" content="{{ $pageTitle }}">
-    <meta property="og:description" content="{{ $pageDescription }}">
-    <meta property="og:image" content="{{ $ogImage }}">
+    @include('frontend.cultivation-v2.partials._social-meta')
 
     <link rel="apple-touch-icon" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/apple-touch-icon.html') }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ app(\App\Services\PublicAssetUrl::class)->url('cultivation/assets/images/fav.png') }}">
