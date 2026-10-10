@@ -98,10 +98,16 @@ class SocialPreviewTest extends TestCase
         $this->assertSame(0xf07814, imagecolorat($image, 210, 288) & 0xffffff);
         imagedestroy($image);
         $oldUrl = $service->url($config);
+        $legacyVersion = substr(hash('sha256', $config->instituteName.'|'.$config->logo.'|'.config('media.public_base_url')), 0, 16);
+        $this->assertStringNotContainsString('v='.$legacyVersion, $oldUrl);
+        // A 120x80 source is enlarged only 1.5x, not stretched to fill the badge.
+        $image = imagecreatefrompng($path);
+        $this->assertNotSame(0xf07814, imagecolorat($image, 130, 285) & 0xffffff);
+        imagedestroy($image);
         $config->instituteName = 'Another Institution';
         $this->assertNotSame($oldUrl, $service->url($config));
         $this->assertNotSame($path, $service->image($config));
-        Cache::forget('social-logo:'.hash('sha256', 'https://admin.example.test/upload/image/cultivation/logo.png'));
+        Cache::forget('social-logo-v2:'.hash('sha256', 'https://admin.example.test/upload/image/cultivation/logo.png'));
         Http::fake(['*' => Http::response('missing', 404)]);
         $this->assertNotSame($path, $service->image($config));
     }
@@ -116,6 +122,69 @@ class SocialPreviewTest extends TestCase
         $broken = $service->image((object) ['instituteName' => $name, 'logo' => 'broken.png']);
         $this->assertSame($missing, $broken);
         $this->assertSame([1200, 630], array_slice(getimagesize($missing), 0, 2));
+    }
+
+    public function test_same_filename_content_revalidates_and_changes_url_without_duplicate_fetches(): void
+    {
+        config(['cache.default' => 'array', 'media.public_base_url' => 'https://admin.example.test', 'media.public_path_prefix' => '']);
+        $logo = imagecreatetruecolor(32, 32);
+        ob_start(); imagepng($logo); $first = ob_get_clean();
+        imagefill($logo, 0, 0, imagecolorallocate($logo, 255, 0, 0));
+        ob_start(); imagepng($logo); $second = ob_get_clean(); imagedestroy($logo);
+        Http::fake(['*' => Http::sequence()
+            ->push($first, 200, ['ETag' => '"one"', 'Last-Modified' => 'Wed, 01 Oct 2025 00:00:00 GMT'])
+            ->push('', 304)->push($second, 200, ['ETag' => '"two"'])]);
+        $config = (object) ['instituteName' => 'Dynamic Academy', 'logo' => 'logo.png'];
+        $service = app(SocialPreview::class);
+        $url = $service->url($config);
+        $path = $service->image($config);
+        $this->assertSame($url, $service->url($config));
+        Http::assertSentCount(1);
+        $this->travel(61)->seconds();
+        $this->assertSame($url, $service->url($config));
+        Http::assertSent(fn ($request) => $request->hasHeader('If-None-Match', '"one"') && $request->hasHeader('If-Modified-Since'));
+        $this->travel(61)->seconds();
+        $this->assertNotSame($url, $service->url($config));
+        $this->assertNotSame($path, $service->image($config));
+        Http::assertSentCount(3);
+        $this->travelBack();
+    }
+
+    public function test_text_only_url_is_deterministic_and_media_prefix_is_versioned(): void
+    {
+        config(['cache.default' => 'array', 'media.public_base_url' => 'https://admin.example.test', 'media.public_path_prefix' => '']);
+        Http::fake(['*' => Http::response('invalid', 200)]);
+        $service = app(SocialPreview::class);
+        $config = (object) ['instituteName' => 'Dynamic Academy', 'logo' => null];
+        $url = $service->url($config);
+        $config->logo = 'broken.png';
+        $this->assertSame($url, $service->url($config));
+        $this->travel(61)->seconds();
+        $this->assertSame($url, $service->url($config));
+        $config->instituteName = 'Renamed Academy';
+        $this->assertNotSame($url, $service->url($config));
+        $config->instituteName = 'Dynamic Academy';
+        config(['media.public_path_prefix' => 'public']);
+        $this->assertNotSame($url, $service->url($config));
+        $this->travelBack();
+    }
+
+    public function test_upstream_without_validators_is_refetched_and_filename_changes_are_versioned(): void
+    {
+        config(['cache.default' => 'array', 'media.public_base_url' => 'https://admin.example.test']);
+        $logo = imagecreatetruecolor(16, 16);
+        ob_start(); imagepng($logo); $bytes = ob_get_clean(); imagedestroy($logo);
+        Http::fake(['*' => Http::response($bytes)]);
+        $config = (object) ['instituteName' => 'Dynamic Academy', 'logo' => 'logo.png'];
+        $service = app(SocialPreview::class);
+        $url = $service->url($config);
+        $this->travel(61)->seconds();
+        $this->assertSame($url, $service->url($config));
+        Http::assertSentCount(2);
+        $config->logo = 'replacement.png';
+        $this->assertNotSame($url, $service->url($config));
+        Http::assertSentCount(3);
+        $this->travelBack();
     }
 
     public function test_metadata_uses_shared_png_not_favicon_and_current_page_url(): void

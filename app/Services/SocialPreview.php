@@ -8,9 +8,12 @@ use Illuminate\Support\Facades\Http;
 
 final class SocialPreview
 {
+    private const DESIGN_VERSION = 'v2';
+
     public function url($institution): string
     {
-        $version = substr(hash('sha256', ($institution?->instituteName ?? '').'|'.($institution?->logo ?? '').'|'.config('media.public_base_url')), 0, 16);
+        $logo = $this->logoBytes($institution);
+        $version = substr(hash('sha256', self::DESIGN_VERSION.'|'.($institution?->instituteName ?? '').'|'.($logo !== '' ? $institution?->logo : '').'|'.hash('sha256', $logo).'|'.config('media.public_base_url').'|'.config('media.public_path_prefix').'|'.config('app.url')), 0, 16);
         return route('socialPreview', ['v' => $version]);
     }
 
@@ -18,20 +21,11 @@ final class SocialPreview
     public function image($institution): string
     {
         $name = trim((string) ($institution?->instituteName ?? '')) ?: 'Official Website';
-        $url = app(PublicMediaUrl::class)->institutionLogo($institution?->logo);
-        $logo = $url ? Cache::remember('social-logo:'.hash('sha256', $url), 3600, function () use ($url) {
-            try {
-                $response = Http::timeout(3)->connectTimeout(2)->withoutRedirecting()->get($url);
-                $bytes = $response->successful() ? $response->body() : '';
-                $size = strlen($bytes) <= 5 * 1024 * 1024 ? @getimagesizefromstring($bytes) : false;
-                return $size && $size[0] * $size[1] <= 16000000 ? $bytes : '';
-            } catch (\Throwable) {
-                return '';
-            }
-        }) : '';
+        $logo = $this->logoBytes($institution);
         $directory = storage_path('app/social-previews');
         File::ensureDirectoryExists($directory);
-        $path = $directory.'/social-preview-'.hash('sha256', 'v1|'.$name.'|'.$logo).'.png';
+        $domain = (string) parse_url(config('app.url'), PHP_URL_HOST);
+        $path = $directory.'/social-preview-'.hash('sha256', self::DESIGN_VERSION.'|'.$name.'|'.$logo.'|'.$domain).'.png';
         if (is_file($path)) {
             $this->retainRecentPreviews($directory, $path);
             return $path;
@@ -54,31 +48,39 @@ final class SocialPreview
             imagefilledrectangle($image, $x, 502, $x + 34, 544, $white);
         }
         imagefilledrectangle($image, 0, 594, 1200, 630, $navy);
-        imagefilledrectangle($image, 0, 594, 310, 630, $blue);
-        imagefilledrectangle($image, 65, 92, 142, 98, $blue);
+        imagefilledrectangle($image, 0, 594, 400, 630, $blue);
+        imagefilledrectangle($image, 65, 92, 170, 100, $blue);
         $left = 75;
         if ($logo && ($source = @imagecreatefromstring($logo))) {
-            imagefilledellipse($image, 210, 288, 280, 280, $white);
-            $scale = min(220 / imagesx($source), 220 / imagesy($source));
+            imagefilledellipse($image, 235, 285, 350, 350, $white);
+            // Limit low-resolution enlargement while allowing high-quality originals to shine.
+            $scale = min(300 / imagesx($source), 300 / imagesy($source), 1.5);
             $w = (int) round(imagesx($source) * $scale);
             $h = (int) round(imagesy($source) * $scale);
-            imagecopyresampled($image, $source, 210 - (int) ($w / 2), 288 - (int) ($h / 2), 0, 0, $w, $h, imagesx($source), imagesy($source));
+            imagecopyresampled($image, $source, 235 - (int) ($w / 2), 285 - (int) ($h / 2), 0, 0, $w, $h, imagesx($source), imagesy($source));
             imagedestroy($source);
-            $left = 395;
+            $left = 445;
         }
         $font = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans-Bold.ttf');
         $width = 1120 - $left;
-        for ($size = 42; $size >= 18; $size -= 2) {
+        for ($size = 48; $size >= 18; $size -= 2) {
             $lines = $this->wrap($name, $font, $size, $width);
             if (count($lines) <= 4) break;
         }
-        $y = 245 - (int) ((count($lines) - 1) * ($size + 12) / 2);
+        $y = 265 - (int) ((count($lines) - 1) * ($size + 12) / 2);
         foreach ($lines as $line) {
             imagettftext($image, $size, 0, $left, $y, $navy, $font, $line);
             $y += $size + 12;
         }
         imagefilledrectangle($image, $left, $y + 7, $left + 70, $y + 11, $blue);
         imagettftext($image, 24, 0, $left, $y + 64, $navy, base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf'), 'Official Website');
+        if ($domain !== '') {
+            $regular = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
+            $footer = $this->wrap($domain, $regular, 18, 1050);
+            foreach (array_slice($footer, 0, 2) as $index => $line) {
+                imagettftext($image, 18, 0, 75, 540 + $index * 26, $navy, $regular, $line);
+            }
+        }
         $temporary = tempnam($directory, 'og-');
         try {
             if (!imagepng($image, $temporary, 7)) throw new \RuntimeException('Cannot generate social preview');
@@ -89,6 +91,39 @@ final class SocialPreview
         }
         $this->retainRecentPreviews($directory, $path);
         return $path;
+    }
+
+    /** Revalidate at most once per minute; share bytes between URL and PNG requests. */
+    private function logoBytes($institution): string
+    {
+        $url = app(PublicMediaUrl::class)->institutionLogo($institution?->logo);
+        if (!$url) return '';
+        $key = 'social-logo-v2:'.hash('sha256', $url);
+        $state = Cache::get($key);
+        if (is_array($state) && $state['checked_at'] > now()->timestamp - 60) return $state['bytes'];
+        $headers = ['Cache-Control' => 'no-cache'];
+        if (!empty($state['etag'])) $headers['If-None-Match'] = $state['etag'];
+        if (!empty($state['modified'])) $headers['If-Modified-Since'] = $state['modified'];
+        $next = ['bytes' => '', 'etag' => null, 'modified' => null, 'checked_at' => now()->timestamp];
+        try {
+            $response = Http::timeout(3)->connectTimeout(2)->withoutRedirecting()->withHeaders($headers)->get($url);
+            if ($response->status() === 304 && is_array($state)) {
+                $next = array_replace($state, ['checked_at' => now()->timestamp]);
+            } elseif ($response->status() === 200) {
+                $bytes = $response->body();
+                $size = strlen($bytes) <= 5 * 1024 * 1024 ? @getimagesizefromstring($bytes) : false;
+                if ($size && $size[0] * $size[1] <= 16000000 && ($decoded = @imagecreatefromstring($bytes))) {
+                    imagedestroy($decoded);
+                    $next['bytes'] = $bytes;
+                    $next['etag'] = $response->header('ETag');
+                    $next['modified'] = $response->header('Last-Modified');
+                }
+            }
+        } catch (\Throwable) {
+            // Failed revalidation produces deterministic text-only branding, not stale logo bytes.
+        }
+        Cache::put($key, $next, 3600);
+        return $next['bytes'];
     }
 
     /** Best-effort, nonrecursive retention of our own PNGs only. */
