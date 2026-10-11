@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 
 final class SocialPreview
 {
-    private const DESIGN_VERSION = 'v2';
+    private const DESIGN_VERSION = 'v4';
 
     public function url($institution): string
     {
@@ -32,53 +32,46 @@ final class SocialPreview
         }
 
         $image = imagecreatetruecolor(1200, 630);
-        for ($y = 0; $y < 630; $y++) {
-            $t = $y / 630;
-            imageline($image, 0, $y, 1200, $y, imagecolorallocate($image, 247 - (int) (16 * $t), 252 - (int) (12 * $t), 255));
-        }
         $navy = imagecolorallocate($image, 17, 45, 86);
         $blue = imagecolorallocate($image, 0, 143, 203);
-        $pale = imagecolorallocate($image, 209, 231, 245);
+        $pale = imagecolorallocate($image, 241, 247, 252);
         $white = imagecolorallocate($image, 255, 255, 255);
-        // Code-native campus silhouette: no third-party or uploaded background.
-        imagefilledrectangle($image, 690, 405, 1199, 581, $pale);
-        imagefilledpolygon($image, [665, 405, 945, 328, 1225, 405], $pale);
-        for ($x = 722; $x < 1180; $x += 70) {
-            imagefilledrectangle($image, $x, 434, $x + 34, 476, $white);
-            imagefilledrectangle($image, $x, 502, $x + 34, 544, $white);
-        }
-        imagefilledrectangle($image, 0, 594, 1200, 630, $navy);
-        imagefilledrectangle($image, 0, 594, 400, 630, $blue);
-        imagefilledrectangle($image, 65, 92, 170, 100, $blue);
-        $left = 75;
+        imagefill($image, 0, 0, $white);
+        imagefilledrectangle($image, 0, 0, 1199, 285, $pale);
+        imagefilledrectangle($image, 0, 616, 1199, 629, $navy);
+        imagefilledrectangle($image, 0, 616, 360, 629, $blue);
+        $hasLogo = false;
         if ($logo && ($source = @imagecreatefromstring($logo))) {
-            imagefilledellipse($image, 235, 285, 350, 350, $white);
-            // Limit low-resolution enlargement while allowing high-quality originals to shine.
-            $scale = min(300 / imagesx($source), 300 / imagesy($source), 1.5);
+            $hasLogo = true;
+            // Downsample large originals; never enlarge raster logos beyond their source dimensions.
+            $scale = min(205 / imagesx($source), 205 / imagesy($source), 1.0);
             $w = (int) round(imagesx($source) * $scale);
             $h = (int) round(imagesy($source) * $scale);
-            imagecopyresampled($image, $source, 235 - (int) ($w / 2), 285 - (int) ($h / 2), 0, 0, $w, $h, imagesx($source), imagesy($source));
+            imagecopyresampled($image, $source, 600 - (int) ($w / 2), 145 - (int) ($h / 2), 0, 0, $w, $h, imagesx($source), imagesy($source));
             imagedestroy($source);
-            $left = 445;
         }
         $font = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans-Bold.ttf');
-        $width = 1120 - $left;
-        for ($size = 48; $size >= 18; $size -= 2) {
+        $width = 1040;
+        for ($size = 54; $size >= 18; $size -= 2) {
             $lines = $this->wrap($name, $font, $size, $width);
-            if (count($lines) <= 4) break;
+            if (count($lines) <= 3) break;
         }
-        $y = 265 - (int) ((count($lines) - 1) * ($size + 12) / 2);
+        $y = ($hasLogo ? 365 : 295) - (int) ((count($lines) - 1) * ($size + 12) / 2);
         foreach ($lines as $line) {
+            $box = imagettfbbox($size, 0, $font, $line);
+            $left = (int) ((1200 - ($box[2] - $box[0])) / 2) - $box[0];
             imagettftext($image, $size, 0, $left, $y, $navy, $font, $line);
             $y += $size + 12;
         }
-        imagefilledrectangle($image, $left, $y + 7, $left + 70, $y + 11, $blue);
-        imagettftext($image, 24, 0, $left, $y + 64, $navy, base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf'), 'Official Website');
+        $regular = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
+        $box = imagettfbbox(24, 0, $regular, 'Official Website');
+        imagettftext($image, 24, 0, (int) ((1200 - ($box[2] - $box[0])) / 2) - $box[0], $y + 22, $navy, $regular, 'Official Website');
         if ($domain !== '') {
             $regular = base_path('vendor/dompdf/dompdf/lib/fonts/DejaVuSans.ttf');
-            $footer = $this->wrap($domain, $regular, 18, 1050);
+            $footer = $this->wrap($domain, $regular, 21, 1050);
             foreach (array_slice($footer, 0, 2) as $index => $line) {
-                imagettftext($image, 18, 0, 75, 540 + $index * 26, $navy, $regular, $line);
+                $box = imagettfbbox(21, 0, $regular, $line);
+                imagettftext($image, 21, 0, (int) ((1200 - ($box[2] - $box[0])) / 2) - $box[0], 555 + $index * 30, $navy, $regular, $line);
             }
         }
         $temporary = tempnam($directory, 'og-');

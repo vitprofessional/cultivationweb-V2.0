@@ -95,14 +95,16 @@ class SocialPreviewTest extends TestCase
         $this->assertSame([1200, 630], array_slice(getimagesize($path), 0, 2));
         $this->assertSame($path, $service->image($config));
         $image = imagecreatefrompng($path);
-        $this->assertSame(0xf07814, imagecolorat($image, 210, 288) & 0xffffff);
+        $this->assertSame(0xf07814, imagecolorat($image, 600, 145) & 0xffffff);
         imagedestroy($image);
         $oldUrl = $service->url($config);
         $legacyVersion = substr(hash('sha256', $config->instituteName.'|'.$config->logo.'|'.config('media.public_base_url')), 0, 16);
         $this->assertStringNotContainsString('v='.$legacyVersion, $oldUrl);
-        // A 120x80 source is enlarged only 1.5x, not stretched to fill the badge.
+        // A 120x80 source remains 120x80: no raster upscaling in the centered V4 layout.
         $image = imagecreatefrompng($path);
-        $this->assertNotSame(0xf07814, imagecolorat($image, 130, 285) & 0xffffff);
+        $this->assertNotSame(0xf07814, imagecolorat($image, 520, 145) & 0xffffff);
+        $this->assertNotSame(0xf07814, imagecolorat($image, 535, 145) & 0xffffff);
+        $this->assertSame(0xf07814, imagecolorat($image, 545, 145) & 0xffffff);
         imagedestroy($image);
         $config->instituteName = 'Another Institution';
         $this->assertNotSame($oldUrl, $service->url($config));
