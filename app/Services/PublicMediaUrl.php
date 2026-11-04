@@ -6,11 +6,40 @@ use Illuminate\Contracts\Config\Repository;
 
 final class PublicMediaUrl
 {
+    /**
+     * Admin ImageUploader stores 'uploads/<folder>/<random>.<ext>' (path relative to the Admin public directory).
+     * Legacy rows keep bare filenames under upload/image/<folder>/. Both formats must keep resolving.
+     */
+    private const UPLOADER_FORMATS = [
+        'slider' => '~\Auploads/slider/[A-Za-z0-9_-]+\.(?:jpg|png)\z~',
+        'persons' => '~\Auploads/persons/[A-Za-z0-9_-]+\.jpg\z~',
+        'hero' => '~\Auploads/hero/[A-Za-z0-9_-]+\.jpg\z~',
+        'logo' => '~\Auploads/logo/[A-Za-z0-9_-]+\.(?:jpg|png)\z~',
+        'gallery' => '~\Auploads/gallery/[A-Za-z0-9_-]+\.(?:jpg|png)\z~',
+        'notice' => '~\Auploads/notice/[A-Za-z0-9_-]+\.jpg\z~',
+    ];
+
     public function __construct(private readonly Repository $config) {}
 
-    /** Resolve the existing filename-only home_sliders.avatar contract. */
+    /** Returns the trimmed value when it is a new-format ImageUploader path of one of the given kinds, else null. */
+    private function uploaded(?string $value, string ...$kinds): ?string
+    {
+        $value = trim($value ?? '');
+        foreach ($kinds as $kind) {
+            if (preg_match(self::UPLOADER_FORMATS[$kind], $value)) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /** Resolve the existing filename-only home_sliders.avatar contract (and the new 'uploads/slider/<file>' format). */
     public function slider(?string $filename): ?string
     {
+        if ($path = $this->uploaded($filename, 'slider')) {
+            return $this->url($path);
+        }
         $filename = trim($filename ?? '');
         if ($filename === '' || str_contains($filename, '/') || str_contains($filename, '\\')) {
             return null;
@@ -22,6 +51,9 @@ final class PublicMediaUrl
     /** Resolve existing Notice relative paths and legacy filename-only values. */
     public function notice(?string $value): ?string
     {
+        if ($path = $this->uploaded($value, 'notice')) {
+            return $this->url($path);
+        }
         $value = trim($value ?? '');
         if (! preg_match('~\A(?:(?:public/)?upload/notice/)?([^/\\\\]+\.(?:jpe?g|png|gif|pdf))\z~i', $value, $match)) {
             return null;
@@ -37,30 +69,48 @@ final class PublicMediaUrl
 
     public function institutionLogo(?string $filename): ?string
     {
+        // Logo/favicon/signature ('uploads/logo/') and governing-body/principal portraits ('uploads/persons/').
+        if ($path = $this->uploaded($filename, 'logo', 'persons')) {
+            return $this->url($path);
+        }
+
         return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
     /** Resolve the existing filename-only institute_details.heroImg About-image contract. */
     public function institutionAboutImage(?string $filename): ?string
     {
+        // About hero ('uploads/hero/'), committee portraits ('uploads/persons/') and principal signature ('uploads/logo/').
+        if ($path = $this->uploaded($filename, 'hero', 'persons', 'logo')) {
+            return $this->url($path);
+        }
         $filename = preg_replace('~\A(?:public/)?upload/image/cultivation/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'cultivation', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
     public function teacherPortrait(?string $filename): ?string
     {
+        if ($path = $this->uploaded($filename, 'persons')) {
+            return $this->url($path);
+        }
         $filename = preg_replace('~\A(?:public/)?upload/image/teacher/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'teacher', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
     public function studentPortrait(?string $filename): ?string
     {
+        if ($path = $this->uploaded($filename, 'persons')) {
+            return $this->url($path);
+        }
         $filename = preg_replace('~\A(?:public/)?upload/image/student/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'student', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
 
     public function staffPortrait(?string $filename): ?string
     {
+        if ($path = $this->uploaded($filename, 'persons')) {
+            return $this->url($path);
+        }
         $filename = preg_replace('~\A(?:public/)?upload/image/staff/~', '', trim($filename ?? ''));
         return $this->galleryFile($filename, 'staff', ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif']);
     }
@@ -74,6 +124,9 @@ final class PublicMediaUrl
     /** Distinguish an invalid record from a valid photo whose media origin is unconfigured. */
     public function galleryPhotoPath(?string $filename): ?string
     {
+        if ($path = $this->uploaded($filename, 'gallery')) {
+            return $path;
+        }
         $filename = trim($filename ?? '');
         if ($filename === '' || str_contains($filename, '/') || str_contains($filename, '\\')
             || $this->segments($filename) === null

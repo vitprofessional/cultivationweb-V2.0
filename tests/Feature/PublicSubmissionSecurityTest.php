@@ -280,6 +280,7 @@ class PublicSubmissionSecurityTest extends TestCase
 
     public function test_placement_validation_summary_displays_non_file_errors(): void
     {
+        $this->establishLayoutAsset();
         $errors = (new \Illuminate\Support\ViewErrorBag())->put('default', new \Illuminate\Support\MessageBag([
             'fullName' => 'The full name field is required.',
         ]));
@@ -310,6 +311,7 @@ class PublicSubmissionSecurityTest extends TestCase
     #[DataProvider('flows')]
     public function test_public_views_escape_submission_text_and_offer_create_only(string $model, string $uri): void
     {
+        $this->establishLayoutAsset();
         $record = new $model();
         $attack = '\"><img src=x onerror=alert(1)>';
         $record->fullName = $attack;
@@ -326,6 +328,13 @@ class PublicSubmissionSecurityTest extends TestCase
         $response = $this->get($path)->assertOk();
         $response->assertSee(e($attack), false)->assertDontSee($attack, false)
             ->assertSee('name="_token"', false)->assertDontSee('name="itemId"', false);
+    }
+
+    private function establishLayoutAsset(): void
+    {
+        // Only rendering cases need this asset; upload-only cases retain an empty tree.
+        File::ensureDirectoryExists($this->uploadRoot.'/cultivation/assets/js');
+        File::copy(base_path('public/cultivation/assets/js/public-scroll.js'), $this->uploadRoot.'/cultivation/assets/js/public-scroll.js');
     }
 
     public function test_existing_needy_spam_controls_and_throttle_are_retained(): void
