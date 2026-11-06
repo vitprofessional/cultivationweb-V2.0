@@ -491,7 +491,7 @@ class FrontController extends Controller
 
     //teacher list page
     public function teacherPage(){
-        $syllabus  =   TeacherManagement::orderBy('rank','asc')->get();
+        $syllabus  =   TeacherManagement::orderByRaw('`rank` IS NULL, `rank` ASC')->get();
         // Debug: log designation raw value and resolved name for first few records
         try {
             foreach ($syllabus->take(8) as $s) {
