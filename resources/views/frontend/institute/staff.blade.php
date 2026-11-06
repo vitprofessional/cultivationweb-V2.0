@@ -13,6 +13,7 @@
         $s->display_role = \App\Models\StaffManagement::getDesignationName($s->designation ?? null);
         $parts = preg_split('/\s+/u', $s->display_name, -1, PREG_SPLIT_NO_EMPTY);
         $s->initials = mb_strtoupper(mb_substr($parts[0] ?? '?', 0, 1).(count($parts) > 1 ? mb_substr(end($parts), 0, 1) : ''));
+        $s->photoUrl = app(\App\Services\PublicMediaUrl::class)->staffPortrait($s->avatar);
         $r = mb_strtolower((string) $s->display_role);
         if (preg_match('/guard|security/u', $r)) $s->cat = ['Security', '#9B3A3A', '#7A2C2C', '#F6E6E6', 'shield'];
         elseif (preg_match('/clean|ayah|sohayok|soyhaok/u', $r)) $s->cat = ['Housekeeping', '#92400E', '#6B2F0A', '#FDF0D5', 'sparkles'];
@@ -28,6 +29,7 @@
 .stf-row{display:flex;align-items:center;gap:16px;padding:14px 22px 14px 18px;background:#fff;border:1px solid #e3e9f0;border-left:4px solid var(--c);border-radius:14px;box-shadow:0 2px 8px rgba(27,58,92,.05);transition:transform .2s,box-shadow .2s}
 .stf-row:hover,.stf-row:focus-within{transform:translateY(-2px);box-shadow:0 10px 24px rgba(27,58,92,.13)}
 .stf-row .stf-avatar{width:54px;height:54px;border-radius:14px;border:0;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--c),var(--cd));box-shadow:0 4px 10px color-mix(in srgb,var(--c) 35%,transparent)}
+.stf-row img.stf-avatar{flex:none;object-fit:cover;background:#eef2f6}
 .stf-main{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
 .stf-row .stf-name{margin:0;font-size:16px;font-weight:700;line-height:1.3;color:var(--navy);overflow-wrap:anywhere}
 .stf-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
@@ -53,7 +55,11 @@
             @foreach($staff as $s)
                 @php [$catName, $c, $cd, $cb, $icon] = $s->cat; @endphp
                 <li class="stf-row" style="--c:{{ $c }};--cd:{{ $cd }};--cb:{{ $cb }}">
-                    <span class="ppl-initials stf-avatar" aria-hidden="true">{{ $s->initials }}</span>
+                    @if($s->photoUrl)
+                        <img src="{{ $s->photoUrl }}" alt="" class="stf-avatar" loading="lazy" onerror="this.outerHTML='<span class=&quot;ppl-initials stf-avatar&quot; aria-hidden=&quot;true&quot;>{{ $s->initials }}</span>'">
+                    @else
+                        <span class="ppl-initials stf-avatar" aria-hidden="true">{{ $s->initials }}</span>
+                    @endif
                     <div class="stf-main">
                         <span class="stf-name">{{ $s->display_name }}</span>
                         <span class="stf-meta">
