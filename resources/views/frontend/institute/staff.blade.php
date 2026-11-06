@@ -26,9 +26,9 @@
 <style>
 .ppl-shell--staff{--accent:#115E59}
 .stf-list{display:flex;flex-direction:column;gap:12px;margin:0;padding:0;list-style:none}
-.stf-row{display:flex;align-items:center;gap:16px;padding:14px 22px 14px 18px;background:#fff;border:1px solid #e3e9f0;border-left:4px solid var(--c);border-radius:14px;box-shadow:0 2px 8px rgba(27,58,92,.05);transition:transform .2s,box-shadow .2s}
+.stf-row{display:flex;align-items:center;gap:20px;padding:18px 24px 18px 20px;background:#fff;border:1px solid #e3e9f0;border-left:4px solid var(--c);border-radius:14px;box-shadow:0 2px 8px rgba(27,58,92,.05);transition:transform .2s,box-shadow .2s}
 .stf-row:hover,.stf-row:focus-within{transform:translateY(-2px);box-shadow:0 10px 24px rgba(27,58,92,.13)}
-.stf-row .stf-avatar{width:54px;height:54px;border-radius:14px;border:0;font-size:17px;color:#fff;background:linear-gradient(135deg,var(--c),var(--cd));box-shadow:0 4px 10px color-mix(in srgb,var(--c) 35%,transparent)}
+.stf-row .stf-avatar{width:115px;height:120px;border-radius:16px;border:0;font-size:28px;color:#fff;background:linear-gradient(135deg,var(--c),var(--cd));box-shadow:0 4px 10px color-mix(in srgb,var(--c) 35%,transparent)}
 .stf-row img.stf-avatar{flex:none;object-fit:cover;background:#eef2f6}
 .stf-main{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}
 .stf-row .stf-name{margin:0;font-size:16px;font-weight:700;line-height:1.3;color:var(--navy);overflow-wrap:anywhere}
@@ -38,7 +38,7 @@
 .stf-badge{padding:2px 9px;border-radius:999px;background:var(--cb);color:var(--cd);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .stf-row .ppl-btn{--btn:var(--c);flex:none}
 .stf-row:hover .ppl-btn,.stf-row:focus-within .ppl-btn{background:var(--c);color:#fff!important}
-@media(max-width:575px){.stf-row{flex-wrap:wrap;padding:14px;gap:12px}.stf-main{flex-basis:calc(100% - 70px)}.stf-row .ppl-btn{margin-left:66px}}
+@media(max-width:575px){.stf-row{flex-wrap:wrap;padding:14px;gap:12px}.stf-row .stf-avatar{width:72px;height:76px;border-radius:12px;font-size:20px}.stf-main{flex-basis:calc(100% - 84px)}.stf-row .ppl-btn{margin-left:84px}}
 </style>
 <section class="ppl-shell ppl-shell--staff" aria-labelledby="ppl-heading">
     @include('frontend.institute.partials.people-hero', [
