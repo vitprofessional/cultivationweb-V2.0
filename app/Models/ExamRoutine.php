@@ -28,6 +28,11 @@ class ExamRoutine extends Model
         return $this->belongsTo(\App\Models\sessionManage::class, 'assignSession');
     }
 
+    public function exam()
+    {
+        return $this->belongsTo(\App\Models\Exam::class, 'assignExam');
+    }
+
     public function entries()
     {
         return $this->hasMany(\App\Models\ExamRoutineItem::class, 'exam_routine_id')->orderBy('sort_order')->orderBy('exam_date');

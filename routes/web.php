@@ -81,6 +81,22 @@ Route::get('/exam/schedule/{id}/download', [
     'downloadExamRoutine'
 ])->whereNumber('id')->name('examRoutine.download');
 
+// "All Class" combined exam routine ({id} = any ExamRoutine id of the exam group)
+Route::get('/exam/schedule/all-class/{id}', [
+    FrontController::class,
+    'viewAllClassExamRoutine'
+])->whereNumber('id')->name('examRoutine.allClass.view');
+
+Route::get('/exam/schedule/all-class/{id}/print', [
+    FrontController::class,
+    'printAllClassExamRoutine'
+])->whereNumber('id')->name('examRoutine.allClass.print');
+
+Route::get('/exam/schedule/all-class/{id}/download', [
+    FrontController::class,
+    'downloadAllClassExamRoutine'
+])->whereNumber('id')->name('examRoutine.allClass.download');
+
 Route::get('/semister/plan',[
     FrontController::class,
     'newSemister'

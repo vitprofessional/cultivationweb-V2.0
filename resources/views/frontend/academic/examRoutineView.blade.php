@@ -123,6 +123,7 @@ Exam Routine View
                                 $itemSession = \App\Models\sessionManage::find($routine->assignSession);
                             @endphp
                             <div class="routine-meta"><b>Class:</b> {{ $itemClass->className ?? '-' }} | <b>Session:</b> {{ $itemSession->session ?? '-' }} | <b>Department:</b> {{ $itemDepartment->departmentName ?? '-' }}</div>
+                            @include('frontend.academic.partials._routine_crosslinks')
                             <div class="table-responsive">
                                 <table class="routine-table table table-bordered table-hover mb-0">
                                     <thead>

@@ -254,9 +254,217 @@ class FrontController extends Controller
         }
     }
 
+    // ---- "All Class" combined exam routine (read-only grid across every class of one exam group) ----
+
+    public function viewAllClassExamRoutine($id)
+    {
+        return view('frontend.academic.examRoutineAllClassView', $this->allClassExamRoutineData($id) + ['orientation' => $this->allClassOrientation()]);
+    }
+
+    // Print page: sheet only; it opens the browser print dialog by itself (see the view's window.print() on load).
+    public function printAllClassExamRoutine($id)
+    {
+        $data = $this->allClassExamRoutineData($id);
+        $orientation = $this->allClassOrientation();
+        return view('frontend.academic.examRoutineAllClassPdf', $data + ['printMode' => true, 'autoPrint' => true, 'orientation' => $orientation, 'fit' => $this->allClassFit($data, $orientation)]);
+    }
+
+    public function downloadAllClassExamRoutine($id)
+    {
+        $data = $this->allClassExamRoutineData($id);
+        $orientation = $this->allClassOrientation();
+        $data += ['printMode' => true, 'isPdf' => true, 'orientation' => $orientation, 'fit' => $this->allClassFit($data, $orientation)];
+        if (!class_exists(\Barryvdh\DomPDF\Facade::class) && !class_exists('PDF') && !app()->bound('dompdf')) {
+            return redirect()->back()->with('error', 'PDF generation package not installed.');
+        }
+        try {
+            return \PDF::loadView('frontend.academic.examRoutineAllClassPdf', $data)->setPaper('a4', $orientation)
+                ->download('exam_routine_all_classes_'.$id.'_'.$orientation.'.pdf');
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'PDF generation failed: ' . $e->getMessage());
+        }
+    }
+
+    private function allClassOrientation(): string
+    {
+        return request()->query('orientation') === 'portrait' ? 'portrait' : 'landscape';
+    }
+
+    /**
+     * One-page fit for print/PDF. Estimates the height of the whole sheet (letterhead + 2 header rows + one row per date
+     * + notice + signatures, with cell text wrapping) at scale $s and picks the largest $s (1.0 .. 0.4) that fits the
+     * A4 page for the orientation. Every font size / padding in the template is multiplied by $s.
+     */
+    private function allClassFit(array $data, string $orientation): array
+    {
+        $pageW = $orientation === 'portrait' ? 595.0 : 842.0;
+        $pageH = $orientation === 'portrait' ? 842.0 : 595.0;
+        $margin = 23.0; // 8mm on every side
+        $budgetW = $pageW - 2 * $margin;
+        $budgetH = $pageH - 2 * $margin - 16.0; // safety
+        $dates = $data['allClassDates'];
+        $sessions = $data['allClassSessions'];
+        $grid = $data['allClassGrid'];
+        $cols = max(1, array_sum(array_map(fn ($s) => count($s['class_ids']), $sessions)));
+        $classIds = collect($sessions)->flatMap(fn ($s) => $s['class_ids'])->all();
+
+        $estimate = function (float $s) use ($dates, $grid, $classIds, $cols, $budgetW) {
+            $font = 11 * $s;
+            $colW = max(30.0, ($budgetW - 92 * $s - 2) / $cols);
+            $charsPerLine = max(4.0, ($colW - 14 * $s) / ($font * 0.55));
+            $h = 84 * $s + 72 * $s; // letterhead + 2 header rows
+            foreach ($dates as $date) {
+                $lines = 2; // date cell: date + weekday
+                foreach ($classIds as $cid) {
+                    $text = implode(' / ', $grid[$date][$cid] ?? []);
+                    $lines = max($lines, (int) ceil(max(1, mb_strlen($text)) / $charsPerLine));
+                }
+                $h += $lines * $font * 1.3 + 11 * $s;
+            }
+            return $h + 140 * $s; // notice + signatures
+        };
+
+        $s = 1.0;
+        while ($s > 0.4 && $estimate($s) > $budgetH) $s = round($s - 0.02, 2);
+
+        return [
+            'scale' => $s, 'estimated_height' => round($estimate($s), 1), 'budget_height' => $budgetH,
+            'font' => round(11 * $s, 2), 'head_font' => round(12.5 * $s, 2), 'sub_font' => round(10 * $s, 2),
+            'cell_pad_y' => round(5.5 * $s, 2), 'cell_pad_x' => round(7 * $s, 2), 'head_pad' => round(7 * $s, 2),
+            'school_font' => round(18 * $s, 2), 'addr_font' => round(10 * $s, 2), 'title_font' => round(13 * $s, 2),
+            'note_font' => round(10 * $s, 2), 'sign_font' => round(10 * $s, 2), 'gap' => round(10 * $s, 2),
+            'sign_gap' => round(26 * $s, 2),
+        ];
+    }
+
+    /**
+     * Mirrors the admin app's AcademicExamRoutineController::allClassData(). $id is any ExamRoutine id of the group.
+     * Group = every Exam row sharing exam_type_id + session_id; each class contributes its base (no section, no
+     * department) 'result_routine' routine. Cells hold ARRAYS of subject names (a class may have two entries on a date).
+     */
+    private function allClassExamRoutineData($id): array
+    {
+        // Draft routines do not exist for the public: unpublished / missing / incomplete group are all the same plain 404.
+        $routine = ExamRoutine::with('exam.type', 'exam.session')->where('is_published', true)->find($id);
+        abort_unless($routine, 404);
+        $exam = $routine->exam;
+        abort_unless($exam && $exam->exam_type_id && $exam->session_id, 404);
+        // The combined view exists only when EVERY class of the exam group has a published routine (no partial combined sheet).
+        abort_unless($this->examGroupPublishState($exam)['complete'], 404);
+
+        $group = \App\Models\Exam::query()->where('exam_type_id', $exam->exam_type_id)->where('session_id', $exam->session_id)->orderBy('className')->get();
+        $classes = \App\Models\classManage::query()->whereIn('id', $group->pluck('className')->map(fn ($c) => (int) $c)->unique())->orderBy('className')->get(['id', 'className']);
+
+        $classEntries = [];
+        $allIds = [];
+        foreach ($group as $row) {
+            $matches = ExamRoutine::with('entries')->where('status', 'result_routine')->where('is_published', true)->where('assignExam', $row->id)
+                ->where('assignClass', $row->className)->where('assignSession', (string) $row->session_id)
+                ->whereNull('assignSection')->whereNull('assignDepartment')->get();
+            // Same rule as the admin app: never pick an arbitrary winner among duplicates.
+            $entries = $matches->count() === 1 ? $matches->sole()->entries : collect();
+            $classEntries[(int) $row->className] = $entries;
+            $allIds = array_merge($allIds, $entries->pluck('subject_id')->filter()->all());
+        }
+
+        // Subject-name lookup: same raw-table pattern as viewExamRoutine() (there is no Subject model on this side).
+        $subjectMap = [];
+        $allIds = array_values(array_unique($allIds));
+        if ($allIds !== []) {
+            foreach (['subjectName', 'subject_name', 'name'] as $col) {
+                try {
+                    if (Schema::hasColumn('subjects', $col)) {
+                        $subjectMap = (array) \DB::table('subjects')->whereIn('id', $allIds)->pluck($col, 'id')->all();
+                        if (!empty($subjectMap)) break;
+                    }
+                } catch (\Throwable $inner) {
+                    continue;
+                }
+            }
+        }
+
+        $dates = collect($classEntries)->flatMap(fn ($entries) => $entries->pluck('exam_date'))->filter()->unique()->sort()->values()->all();
+        $representative = [];
+        foreach ($classEntries as $classId => $entries) {
+            $pairs = $entries->map(fn ($e) => substr((string) $e->start_time, 0, 5).'|'.substr((string) $e->end_time, 0, 5))->countBy();
+            if ($pairs->isEmpty()) continue;
+            $max = $pairs->max();
+            $representative[$classId] = $pairs->filter(fn ($count) => $count === $max)->keys()->sort()->first();
+        }
+        $classOrder = $classes->pluck('id')->map(fn ($c) => (int) $c)->all();
+        $sessions = [];
+        foreach (collect($representative)->groupBy(fn ($pair) => $pair, preserveKeys: true)->sortKeys() as $pair => $ids) {
+            [$start, $end] = explode('|', $pair);
+            $inBucket = $ids->keys()->map(fn ($c) => (int) $c)->all();
+            $sessions[] = ['start_time' => $start, 'end_time' => $end, 'class_ids' => array_values(array_filter($classOrder, fn ($c) => in_array($c, $inBucket, true)))];
+        }
+        // A class with no saved entries has no time of its own: keep its (empty) column in the first session.
+        $without = array_values(array_filter($classOrder, fn ($c) => !isset($representative[$c])));
+        if ($without !== [] && $sessions !== []) {
+            $merged = array_merge($sessions[0]['class_ids'], $without);
+            $sessions[0]['class_ids'] = array_values(array_filter($classOrder, fn ($c) => in_array($c, $merged, true)));
+        }
+        foreach ($sessions as $i => &$s) $s['label'] = 'Session '.($i + 1);
+        unset($s);
+
+        $grid = [];
+        foreach ($classEntries as $classId => $entries) {
+            foreach ($entries as $e) {
+                $name = $e->subject_name ?: ($subjectMap[$e->subject_id] ?? 'Subject');
+                $grid[$e->exam_date][$classId][] = $name;
+            }
+        }
+
+        $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->first() : null;
+
+        return [
+            'routine' => $routine, 'exam' => $exam, 'examTitle' => trim((string) ($exam->type?->name ?: $exam->examName)),
+            'sessionLabel' => $exam->session?->session, 'classes' => $classes,
+            'allClassDates' => $dates, 'allClassSessions' => $sessions, 'allClassGrid' => $grid,
+            'institutionName' => trim((string) $config?->instituteName), 'institutionAddress' => trim((string) $config?->address),
+        ];
+    }
+
+    /**
+     * Publish state of one exam group (every Exam row sharing exam_type_id + session_id, one row per class).
+     * 'routines' = the published routines of the group (class picker / cross-links).
+     * 'complete' = true only when EVERY class of the group has exactly one published base routine
+     *              (no section, no department) - the rule for the "All Classes Together" view.
+     */
+    private function examGroupPublishState(?\App\Models\Exam $exam): array
+    {
+        if (!$exam || !$exam->exam_type_id || !$exam->session_id) {
+            return ['routines' => collect(), 'complete' => false];
+        }
+        $group = \App\Models\Exam::query()->where('exam_type_id', $exam->exam_type_id)->where('session_id', $exam->session_id)->get();
+        $published = ExamRoutine::with(['class', 'department'])
+            ->where('status', 'result_routine')->where('is_published', true)->whereNull('assignSection')
+            ->whereIn('assignExam', $group->pluck('id'))
+            ->get()
+            ->sortBy(fn ($r) => sprintf('%08d-%08d', (int) $r->assignClass, (int) $r->assignDepartment))
+            ->values();
+
+        $complete = $group->isNotEmpty() && $group->every(fn ($row) => $published->filter(
+            fn ($r) => (int) $r->assignExam === (int) $row->id
+                && (string) $r->assignClass === (string) $row->className
+                && (string) $r->assignSession === (string) $row->session_id
+                && $r->assignDepartment === null
+        )->count() === 1);
+
+        return ['routines' => $published, 'complete' => $complete];
+    }
+
+    /** Single published routine or a plain 404 (unpublished and non-existent ids are indistinguishable). */
+    private function publishedRoutineOr404($id): ExamRoutine
+    {
+        $routine = ExamRoutine::with(['class', 'department', 'session', 'entries', 'exam'])->where('is_published', true)->find($id);
+        abort_unless($routine, 404);
+        return $routine;
+    }
+
     public function newExamSchedule(Request $request)
     {
-        $query = ExamRoutine::with(['class','department','session']);
+        $query = ExamRoutine::with(['class','department','session','exam.type','exam.session'])->where('is_published', true);
 
         if ($request->filled('class')) {
             $query->where('assignClass', $request->query('class'));
@@ -270,6 +478,23 @@ class FrontController extends Controller
 
         $result = $query->orderBy('created_at','desc')->get();
 
+        // One card per exam group (exam_type_id + session_id). A routine without a grouped exam stands alone.
+        $examGroups = $result->groupBy(fn ($r) => ($r->exam && $r->exam->exam_type_id && $r->exam->session_id)
+            ? $r->exam->exam_type_id.':'.$r->exam->session_id : 'solo:'.$r->id)
+            ->map(function ($routines) {
+                $first = $routines->first();
+                $exam = $first->exam;
+                $grouped = $exam && $exam->exam_type_id && $exam->session_id;
+                $state = $grouped ? $this->examGroupPublishState($exam) : ['routines' => collect(), 'complete' => false];
+                return [
+                    'title' => $grouped ? trim(($exam->type?->name ?: $exam->examName).($exam->session?->session ? ' — '.$exam->session->session : '')) : ($first->title ?: 'Exam Routine'),
+                    'routines' => $routines->sortBy(fn ($r) => sprintf('%08d-%08d', (int) $r->assignClass, (int) $r->assignDepartment))->values(),
+                    'allAvailable' => $state['complete'],
+                    'allClassId' => $state['complete'] ? $state['routines']->first()->id : null,
+                    'grouped' => $grouped,
+                ];
+            })->values();
+
         // Lists for filter dropdowns
         $classes = \App\Models\classManage::orderBy('className','asc')->get();
         $departments = \App\Models\Department::orderBy('departmentName','asc')->get();
@@ -277,6 +502,7 @@ class FrontController extends Controller
 
         return view('frontend.academic.examSchedule', [
             'Datakey' => $result,
+            'examGroups' => $examGroups,
             'classes' => $classes,
             'departments' => $departments,
             'sessions' => $sessions,
@@ -286,7 +512,7 @@ class FrontController extends Controller
     // View single exam routine (embed attachment or show message)
     public function viewExamRoutine($id)
     {
-        $routine = ExamRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = $this->publishedRoutineOr404($id);
         $entries = $routine->entries ?? collect();
 
         // Resolve subject names when missing by looking up common subjects table columns
@@ -320,13 +546,19 @@ class FrontController extends Controller
             // ignore lookup failures
         }
 
-        return view('frontend.academic.examRoutineView', ['routine' => $routine, 'entries' => $entries]);
+        // Cross-links: other published classes of the same exam group + the combined view when every class is published.
+        $state = $this->examGroupPublishState($routine->exam);
+        return view('frontend.academic.examRoutineView', [
+            'routine' => $routine, 'entries' => $entries,
+            'siblingRoutines' => $state['routines']->reject(fn ($r) => $r->id === $routine->id)->values(),
+            'allClassAvailable' => $state['complete'],
+        ]);
     }
 
     // Print exam routine using printable standalone view
     public function printExamRoutine($id)
     {
-        $routine = ExamRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = $this->publishedRoutineOr404($id);
         $entries = $routine->entries ?? collect();
 
         try {
@@ -362,7 +594,7 @@ class FrontController extends Controller
     // Download exam routine: if attachment is PDF, serve file; otherwise render PDF server-side
     public function downloadExamRoutine($id)
     {
-        $routine = ExamRoutine::with(['class','department','session','entries'])->findOrFail($id);
+        $routine = $this->publishedRoutineOr404($id);
 
         $attachment = $routine->attachment ?? '';
         $filePath = public_path('upload/image/cultivation/examRoutine/' . ($attachment));
