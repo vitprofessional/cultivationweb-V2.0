@@ -767,45 +767,174 @@ class FrontController extends Controller
     }
 
     //front web site str
+    /**
+     * Internal Result: two tabs.
+     *  - My Result: a student searches their own result by exam + Student ID.
+     *  - Class Results: class-wide reports (summary, merit list, tabulation, performance) the school chose to publish.
+     * Everything is calculated by the Admin application; only results that are Published AND switched on for the
+     * website are returned. Result files uploaded with the old upload screen are still listed, if any exist.
+     */
     public function internalResult(Request $request){
-        // Filters
-        $classId   = $request->query('class');
-        $sectionId = $request->query('section');
-        $deptId    = $request->query('department');
-        $sessId    = $request->query('session');
+        $base = rtrim((string) config('portals.base_url'), '/');
+        $data = ['exams' => [], 'serviceDown' => $base === ''];
+        if ($base !== '') {
+            try {
+                $data['exams'] = \Illuminate\Support\Facades\Cache::remember('public_result_exams', 60, function () use ($base) {
+                    return (array) $this->resultService($base, '/public-results/exams', [], 8)->json('exams', []);
+                });
+            } catch (\Throwable $exception) {
+                Log::warning('public_result_exams_unavailable', ['exception' => get_class($exception)]);
+                $data['serviceDown'] = true;
+            }
+        }
 
-        $query = Marksheet::query();
-        if(!empty($classId))   { $query->where('assignClass', $classId); }
-        if(!empty($sectionId)) { $query->where('assignSection', $sectionId); }
-        if(!empty($deptId))    { $query->where('assignDepartment', $deptId); }
-        if(!empty($sessId))    { $query->where('assignSession', $sessId); }
+        $data['tab'] = $request->query('tab') === 'class' ? 'class' : 'my';
+        $data += $this->studentResultSearch($request, $base, $data['serviceDown']);
+        $data += $this->classResultReport($request, $base, $data['serviceDown'], $data['exams']);
+        $data['archive'] = collect();
+        try {
+            $data['archive'] = Marksheet::query()->whereNotNull('attachment')->where('attachment', '!=', '')->orderBy('id', 'desc')->limit(24)->get();
+        } catch (\Throwable $exception) {
+            Log::warning('internal_result_archive_unavailable', ['exception' => get_class($exception)]);
+        }
 
-        $result = $query->orderBy('id','desc')->get();
-
-        // Option lists
-        $classes   = \App\Models\classManage::orderBy('className','asc')->get();
-        $sections  = \App\Models\sectionManage::orderBy('section','asc')->get();
-        $depts     = \App\Models\Department::orderBy('departmentName','asc')->get();
-        $sessions  = \App\Models\sessionManage::orderBy('session','desc')->get();
-
-        return view('frontend.result.internalResult',[
-            'Datakey'  => $result,
-            'classes'  => $classes,
-            'sections' => $sections,
-            'depts'    => $depts,
-            'sessions' => $sessions,
-            'filters'  => [
-                'class'     => $classId,
-                'section'   => $sectionId,
-                'department'=> $deptId,
-                'session'   => $sessId,
-            ],
-        ]);
+        $data['institution'] = $this->resultInstitution();
+        $response = response()->view('frontend.result.internalResult', $data);
+        // Class-wide lists are for visitors of the school website, not for search engines.
+        return $data['report'] ? $response->header('X-Robots-Tag', 'noindex, nofollow') : $response;
     }
 
+    /** The old Individual Result address now opens the Internal Result page (search kept). */
+    public function individualResult(Request $request){
+        return redirect()->route('internalResult', $request->only(['exam', 'student_id']));
+    }
 
-    public function individualResult(){
-        return view('frontend.result.individualResult');
+    /** School letterhead for printed results. */
+    private function resultInstitution(): array
+    {
+        $config = null;
+        try {
+            $config = Schema::hasTable((new ServerConfig())->getTable()) ? ServerConfig::query()->latest('id')->first() : null;
+        } catch (\Throwable $exception) {
+            Log::warning('result_institution_unavailable', ['exception' => get_class($exception)]);
+        }
+        $name = trim((string) ($config?->instituteName ?? '')) ?: (string) config('app.name');
+        $logo = null;
+        try {
+            $logo = filled($config?->logo) ? app(\App\Services\PublicMediaUrl::class)->institutionLogo((string) $config->logo) : null;
+        } catch (\Throwable $exception) {
+            $logo = null;
+        }
+
+        return [
+            'name' => $name,
+            'address' => trim((string) ($config?->address ?? '')),
+            'phone' => trim((string) ($config?->officeMobile ?? '')),
+            'email' => trim((string) ($config?->officeEmail ?? '')),
+            'logoUrl' => $logo,
+            'initials' => collect(preg_split('/\s+/', $name) ?: [])->filter()->take(3)->map(fn ($word) => mb_strtoupper(mb_substr($word, 0, 1)))->implode(''),
+        ];
+    }
+
+    private function resultService(string $base, string $path, array $query, int $timeout = 15): \Illuminate\Http\Client\Response
+    {
+        $response = \Illuminate\Support\Facades\Http::acceptJson()->timeout($timeout)->get($base.$path, $query);
+        if ($response->serverError() || $response->status() === 0) throw new \RuntimeException('Result service unavailable.');
+
+        return $response;
+    }
+
+    /** Each visitor (by IP) may run a limited number of searches per minute; the admin server sees only this website. */
+    private function tooManyResultSearches(Request $request, string $bucket, int $perMinute): bool
+    {
+        $key = 'result-search:'.$bucket.':'.$request->ip();
+        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($key, $perMinute)) return true;
+        \Illuminate\Support\Facades\RateLimiter::hit($key, 60);
+
+        return false;
+    }
+
+    private function studentResultSearch(Request $request, string $base, bool $serviceDown): array
+    {
+        $examId = $request->query('exam');
+        $studentId = trim((string) $request->query('student_id', ''));
+        $result = null;
+        $notFound = false;
+        $searchError = null;
+        if ($request->filled('exam') || $studentId !== '') {
+            if (! ctype_digit((string) $examId) || $studentId === '' || strlen($studentId) > 40 || ! preg_match('/^[A-Za-z0-9\-\/]+$/', $studentId)) {
+                $searchError = 'Choose an exam and enter a valid Student ID.';
+            } elseif ($this->tooManyResultSearches($request, 'student', 15)) {
+                $searchError = 'Too many searches. Please wait a minute and try again.';
+            } elseif (! $serviceDown) {
+                try {
+                    $response = $this->resultService($base, '/public-results/lookup', ['examId' => (int) $examId, 'studentId' => $studentId]);
+                    if ($response->status() === 404) {
+                        $notFound = true;
+                    } elseif ($response->successful() && $response->json('found')) {
+                        $result = $response->json();
+                    } else {
+                        $searchError = 'The result service could not answer right now. Please try again later.';
+                    }
+                } catch (\Throwable $exception) {
+                    Log::warning('public_result_lookup_failed', ['exception' => get_class($exception)]);
+                    $searchError = 'The result service could not answer right now. Please try again later.';
+                }
+            }
+        }
+
+        return compact('examId', 'studentId', 'result', 'notFound', 'searchError');
+    }
+
+    private function classResultReport(Request $request, string $base, bool $serviceDown, array $exams): array
+    {
+        $out = ['classExamId' => null, 'classScopes' => [], 'scopeKey' => null, 'scope' => null, 'reportType' => null,
+            'report' => null, 'reportNames' => [], 'classError' => null];
+        $examId = $request->query('class_exam');
+        if ($serviceDown || ! ctype_digit((string) $examId) || ! collect($exams)->contains(fn ($exam) => (string) ($exam['id'] ?? '') === (string) $examId)) {
+            return $out;
+        }
+        $out['classExamId'] = (int) $examId;
+        try {
+            $classes = \Illuminate\Support\Facades\Cache::remember('public_result_classes:'.(int) $examId, 60, function () use ($base, $examId) {
+                $response = $this->resultService($base, '/public-results/classes', ['examId' => (int) $examId], 8);
+                return ['classes' => (array) $response->json('classes', []), 'names' => (array) $response->json('reportNames', [])];
+            });
+        } catch (\Throwable $exception) {
+            Log::warning('public_result_classes_unavailable', ['exception' => get_class($exception)]);
+            $out['classError'] = 'The result service could not answer right now. Please try again later.';
+            return $out;
+        }
+        $out['classScopes'] = $classes['classes'];
+        $out['reportNames'] = $classes['names'];
+        $scope = collect($classes['classes'])->firstWhere('key', (string) $request->query('scope'));
+        if (! $scope && count($classes['classes']) === 1) $scope = $classes['classes'][0];
+        if (! $scope) return $out;
+        $out['scope'] = $scope;
+        $out['scopeKey'] = $scope['key'];
+        $type = in_array($request->query('report'), $scope['reports'], true) ? $request->query('report') : ($scope['reports'][0] ?? null);
+        $out['reportType'] = $type;
+        if (! $type) return $out;
+        if ($this->tooManyResultSearches($request, 'class', 40)) {
+            $out['classError'] = 'Too many requests. Please wait a minute and try again.';
+            return $out;
+        }
+        try {
+            $response = $this->resultService($base, '/public-results/report', [
+                'examId' => (int) $examId, 'sessionId' => $scope['sessionId'], 'classId' => $scope['classId'],
+                'groupId' => $scope['groupId'], 'type' => $type,
+            ], 30);
+            if ($response->successful() && $response->json('found')) {
+                $out['report'] = $response->json();
+            } else {
+                $out['classError'] = 'This report is not available on the website.';
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('public_result_report_failed', ['exception' => get_class($exception)]);
+            $out['classError'] = 'The result service could not answer right now. Please try again later.';
+        }
+
+        return $out;
     }
     //front web site end
 

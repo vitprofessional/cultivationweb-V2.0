@@ -51,6 +51,9 @@ class PublicStudentDraftExclusionTest extends TestCase
             ->assertSee('Student Info')->assertSee('Student Details')->assertSee('View Student Profile')
             ->assertSee(route('student.show', ['id' => $activeId]), false)
             ->assertSee('Public Active Student')
+            // The text search covers only the name and student ID (tests/Browser/student-database-filters).
+            ->assertSee('<td data-search="Public Active Student 93810001">', false)
+            ->assertSee('placeholder="Name or student ID"', false)
             ->assertDontSee('Public Missing Class Draft')
             ->assertDontSee('Public No Class Draft')
             ->assertDontSee('Public Unresolved Class Draft');

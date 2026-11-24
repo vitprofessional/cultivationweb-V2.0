@@ -409,7 +409,7 @@ body:has(#student-database-page) .edu-main-inner{padding:0}
     <section class="student-filter-panel" aria-labelledby="student-filter-title">
         <h2 id="student-filter-title">Find a Student</h2>
         <form class="student-filters" id="student-filters" role="search">
-            <label>Search Student<input id="student-search" type="search" placeholder="Name, student ID or details" autocomplete="off"></label>
+            <label>Search Student<input id="student-search" type="search" placeholder="Name or student ID" autocomplete="off"></label>
             @foreach($studentFilters as [$key, $label, $field, $lookup, $nameField])
                 <label>{{ $label }}
                     <select data-student-filter="{{ $key }}" aria-label="{{ $label }}">
@@ -457,7 +457,8 @@ body:has(#student-database-page) .edu-main-inner{padding:0}
                                     ?: app(\App\Services\PublicAssetUrl::class)->url('avatar.png');
                             @endphp
                             <tr data-class="{{ $std->className }}" data-section="{{ $std->sectionName }}" data-session="{{ $std->sessName }}" data-department="{{ $std->departmentName }}">
-                                <td>
+                                {{-- Text search matches only the name and the student ID (not the "ID:" label). --}}
+                                <td data-search="{{ $fullName }} {{ $std->stdId }}">
                                     <div class="student-info-wrap">
                                         <x-people-portrait :src="$photo" :alt="$fullName" variant="compact" image-class="student-avatar" />
                                         <div class="student-name-id">
@@ -523,7 +524,8 @@ document.addEventListener('DOMContentLoaded', function () {
             pageLength: 25,
             autoWidth: false,
             responsive: false,
-            columnDefs: [{ targets: [2], orderable: false, searchable: false }],
+            // Details (class/session/department/section) are filtered by the selects, not the text search.
+            columnDefs: [{ targets: [1], searchable: false }, { targets: [2], orderable: false, searchable: false }],
             language: {
                 search: '',
                 searchPlaceholder: 'Search students…',
@@ -541,12 +543,28 @@ document.addEventListener('DOMContentLoaded', function () {
             return filters.every(control => !control.value || row.dataset[control.dataset.studentFilter] === control.value);
         };
         $.fn.dataTable.ext.search.push(filterRows);
-        filters.forEach(control => control.addEventListener('change', () => table.draw()));
+        // Class follows Session; Section follows Session and Class. Each lists only the values the
+        // loaded rows carry for the current parent choice, and a choice that drops out resets to All.
+        const control = key => filters.find(select => select.dataset.studentFilter === key);
+        const loadedRows = table.rows().nodes().toArray();
+        const cascade = [['class', ['session']], ['section', ['session', 'class']]]
+            .filter(([key, parents]) => control(key) && parents.every(control))
+            .map(([key, parents]) => ({ key, parents, options: Array.from(control(key).options).slice(1) }));
+        const syncCascade = () => cascade.forEach(({ key, parents, options }) => {
+            const select = control(key);
+            const present = new Set(loadedRows
+                .filter(row => parents.every(parent => !control(parent).value || row.dataset[parent] === control(parent).value))
+                .map(row => row.dataset[key]));
+            const current = select.value;
+            select.replaceChildren(select.options[0], ...options.filter(option => present.has(option.value)));
+            select.value = current && present.has(current) ? current : '';
+        });
+        filters.forEach(control => control.addEventListener('change', () => { syncCascade(); table.draw(); }));
         document.getElementById('student-search').addEventListener('input', event => table.search(event.target.value).draw());
         document.getElementById('student-per-page').addEventListener('change', event => table.page.len(Number(event.target.value)).draw());
         const form = document.getElementById('student-filters');
         form.addEventListener('submit', event => event.preventDefault());
-        form.addEventListener('reset', () => setTimeout(() => table.search('').page.len(25).draw(), 0));
+        form.addEventListener('reset', () => setTimeout(() => { syncCascade(); table.search('').page.len(25).draw(); }, 0));
         $('#studentTable').on('destroy.dt', () => {
             const index = $.fn.dataTable.ext.search.indexOf(filterRows);
             if (index >= 0) $.fn.dataTable.ext.search.splice(index, 1);

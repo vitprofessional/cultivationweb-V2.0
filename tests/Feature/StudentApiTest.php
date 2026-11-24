@@ -1,13 +1,28 @@
 <?php
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
 use App\Models\StudentManagement;
 
 class StudentApiTest extends TestCase
 {
-    use RefreshDatabase;
+    // Never RefreshDatabase: it runs migrate:fresh. Each test's writes are rolled back instead.
+    use DatabaseTransactions;
+
+    public function createApplication()
+    {
+        $app = parent::createApplication();
+        $db = $app['db']->connection();
+        if ($app->environment() !== 'testing' || $db->getDriverName() !== 'mysql'
+            || ! in_array($db->getConfig('host'), ['127.0.0.1', 'localhost'], true)
+            || $db->getDatabaseName() !== 'cultivation_test'
+            || $db->selectOne('SELECT DATABASE() AS name')->name !== 'cultivation_test') {
+            throw new \RuntimeException('Student API tests require local cultivation_test.');
+        }
+
+        return $app;
+    }
 
     /** @test */
     public function it_creates_a_student()
